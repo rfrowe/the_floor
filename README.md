@@ -106,17 +106,34 @@ npm run format:check
 ```
 the-floor/
 ├── src/
+│   ├── components/      # Reusable UI components
+│   │   ├── common/      # Generic components (buttons, cards, etc.)
+│   │   ├── contestant/  # Contestant-related components
+│   │   ├── duel/        # Duel-related components
+│   │   └── slide/       # Slide display components
+│   ├── pages/           # Route components (Dashboard, MasterView, AudienceView)
+│   ├── contexts/        # React Context providers
+│   ├── hooks/           # Custom React hooks
+│   ├── types/           # TypeScript interfaces and types
+│   ├── utils/           # Utility functions
+│   ├── storage/         # localStorage abstraction
 │   ├── assets/          # Static assets
-│   ├── App.tsx          # Main application component
+│   ├── App.tsx          # Root component with router
 │   ├── App.test.tsx     # App component tests
 │   ├── setupTests.ts    # Test configuration
 │   └── main.tsx         # Application entry point
+├── docs/tasks/          # Task definitions
 ├── public/              # Public static files
 ├── index.html           # HTML template
 ├── vite.config.ts       # Vite configuration
 ├── tsconfig.json        # TypeScript configuration
 └── package.json         # Project dependencies and scripts
 ```
+
+### Routes
+- `/` - Dashboard (game master control center)
+- `/master` - Master View (duel control interface)
+- `/audience` - Audience View (display for projector/screen)
 
 ## Tech Stack
 
