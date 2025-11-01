@@ -125,6 +125,26 @@ This means:
 - Avoid type assertions (`as`) - use type guards and type narrowing instead
 - Never use `any` - prefer `unknown` and narrow the type appropriately
 
+### Path Aliases
+The project uses TypeScript path mapping for clean imports:
+
+```typescript
+// Instead of: import { Button } from '../../../components/ui/Button'
+import { Button } from '@components/ui/Button'
+
+// Available aliases:
+// @/           - src root
+// @components/ - src/components
+// @hooks/      - src/hooks
+// @utils/      - src/utils
+// @types/      - src/types
+// @models/     - src/models
+// @services/   - src/services
+// @contexts/   - src/contexts
+// @pages/      - src/pages
+// @assets/     - src/assets
+```
+
 ### Testing & Development
 - Tests use jsdom environment for DOM simulation
 - All test utilities from jest-dom are available globally

@@ -72,6 +72,19 @@ Types: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`
 - Reference code with file paths and line numbers (e.g., `App.tsx:42`)
 - Use `@ts-expect-error` only when necessary with explanation comment
 
+**Import Path Aliases:**
+Use path aliases for clean imports (configured in tsconfig.app.json and vite.config.ts):
+- `@/` - src root (e.g., `import { foo } from '@/utils/foo'`)
+- `@components/` - src/components
+- `@hooks/` - src/hooks
+- `@utils/` - src/utils
+- `@types/` - src/types
+- `@models/` - src/models
+- `@services/` - src/services
+- `@contexts/` - src/contexts
+- `@pages/` - src/pages
+- `@assets/` - src/assets
+
 ## Project Structure
 ```
 the-floor/

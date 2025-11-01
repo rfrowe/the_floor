@@ -49,7 +49,7 @@ From SPEC.md section 4:
 
 ## Success Criteria
 - All types from SPEC.md are implemented accurately
-- Types can be imported cleanly: `import { Contestant, Slide } from '@/types'`
+- Types can be imported cleanly: `import { Contestant, Slide } from '@types'`
 - TypeScript compilation shows no errors
 - Type guards correctly validate data at runtime
 - Code is well-documented with JSDoc comments
