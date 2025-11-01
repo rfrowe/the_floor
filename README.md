@@ -109,7 +109,24 @@ the-floor/
 
 ## Development Notes
 
-- TypeScript is configured with strict mode enabled
+### TypeScript Configuration
+This project enforces **maximum type safety** with strict TypeScript settings:
+
+- **Strict mode** with all strict flags enabled
+- **Strict null checks** - all null/undefined must be handled explicitly
+- **noUncheckedIndexedAccess** - array/object access returns `T | undefined`
+- **exactOptionalPropertyTypes** - distinguishes `undefined` from missing properties
+- **noImplicitReturns** - all code paths must return a value
+- **noPropertyAccessFromIndexSignature** - requires bracket notation for dynamic keys
+
+This means:
+- Array access requires null checks: `const item = array[0]; if (item) { ... }`
+- Optional chaining (`?.`) and nullish coalescing (`??`) should be used liberally
+- Avoid type assertions (`as`) - use type guards and type narrowing instead
+- Never use `any` - prefer `unknown` and narrow the type appropriately
+
+### Testing & Development
 - Tests use jsdom environment for DOM simulation
 - All test utilities from jest-dom are available globally
 - Hot Module Replacement (HMR) is enabled for fast development
+- See `CLAUDE.md` for detailed development guidelines
