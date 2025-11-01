@@ -59,6 +59,10 @@ export default defineConfig([
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       // Allow type assertions where we know the type exists (e.g., DOM elements in Vite apps)
       '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+      // Allow single-use type parameters for caller type safety
+      '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+      // Disable unified-signatures due to ESLint plugin bug causing crashes
+      '@typescript-eslint/unified-signatures': 'off',
 
       // Import/Export rules
       'no-duplicate-imports': 'error',
