@@ -64,12 +64,30 @@ Preview the production build locally:
 npm run preview
 ```
 
-### Linting
+### Code Quality
 
 Run ESLint to check code quality:
 
 ```bash
 npm run lint
+```
+
+Auto-fix linting errors:
+
+```bash
+npm run lint:fix
+```
+
+Format code with Prettier:
+
+```bash
+npm run format
+```
+
+Check formatting without modifying files:
+
+```bash
+npm run format:check
 ```
 
 ## Available Scripts
@@ -78,6 +96,9 @@ npm run lint
 - `npm run build` - Build for production
 - `npm test` - Run test suite
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Auto-fix linting errors
+- `npm run format` - Format all files with Prettier
+- `npm run format:check` - Check formatting without changes
 - `npm run preview` - Preview production build locally
 
 ## Project Structure
@@ -105,7 +126,8 @@ the-floor/
 - **Vitest 4+** - Unit testing framework
 - **React Testing Library** - Component testing utilities
 - **React Router DOM 7+** - Client-side routing
-- **ESLint** - Code linting
+- **ESLint** - Code linting with TypeScript, React, and accessibility rules
+- **Prettier** - Code formatting
 
 ## Development Notes
 
