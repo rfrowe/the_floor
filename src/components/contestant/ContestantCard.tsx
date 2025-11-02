@@ -7,6 +7,7 @@ export interface ContestantCardProps {
   onSelect?: (contestant: Contestant) => void;
   onClick?: (contestant: Contestant) => void;
   className?: string;
+  hasTopWins?: boolean;
 }
 
 export function ContestantCard({
@@ -15,11 +16,17 @@ export function ContestantCard({
   onSelect,
   onClick,
   className = '',
+  hasTopWins = false,
 }: ContestantCardProps) {
   const isEliminated = contestant.eliminated;
-  const isInteractive = Boolean(onClick ?? onSelect);
+  // Eliminated contestants should not be interactive
+  const isInteractive = Boolean(onClick ?? onSelect) && !isEliminated;
 
   const handleClick = () => {
+    // Don't handle clicks for eliminated contestants
+    if (isEliminated) {
+      return;
+    }
     if (onClick) {
       onClick(contestant);
     }
@@ -53,8 +60,11 @@ export function ContestantCard({
       <div className={styles['content']}>
         <div className={styles['header']}>
           <h3 className={styles['name']}>{contestant.name}</h3>
-          <div className={styles['wins-badge']} aria-label={`${String(contestant.wins)} wins`}>
-            {contestant.wins}
+          <div className={styles['wins-badge-wrapper']}>
+            {hasTopWins && <span className={styles['crown']}>👑</span>}
+            <div className={styles['wins-badge']} aria-label={`${String(contestant.wins)} wins`}>
+              {contestant.wins}
+            </div>
           </div>
         </div>
 

@@ -24,7 +24,7 @@ export function ComponentsDemo() {
       id: 'demo-contestant-1',
       name: 'Alice Johnson',
       category: { name: '80s Movies', slides: [] },
-      wins: 5,
+      wins: 8,
       eliminated: false,
     },
     {
@@ -38,7 +38,7 @@ export function ComponentsDemo() {
       id: 'demo-contestant-3',
       name: 'Carol Davis',
       category: { name: 'World History', slides: [] },
-      wins: 7,
+      wins: 5,
       eliminated: true,
     },
     {
@@ -189,21 +189,27 @@ export function ComponentsDemo() {
         <section className={styles['section']}>
           <h2>Contestant Card</h2>
           <div className={styles['cardGrid']}>
-            {mockContestants.map((contestant) => (
-              <ContestantCard
-                key={contestant.name}
-                contestant={contestant}
-                isSelected={selectedContestant === contestant.name}
-                onSelect={(c) => {
-                  setSelectedContestant(c.name === selectedContestant ? null : c.name);
-                }}
-              />
-            ))}
+            {mockContestants.map((contestant) => {
+              const maxWins = Math.max(...mockContestants.map((c) => c.wins));
+              const hasTopWins = contestant.wins === maxWins && maxWins > 0;
+              return (
+                <ContestantCard
+                  key={contestant.name}
+                  contestant={contestant}
+                  isSelected={selectedContestant === contestant.name}
+                  onSelect={(c) => {
+                    setSelectedContestant(c.name === selectedContestant ? null : c.name);
+                  }}
+                  hasTopWins={hasTopWins}
+                />
+              );
+            })}
           </div>
           <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
             <p>
               <strong>Features:</strong> Click cards to select/deselect. Notice the eliminated
-              contestant (Carol) is greyed out. Win counts are displayed as badges.
+              contestant (Carol) is greyed out and has a crown for having the most wins. Win counts
+              are displayed as badges.
             </p>
           </div>
         </section>
