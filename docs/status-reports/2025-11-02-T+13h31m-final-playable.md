@@ -38,72 +38,77 @@ All times shown as T+HH:MM (hours:minutes since 14:29 start)
 
 ```mermaid
 gantt
-    title The Floor - Parallel Development Timeline (T+ = elapsed time)
-    dateFormat YYYY-MM-DD
-    axisFormat T+%H
+    title The Floor - Complete Development Session
+    dateFormat YYYY-MM-DD HH:mm
+    axisFormat %H:%M
 
-    section Serial: Phase 1-2
-    T1: Init (15m)                :t1, 2025-01-01, 15m
-    T2: Aliases (11m)             :t2, after t1, 11m
-    T3: ESLint (15m)              :t3, after t2, 15m
-    T4: Models (33m)              :t4, after t3, 33m
-    T5: Storage (63m)             :t5, after t4, 63m
-    T6: PPTX (59m)                :t6, after t5, 59m
-    IndexedDB (68m)               :db, after t6, 68m
+    section Phase 1: Setup
+    Project Init (Task 1)           :done, t1, 2025-11-01 14:29, 15m
+    Path Aliases (Task 2)           :done, t2, 2025-11-01 14:44, 11m
+    ESLint + Prettier (Task 3)      :done, t3, 2025-11-01 14:55, 15m
 
-    section Serial: Phase 3
-    T7-8: Layout (51m)            :t7, after db, 51m
-    T9: SlideViewer (31m)         :t9, after t7, 31m
+    section Phase 2: Foundation
+    Data Models (Task 4)            :done, t4, 2025-11-01 15:10, 33m
+    Storage Layer (Task 5)          :done, t5, 2025-11-01 15:43, 63m
+    PPTX Parser (Task 6)            :done, t6, 2025-11-01 16:46, 62m
+    CategoryImporter Component      :done, cat, 2025-11-01 16:46, 62m
+    Layout Components (Button, Card) :done, lay, 2025-11-01 17:46, 24m
+    IndexedDB Integration           :done, db, 2025-11-01 18:10, 68m
 
-    section Agent 1: Dashboard
-    Dashboard Refactor (13m)      :a1t1, after t9, 13m
-    T11: Random (31m)             :a1t2, 2025-01-01 06:39, 31m
-    T12: DuelSetup (28m)          :a1t3, 2025-01-01 07:11, 28m
-    T10: Polish (29m)             :a1t4, 2025-01-01 07:39, 29m
+    section Phase 3: Components
+    SlideViewer (Task 9)            :done, t9, 2025-11-01 19:08, 31m
+    Crown Indicator                 :done, crown, 2025-11-01 19:45, 11m
+    Dashboard Refactor              :done, dash, 2025-11-01 20:15, 13m
 
-    section Agent 2: Audience
-    T17: Layout (5m)              :a2t1, 2025-01-01 05:52, 5m
-    T18: Display (22m)            :a2t2, 2025-01-01 05:57, 22m
-    T20: Skip (10m)               :a2t3, 2025-01-01 06:19, 10m
-    T19: Clock (40m)              :a2t4, 2025-01-01 07:00, 40m
-    Polish (21m)                  :a2t5, 2025-01-01 08:08, 21m
+    section Phase 4: Dashboard
+    Random Select (Task 11)         :done, t11, 2025-11-01 20:52, 31m
+    Duel Setup (Task 12)            :done, t12, 2025-11-01 21:23, 28m
+    Dashboard Polish (Task 10)      :done, t10, 2025-11-01 21:51, 29m
 
-    section Agent 3: Master
-    T15: Timer (7m)               :a3t1, 2025-01-01 07:52, 7m
-    T14: Layout (29m)             :a3t2, 2025-01-01 08:13, 29m
+    section Critical Docs
+    Task Restructuring Doc          :crit, doc1, 2025-11-01 22:12, 21m
 
-    section Critical: Restructure
-    Task Restructure (21m)        :crit, rs, 2025-01-01 07:43, 21m
+    section Phase 5: Master View
+    Master Timer (Task 15)          :done, t15, 2025-11-01 22:05, 7m
+    Master Layout (Task 14)         :done, t14, 2025-11-01 22:33, 29m
+    Duel Logic (Task 16)            :done, t16, 2025-11-01 23:02, 75m
 
-    section Serial: MVP
-    T16: Duel Logic (75m)         :t16, 2025-01-01 09:07, 75m
-    T24: Tests (10m)              :t24, 2025-01-01 09:05, 10m
+    section Phase 6: Audience View
+    Audience Layout (Task 17)       :done, t17, 2025-11-01 20:15, 5m
+    Audience Display (Task 18)      :done, t18, 2025-11-01 20:20, 22m
+    Skip Animation (Task 20)        :done, t20, 2025-11-01 20:42, 10m
+    ClockBar (Task 19)              :done, t19, 2025-11-01 21:23, 40m
+    Audience Polish                 :done, p6e, 2025-11-01 22:20, 21m
 
-    section Serial: Post-MVP
-    Docs (67m)                    :pm1, 2025-01-01 09:02, 67m
-    Test Data (35m)               :pm2, 2025-01-01 10:26, 35m
-    Retro Docs (42m)              :pm3, 2025-01-01 10:44, 42m
+    section Phase 7: Deployment
+    Retroactive Docs                :done, rdoc, 2025-11-02 01:13, 42m
+    GitHub Pages (Task 28)          :done, t28, 2025-11-02 01:55, 19m
+    Build Configuration             :done, bld, 2025-11-02 02:14, 12m
 
-    section Parallel: Deploy+Dark
-    T28: GitHub (19m)             :pd1, 2025-01-01 11:26, 19m
-    T26: Dark Mode (60m)          :pd2, 2025-01-01 10:33, 60m
+    section Phase 8: Testing
+    Unit Tests (Task 24)            :done, t24, 2025-11-01 23:17, 10m
+    Documentation Reorg             :done, doc2, 2025-11-01 23:27, 25m
+    Task 27 Polish (partial)        :done, t27, 2025-11-02 00:20, 20m
+    Test Contestants (Task 27.9)    :done, t27_9, 2025-11-02 00:55, 35m
+    Multi-file Import (Task 27.6)   :done, t27_6, 2025-11-02 01:41, 30m
+    SlideViewer Enhance             :done, slide, 2025-11-02 01:42, 1m
+    Crown + Resume                  :done, crown2, 2025-11-02 01:42, 1m
+    Timer Improvements              :done, timer, 2025-11-02 01:43, 1m
+    Manual Testing (Task 27.7)      :done, t27_7, 2025-11-02 02:59, 59m
+    Dark Mode (Task 26)             :done, t26, 2025-11-02 01:02, 60m
 
-    section Parallel: Polish
-    Multi-import (30m)            :ps1, 2025-01-01 11:12, 30m
-    SlideViewer (30m)             :ps2, 2025-01-01 11:12, 30m
-    Crown (30m)                   :ps3, 2025-01-01 11:12, 30m
-    Timer (30m)                   :ps4, 2025-01-01 11:12, 30m
+    section Task 27.7: 3 Solutions
+    Option 1 Solution               :done, opt1, 2025-11-02 01:51, 28m
+    Option 2 Solution               :done, opt2, 2025-11-02 01:51, 28m
+    Option 3 Solution               :done, opt3, 2025-11-02 01:51, 28m
 
-    section Serial: Bug Fixes
-    UI Polish (59m)               :bug, 2025-01-01 12:30, 59m
+    section Phase 9: Planning
+    Phase 9 Docs                    :done, doc3, 2025-11-02 00:11, 11m
 
-    section Parallel: 3 Solutions
-    Option 1 (28m)                :sol1, 2025-01-01 13:29, 28m
-    Option 2 (28m)                :sol2, 2025-01-01 13:29, 28m
-    Option 3 (28m)                :sol3, 2025-01-01 13:29, 28m
-
-    section Critical: Final
-    T28.1: Timer Sync (180m)      :crit, final, 2025-01-01 13:28, 180m
+    section Final: Critical
+    Deployment Tagging              :done, tag, 2025-11-02 02:26, 3m
+    License + Coverage              :done, lic, 2025-11-02 02:29, 1m
+    Timer Sync (Task 28.1)          :crit, sync, 2025-11-02 03:58, 180m
 ```
 
 ### Key Milestones (T+ Format)
