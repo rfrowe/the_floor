@@ -158,9 +158,13 @@ function Dashboard() {
   };
 
   const handleUpdateContestants = async (updatedContestants: Contestant[]) => {
-    // Update all contestants
-    for (const contestant of updatedContestants) {
-      await updateContestant(contestant);
+    // Only update contestants that actually changed (performance optimization)
+    for (const updated of updatedContestants) {
+      const original = contestants.find((c) => c.id === updated.id);
+      // Deep comparison to detect changes
+      if (JSON.stringify(original) !== JSON.stringify(updated)) {
+        await updateContestant(updated);
+      }
     }
   };
 
