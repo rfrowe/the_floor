@@ -1,10 +1,8 @@
 .card {
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-default);
   border-radius: 0.5rem;
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.1),
-    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition:
     box-shadow 0.2s ease,
@@ -16,17 +14,16 @@
 }
 
 .interactive:hover {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
 .header {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-default);
   font-weight: 600;
   font-size: 1.125rem;
+  color: var(--text-primary);
 }
 
 .body {
@@ -35,6 +32,6 @@
 
 .footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border-top: 1px solid var(--border-default);
+  background-color: var(--bg-secondary);
 }

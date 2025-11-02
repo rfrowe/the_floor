@@ -23,10 +23,10 @@
 @keyframes timeout-flash {
   0%,
   100% {
-    background-color: #d32f2f;
+    background-color: var(--status-danger);
   }
   50% {
-    background-color: #ff5252;
+    background-color: var(--timer-danger);
   }
 }
 
@@ -75,11 +75,11 @@
 }
 
 .time-display.low-time {
-  color: #ff9800;
+  color: var(--timer-warning);
 }
 
 .time-display.critical-time {
-  color: #f44336;
+  color: var(--timer-danger);
   animation: pulse 0.5s ease-in-out infinite;
 }
 
@@ -181,7 +181,7 @@
 
   /* Show solid red background instead of flashing for timeout */
   .clock-bar.timeout {
-    background-color: #d32f2f;
+    background-color: var(--status-danger);
   }
 }
 
