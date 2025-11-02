@@ -1,5 +1,14 @@
 # The Floor
 
+[![Deploy to GitHub Pages](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml/badge.svg)](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml)
+[![GitHub Pages](https://img.shields.io/badge/demo-live-success?logo=github)](https://rfrowe.github.io/the_floor/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19+-61DAFB?logo=react)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7+-646CFF?logo=vite)](https://vite.dev/)
+[![Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18?logo=vitest)](https://vitest.dev/)
+[![Coverage](https://img.shields.io/badge/coverage-check%20locally-blue)](https://github.com/rfrowe/the_floor#testing)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
 A modern React + TypeScript application built with Vite.
 
 ## Overview
@@ -49,6 +58,14 @@ For watch mode during development:
 ```bash
 npm test -- --watch
 ```
+
+Generate coverage report:
+
+```bash
+npm run test:coverage
+```
+
+Coverage reports are generated in `coverage/` directory. Open `coverage/index.html` in your browser to view detailed coverage metrics.
 
 ### Building for Production
 
