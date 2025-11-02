@@ -106,8 +106,8 @@ export function Modal({
       className={overlayClass}
       onClick={handleOverlayClick}
       onKeyDown={(e) => {
-        // Prevent default behavior but don't handle Escape here (handled in useEffect)
-        if (e.key === 'Enter' || e.key === ' ') {
+        // Only close on space/enter if the overlay itself is focused, not children (like form inputs)
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
           e.preventDefault();
           onClose();
         }
