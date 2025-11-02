@@ -115,6 +115,65 @@ A task is complete when:
 5. Commit and push
 6. Move to next task
 
+## CSS Modules with TypeScript Strict Mode
+
+When using CSS Modules with `noUncheckedIndexedAccess`, class names return `string | undefined`. Best practices:
+
+**Pattern:**
+```typescript
+// Extract variables to satisfy template literal restrictions
+const buttonClass = styles['button'] ?? '';
+const variantClass = styles[variant] ?? '';
+return <button className={`${buttonClass} ${variantClass}`.trim()} />;
+```
+
+**Why:** Direct inline access (`${styles['button']}`) in template literals fails with "Invalid type string | undefined" errors.
+
+**Alternative (for simple cases):**
+```typescript
+// When only accessing literal keys
+className={styles['container']}  // TypeScript allows this
+```
+
+## Accessibility for Interactive Overlays
+
+Modal overlays and clickable non-button elements need keyboard support to satisfy ESLint's `jsx-a11y` rules:
+
+**Pattern:**
+```typescript
+<div
+  onClick={handleOverlayClick}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClose();
+    }
+  }}
+  role="button"
+  tabIndex={-1}
+  aria-label="Modal backdrop"
+>
+```
+
+**Why:** ESLint requires `click-events-have-key-events` and proper roles for interactive non-button elements.
+
+**Alternative:** Use actual `<button>` elements when possible to avoid these requirements.
+
+## Testing Portal Components
+
+React Testing Library's `cleanup()` in `afterEach` handles React portals automatically:
+
+**Pattern:**
+```typescript
+import { cleanup } from '@testing-library/react';
+
+afterEach(() => {
+  cleanup(); // Handles portals automatically
+});
+```
+
+**Avoid:** Manual DOM manipulation (`document.body.innerHTML = ''`) can interfere with React's portal cleanup.
+
 ## Critical Reminders
 - **DO NOT** jump ahead to future phases during infrastructure tasks
 - **DO NOT** commit failing tests or TypeScript errors
