@@ -321,7 +321,7 @@ See LICENSE file for details.
 
 ## For Detailed Information
 
-- **Complete Session Report:** `docs/status-reports/2025-11-02-mvp-complete.md`
+- **Complete Session Report:** `docs/status-reports/2025-11-02-T+13h31m-final-playable.md`
 - **Task Documentation:** `docs/tasks/` (29 task definitions)
 - **Status Reports:** `docs/status-reports/` (5 chronological reports)
 - **Development Guide:** `CLAUDE.md` (development standards and workflow)

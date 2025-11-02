@@ -60,7 +60,7 @@ This wasn't about AI writing code blindly. It was about:
 5. **Strategic documentation** - Decisions captured at key moments
 6. **Persistence** - Staying to fix critical bugs (timer sync at hour 13)
 
-**Read the full story:** [`docs/status-reports/2025-11-02-mvp-complete.md`](./docs/status-reports/2025-11-02-mvp-complete.md)
+**Read the full story:** [`docs/status-reports/2025-11-02-T+13h31m-final-playable.md`](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)
 
 ## Live Demo
 
@@ -80,7 +80,7 @@ This project's documentation is a **case study in AI-assisted development**. Eve
 
 ### 📊 Complete Session Documentation
 
-**[Full Session Report](./docs/status-reports/2025-11-02-mvp-complete.md)** - The complete story
+**[Full Session Report](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)** - The complete story
 - Minute-by-minute timeline (mermaid charts)
 - All 27 tasks with completion times
 - Architecture decisions and ROI analysis
@@ -361,7 +361,7 @@ This repository contains **exceptional documentation** as a case study for AI-as
 
 ### For Engineering Leaders
 
-**[Full Session Report](./docs/status-reports/2025-11-02-mvp-complete.md)** - Complete analysis
+**[Full Session Report](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)** - Complete analysis
 - Velocity metrics and productivity analysis
 - Architecture decisions and ROI calculations
 - Success factors (why 8-11x faster?)
@@ -485,7 +485,7 @@ See [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) for detailed backlog.
 - Persistence matters (staying to fix critical bugs)
 - Documentation is an investment that pays dividends
 
-**Read the full story:** [`docs/status-reports/2025-11-02-mvp-complete.md`](./docs/status-reports/2025-11-02-mvp-complete.md)
+**Read the full story:** [`docs/status-reports/2025-11-02-T+13h31m-final-playable.md`](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)
 
 **Explore the tasks:** [`docs/tasks/`](./docs/tasks/)
 
