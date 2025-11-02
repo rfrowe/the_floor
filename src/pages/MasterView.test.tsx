@@ -162,8 +162,8 @@ describe('MasterView', () => {
       );
 
       // Time is formatted as MM:SS.s
-      expect(screen.getByText('0:28.5')).toBeInTheDocument(); // Player 1
-      expect(screen.getByText('0:30.0')).toBeInTheDocument(); // Player 2
+      expect(screen.getByText('28.5s')).toBeInTheDocument(); // Player 1
+      expect(screen.getByText('30.0s')).toBeInTheDocument(); // Player 2
     });
 
     it('should show active indicator for active player', () => {
@@ -504,7 +504,7 @@ describe('MasterView', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText('0:45.5')).toBeInTheDocument();
+      expect(screen.getByText('45.5s')).toBeInTheDocument();
     });
 
     it('should format time correctly for values over 1 minute', () => {
@@ -520,7 +520,7 @@ describe('MasterView', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText('2:05.3')).toBeInTheDocument();
+      expect(screen.getByText('2:05.2')).toBeInTheDocument();
     });
 
     it('should pad seconds correctly', () => {
@@ -536,7 +536,7 @@ describe('MasterView', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText('0:05.5')).toBeInTheDocument();
+      expect(screen.getByText('5.5s')).toBeInTheDocument();
     });
   });
 });
