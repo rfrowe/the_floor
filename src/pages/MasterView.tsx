@@ -14,6 +14,7 @@ import { useContestants } from '@hooks/useIndexedDB';
 import { useGameTimer } from '@hooks/useGameTimer';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
+import { saveTimerState, clearTimerState } from '@/storage/timerState';
 import type { Contestant } from '@types';
 import styles from './MasterView.module.css';
 
@@ -26,6 +27,9 @@ function MasterView() {
   // Skip timeout ref for cleanup
   const skipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Flag to prevent duplicate duel end handling
+  const duelEndingRef = useRef(false);
+
   // Get time warning level
   const getTimeClass = (seconds: number): string => {
     if (seconds <= 5) return 'danger';
@@ -37,6 +41,12 @@ function MasterView() {
   // Note: timer accessed in closure but not in deps to avoid circular dependency
   const handleDuelEnd = useCallback(
     async (winner: Contestant, loser: Contestant) => {
+      // Prevent duplicate execution
+      if (duelEndingRef.current) {
+        return;
+      }
+      duelEndingRef.current = true;
+
       // Pause timer
       timer.pause();
 
@@ -62,8 +72,9 @@ function MasterView() {
           eliminated: true,
         });
 
-        // Clear duel state
+        // Clear duel state and timer state
         setDuelState(null);
+        clearTimerState();
 
         // Navigate to dashboard
         void navigate('/');
@@ -101,6 +112,37 @@ function MasterView() {
     onTimeExpired: handleTimeExpired,
   });
 
+  // Store timer in ref for interval access
+  const timerRef = useRef(timer);
+  timerRef.current = timer;
+
+  // Sync timer values to separate storage every 200ms for AudienceView
+  // This doesn't affect duelState, so no re-renders!
+  useEffect(() => {
+    if (!duelState) {
+      return;
+    }
+
+    // Save timer state every 200ms (matches AudienceView polling)
+    const syncInterval = setInterval(() => {
+      saveTimerState({
+        timeRemaining1: timerRef.current.timeRemaining1,
+        timeRemaining2: timerRef.current.timeRemaining2,
+        activePlayer: duelState.activePlayer,
+        lastUpdate: Date.now(),
+      });
+    }, 200);
+
+    return () => {
+      clearInterval(syncInterval);
+    };
+  }, [duelState]);
+
+  // Reset duel ending flag when duel changes
+  useEffect(() => {
+    duelEndingRef.current = false;
+  }, [duelState?.contestant1?.id, duelState?.contestant2?.id]);
+
   // Cleanup skip timeout on unmount
   useEffect(() => {
     return () => {
@@ -119,14 +161,12 @@ function MasterView() {
   const handleCorrect = useCallback(() => {
     if (!duelState || controlsDisabled) return;
 
-    // Pause timer
-    timer.pause();
-
     // Advance to next slide
     const nextIndex = duelState.currentSlideIndex + 1;
 
     // Check if last slide - active player wins by completion
     if (nextIndex >= duelState.selectedCategory.slides.length) {
+      timer.pause();
       const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
       const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
       void handleDuelEnd(winner, loser);
@@ -134,6 +174,7 @@ function MasterView() {
     }
 
     // Update duel state: increment slide, switch player
+    // Timer continues running - the activePlayer change will make it switch to the new player
     setDuelState({
       ...duelState,
       currentSlideIndex: nextIndex,
@@ -141,9 +182,6 @@ function MasterView() {
       timeRemaining1: timer.timeRemaining1,
       timeRemaining2: timer.timeRemaining2,
     });
-
-    // Resume timer for new player
-    timer.resume();
   }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
 
   // Handle skip
