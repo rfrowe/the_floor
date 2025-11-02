@@ -11,18 +11,12 @@ import { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDuelState } from '@hooks/useDuelState';
 import { SlideViewer } from '@components/slide/SlideViewer';
+import { formatTime } from '@utils/time';
 import styles from './MasterView.module.css';
 
 function MasterView() {
   const navigate = useNavigate();
   const [duelState] = useDuelState();
-
-  // Format time as MM:SS.s
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(mins)}:${secs.toFixed(1).padStart(4, '0')}`;
-  };
 
   // Get time warning level
   const getTimeClass = (seconds: number): string => {

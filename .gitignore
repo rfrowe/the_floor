@@ -29,3 +29,4 @@ dist-ssr
 # Sample/test data files (parsed PPTX output and source files)
 scripts/*.json
 scripts/*.pptx
+coverage/
