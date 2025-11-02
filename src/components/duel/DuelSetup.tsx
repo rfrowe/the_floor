@@ -1,11 +1,14 @@
-import { useState, useImperativeHandle, forwardRef } from 'react';
+import { useState, useImperativeHandle, forwardRef, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_GAME_CONFIG, type Contestant, type Category } from '@types';
 import { useDuelState } from '@hooks/useDuelState';
 import { useAudienceConnection } from '@hooks/useAudienceConnection';
 import timerSyncService from '@services/timerSync';
+import { createBroadcastSync } from '@/utils/broadcastSync';
 import { Button } from '@components/common/Button';
 import styles from './DuelSetup.module.css';
+
+const CATEGORY_SELECTION_CHANNEL = 'the_floor_category_selection';
 
 /**
  * Configuration for starting a duel
@@ -61,6 +64,28 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
   const navigate = useNavigate();
   const [, setDuelState] = useDuelState();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const broadcastRef = useRef<ReturnType<typeof createBroadcastSync<string | null>> | null>(null);
+
+  // Initialize broadcast channel for category selection
+  useEffect(() => {
+    const broadcast = createBroadcastSync<string | null>({
+      channelName: CATEGORY_SELECTION_CHANNEL,
+      onMessage: () => {
+        // Dashboard doesn't need to listen, only broadcast
+      },
+    });
+
+    broadcastRef.current = broadcast;
+
+    return () => {
+      broadcast.cleanup();
+    };
+  }, []);
+
+  // Broadcast category selection changes
+  useEffect(() => {
+    broadcastRef.current?.send(selectedCategory?.name ?? null);
+  }, [selectedCategory]);
 
   // Check for audience connection
   const { isConnected: audienceConnected } = useAudienceConnection();
@@ -158,19 +183,6 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
     onClear();
   };
 
-  // Get the unplayed category name for the info message
-  const getUnplayedCategoryName = (): string => {
-    if (!selectedCategory || !contestant1 || !contestant2) {
-      return 'unplayed category';
-    }
-
-    // The unplayed category is the one NOT selected for the duel
-    if (selectedCategory.name === contestant1.category.name) {
-      return contestant2.category.name;
-    }
-    return contestant1.category.name;
-  };
-
   const containerClass = styles['duel-setup'] ?? '';
   const headerClass = styles['header'] ?? '';
   const sectionClass = styles['section'] ?? '';
@@ -179,8 +191,6 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
   const contestantLabelClass = styles['contestant-label'] ?? '';
   const contestantNameClass = styles['contestant-name'] ?? '';
   const categorySelectClass = styles['category-select'] ?? '';
-  const infoBoxClass = styles['info-box'] ?? '';
-  const infoIconClass = styles['info-icon'] ?? '';
   const validationClass = styles['validation-message'] ?? '';
   const actionsClass = styles['actions'] ?? '';
 
@@ -226,15 +236,6 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
             </option>
           )}
         </select>
-      </div>
-
-      {/* Info Box */}
-      <div className={infoBoxClass}>
-        <span className={infoIconClass}>ℹ️</span>
-        <span>
-          Winner receives the <strong>UNPLAYED category</strong> from the loser
-          {selectedCategory && ` (${getUnplayedCategoryName()})`}
-        </span>
       </div>
 
       {/* Validation Message */}

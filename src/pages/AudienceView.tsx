@@ -1,9 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDuelState } from '@hooks/useDuelState';
+import { useContestants } from '@hooks/useIndexedDB';
 import { useAuthoritativeTimer } from '@hooks/useAuthoritativeTimer';
+import { useContestantSelectionListener } from '@hooks/useContestantSelectionListener';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { ClockBar } from '@components/duel/ClockBar';
+import { FloorGrid } from '@components/floor/FloorGrid';
 import { loadTimerState } from '@storage/timerState';
+import { onAppReset } from '@utils/resetApp';
 import type { Slide } from '@types';
 import styles from './AudienceView.module.css';
 
@@ -14,6 +18,9 @@ import styles from './AudienceView.module.css';
  */
 function AudienceView() {
   const [duelState] = useDuelState();
+  const [contestants] = useContestants();
+  const { selectedIds: selectedContestantIds, selectedCategoryName } =
+    useContestantSelectionListener();
   const [slideTransitioning, setSlideTransitioning] = useState(false);
   const [displaySlide, setDisplaySlide] = useState<Slide | undefined>(undefined);
 
@@ -39,6 +46,16 @@ function AudienceView() {
 
   // Track if we've already resumed (to prevent re-sending START on re-renders)
   const hasResumedRef = useRef(false);
+
+  // Listen for app reset from other windows
+  useEffect(() => {
+    const cleanup = onAppReset(() => {
+      // Stay on audience view - just reload to show waiting page
+      window.location.reload();
+    });
+
+    return cleanup;
+  }, []);
 
   // Resume duel if opening mid-game (Case 8: Audience View Opens Mid-Duel)
   useEffect(() => {
@@ -153,8 +170,40 @@ function AudienceView() {
     return undefined;
   }, [duelState, displaySlide]);
 
-  // If no active duel, show waiting screen
+  // If no active duel, show grid view (or waiting screen if no contestants positioned)
   if (!duelState) {
+    // Check if any contestants have grid positions
+    const hasPositionedContestants = contestants.some(
+      (c) => c.controlledSquares && c.controlledSquares.length > 0
+    );
+
+    if (hasPositionedContestants) {
+      // Find selected contestants from IDs
+      const selectedContestant1 = selectedContestantIds[0]
+        ? contestants.find((c) => c.id === selectedContestantIds[0])
+        : undefined;
+      const selectedContestant2 = selectedContestantIds[1]
+        ? contestants.find((c) => c.id === selectedContestantIds[1])
+        : undefined;
+
+      // Show grid view with contestant territories
+      return (
+        <div className={styles['container'] ?? ''}>
+          {/* Always show ClockBar when grid is visible */}
+          <ClockBar
+            contestant1={selectedContestant1 ?? null}
+            contestant2={selectedContestant2 ?? null}
+            timeRemaining1={30}
+            timeRemaining2={30}
+            activePlayer={1}
+            categoryName={selectedCategoryName ?? '—'}
+          />
+          <FloorGrid contestants={contestants} selectedContestantIds={selectedContestantIds} />
+        </div>
+      );
+    }
+
+    // Fall back to waiting screen if grid not initialized
     return (
       <div className={styles['container'] ?? ''}>
         <div className={styles['waiting-screen'] ?? ''}>

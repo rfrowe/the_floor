@@ -4,6 +4,7 @@ import type { Category, Contestant } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { ContestantCard } from '@components/contestant/ContestantCard';
 import { DuelSetup, type DuelConfig, type DuelSetupHandle } from '@components/duel/DuelSetup';
+import { GridConfigurator } from '@components/dashboard/GridConfigurator';
 import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
 import { Card } from '@components/common/Card';
@@ -21,6 +22,7 @@ function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [contestants, { add: addContestant, remove: removeContestant, update: updateContestant }] =
     useContestants();
   const {
@@ -28,12 +30,20 @@ function Dashboard() {
     select,
     clear: clearSelection,
     randomSelect,
+    canSelectAsP2,
   } = useContestantSelection(contestants);
   const [selectedContestant1, selectedContestant2] = selected;
   const duelSetupRef = useRef<DuelSetupHandle>(null);
   const [duelState] = useDuelState();
 
   const handleImport = async (contestants: { name: string; category: Category }[]) => {
+    // Prevent multiple simultaneous imports
+    if (isImporting) {
+      return;
+    }
+
+    setIsImporting(true);
+
     let successCount = 0;
     let failCount = 0;
     const errors: string[] = [];
@@ -51,6 +61,7 @@ function Dashboard() {
     }
 
     setShowImporter(false);
+    setIsImporting(false);
 
     // Show summary
     if (successCount > 0 && failCount === 0) {
@@ -101,7 +112,17 @@ function Dashboard() {
   };
 
   const handleContestantClick = (contestant: Contestant) => {
+    // Selection is handled by the select function from useContestantSelection
+    // Disabled contestants won't be clickable due to the disabled prop
     select(contestant);
+  };
+
+  const isContestantDisabled = (contestant: Contestant): boolean => {
+    // If selecting P2 (P1 already selected, P2 not yet), disable non-adjacent contestants
+    if (selectedContestant1 && !selectedContestant2) {
+      return !canSelectAsP2(contestant);
+    }
+    return false;
   };
 
   const handleClearDuelSelection = () => {
@@ -134,6 +155,13 @@ function Dashboard() {
 
   const handleCancelReset = () => {
     setShowResetConfirm(false);
+  };
+
+  const handleUpdateContestants = async (updatedContestants: Contestant[]) => {
+    // Update all contestants
+    for (const contestant of updatedContestants) {
+      await updateContestant(contestant);
+    }
   };
 
   const isContestantSelected = (contestant: Contestant): boolean => {
@@ -233,6 +261,16 @@ function Dashboard() {
         />
       </Card>
 
+      {/* Grid Configuration Panel with Drag & Drop */}
+      {contestants.length > 0 && (
+        <Card>
+          <GridConfigurator
+            contestants={contestants}
+            onUpdateContestants={handleUpdateContestants}
+          />
+        </Card>
+      )}
+
       {/* Contestants Section */}
       <section className={styles['contestants-section'] ?? ''}>
         <div className={styles['section-header'] ?? ''}>
@@ -266,6 +304,7 @@ function Dashboard() {
                   isSelected={isContestantSelected(contestant)}
                   onClick={handleContestantClick}
                   hasTopWins={hasTopWins(contestant)}
+                  disabled={isContestantDisabled(contestant)}
                 />
                 <div className={styles['action-buttons'] ?? ''}>
                   {contestant.eliminated ? (
