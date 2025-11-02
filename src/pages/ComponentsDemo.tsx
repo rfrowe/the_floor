@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Button, Card, Modal, Spinner } from '@components/common';
 import { ContestantCard } from '@components/contestant/ContestantCard';
 import { SlideViewer } from '@components/slide/SlideViewer';
+import { ClockBar } from '@components/duel/ClockBar';
 import type { Contestant, Slide } from '@types';
 import styles from './ComponentsDemo.module.css';
 
@@ -11,6 +12,9 @@ export function ComponentsDemo() {
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showSkipAnimation, setShowSkipAnimation] = useState(false);
+  const [clockActivePlayer, setClockActivePlayer] = useState<1 | 2>(1);
+  const [time1, setTime1] = useState(30);
+  const [time2, setTime2] = useState(30);
 
   const handleLoadingDemo = () => {
     setIsLoading(true);
@@ -27,6 +31,38 @@ export function ComponentsDemo() {
     }, 3000);
   };
 
+  // Simulate clock countdown with 100ms updates for smooth millisecond display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (clockActivePlayer === 1 && time1 > 0) {
+        setTime1((t) => Math.max(0, t - 0.1));
+      } else if (clockActivePlayer === 2 && time2 > 0) {
+        setTime2((t) => Math.max(0, t - 0.1));
+      }
+    }, 100);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [clockActivePlayer, time1, time2]);
+
+  const handleResetClock = () => {
+    setTime1(30);
+    setTime2(30);
+    setClockActivePlayer(1);
+  };
+
+  const handleSwitchPlayer = () => {
+    setClockActivePlayer(clockActivePlayer === 1 ? 2 : 1);
+  };
+
+  const handleTimeout = () => {
+    if (clockActivePlayer === 1) {
+      setTime1(0);
+    } else {
+      setTime2(0);
+    }
+  };
   // Mock contestants for demo
   const mockContestants: Contestant[] = [
     {
@@ -217,8 +253,8 @@ export function ComponentsDemo() {
           <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
             <p>
               <strong>Features:</strong> Click cards to select/deselect. Notice the eliminated
-              contestant (Carol) is greyed out and has a crown for having the most wins. Win counts
-              are displayed as badges.
+              contestant (Carol) is greyed out. Alice has a crown for having the most wins (8). Win
+              counts are displayed as badges.
             </p>
           </div>
         </section>
@@ -269,6 +305,53 @@ export function ComponentsDemo() {
             </p>
             <p>Try pressing the Tab key to cycle through the focusable elements!</p>
           </Modal>
+        </section>
+
+        {/* ClockBar Demo */}
+        <section className={styles['section']}>
+          <h2>ClockBar</h2>
+          <p>
+            The ClockBar component displays both players&apos; names, remaining time, and active
+            player indicator for the audience view during duels.
+          </p>
+          <div style={{ marginBottom: '1rem' }}>
+            {mockContestants[0] && mockContestants[1] && (
+              <ClockBar
+                contestant1={mockContestants[0]}
+                contestant2={mockContestants[1]}
+                timeRemaining1={time1}
+                timeRemaining2={time2}
+                activePlayer={clockActivePlayer}
+                categoryName="80s Movies"
+              />
+            )}
+          </div>
+          <div className={styles['buttonGroup']}>
+            <Button size="small" onClick={handleSwitchPlayer}>
+              Switch Active Player
+            </Button>
+            <Button size="small" variant="danger" onClick={handleTimeout}>
+              Trigger Timeout (Active Player)
+            </Button>
+            <Button size="small" variant="secondary" onClick={handleResetClock}>
+              Reset Clock
+            </Button>
+          </div>
+          <div className={styles['highlight']}>
+            <p>
+              <strong>Features:</strong>
+            </p>
+            <ul>
+              <li>Real-time countdown display for both players</li>
+              <li>Clear visual indicator of active player</li>
+              <li>Low time warning (orange) at &lt; 10 seconds</li>
+              <li>Critical time warning (red, pulsing) at &lt; 5 seconds</li>
+              <li>Smooth animations when switching active player</li>
+              <li>Responsive design with viewport-based text sizing</li>
+              <li>Handles long names with ellipsis truncation</li>
+              <li>Category name display</li>
+            </ul>
+          </div>
         </section>
 
         {/* SlideViewer Demo */}
@@ -330,42 +413,17 @@ export function ComponentsDemo() {
               {showSkipAnimation ? 'Animation Playing...' : 'Trigger Skip Animation'}
             </Button>
           </div>
-          <div
-            style={{
-              position: 'relative',
-              height: '90px',
-              backgroundColor: '#1a1a1a',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 2rem',
-              gap: '2rem',
-              border: '3px solid #333',
-            }}
-          >
-            {/* Mock clock bar content */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>Alice</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4caf50' }}>25s</span>
-            </div>
-
-            <div style={{ fontSize: '1.5rem', color: '#666' }}>◀▶</div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4caf50' }}>30s</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>Bob</span>
-            </div>
-
-            <div style={{ fontSize: '1.25rem', color: '#888' }}>World Landmarks</div>
-
-            {/* Skip answer overlay */}
-            {showSkipAnimation && (
-              <div className={styles['skip-answer-overlay']}>
-                <div className={styles['skip-answer-text']}>The Eiffel Tower</div>
-              </div>
-            )}
-          </div>
+          {mockContestants[0] && mockContestants[1] && (
+            <ClockBar
+              contestant1={mockContestants[0]}
+              contestant2={mockContestants[1]}
+              timeRemaining1={25}
+              timeRemaining2={30}
+              activePlayer={1}
+              categoryName="World Landmarks"
+              {...(showSkipAnimation && { skipAnswer: 'The Eiffel Tower' })}
+            />
+          )}
           <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
             <p>
               <strong>Features:</strong>

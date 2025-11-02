@@ -1,0 +1,221 @@
+/**
+ * ClockBar Component Styles
+ * High-contrast, readable design for audience view
+ * Wide layout designed to sit at the top of the slide view
+ */
+
+.clock-bar {
+  position: relative;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  border: 3px solid #333;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+/* Timeout state - flash red when time runs out */
+.clock-bar.timeout {
+  animation: timeout-flash 1s ease-in-out infinite;
+}
+
+@keyframes timeout-flash {
+  0%,
+  100% {
+    background-color: #d32f2f;
+  }
+  50% {
+    background-color: #ff5252;
+  }
+}
+
+.clock-bar-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Player sections - flat, no background boxes */
+.player-section {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  transition: opacity 0.3s ease;
+}
+
+.player-section.active {
+  opacity: 1;
+}
+
+.player-section.inactive {
+  opacity: 0.5;
+}
+
+/* Player name */
+.player-name {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Time display */
+.time-display {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+  min-width: 60px;
+  text-align: right;
+}
+
+.time-display.low-time {
+  color: #ff9800;
+}
+
+.time-display.critical-time {
+  color: #f44336;
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Center display - shows category or answer */
+.center-indicator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.9rem, 1.5vw, 1.25rem);
+  font-weight: normal;
+  color: #888;
+  padding: 0 1rem;
+}
+
+.indicator-text {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .clock-bar {
+    padding: 0.75rem 1.5rem;
+  }
+
+  .clock-bar-main {
+    gap: 1.5rem;
+  }
+
+  .center-indicator {
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .clock-bar {
+    padding: 0.5rem 1rem;
+  }
+
+  .clock-bar-main {
+    gap: 1rem;
+  }
+
+  .player-section {
+    gap: 0.5rem;
+  }
+
+  .center-indicator {
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+  }
+
+  .indicator-text {
+    font-size: clamp(0.75rem, 1.25vw, 0.9rem);
+  }
+
+  .time-display {
+    min-width: 50px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .player-section.active {
+    outline: 2px solid #ffd700;
+  }
+
+  .player-section.inactive {
+    outline: 1px solid #666;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .player-section,
+  .time-display,
+  .clock-bar {
+    transition: none;
+  }
+
+  .time-display.critical-time,
+  .clock-bar.timeout {
+    animation: none;
+  }
+
+  /* Show solid red background instead of flashing for timeout */
+  .clock-bar.timeout {
+    background-color: #d32f2f;
+  }
+}
+
+/* Skip Answer Overlay */
+.skip-answer-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  animation: skip-answer-fade-in 0.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes skip-answer-fade-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.skip-answer-text {
+  background: rgba(0, 0, 0, 0.95);
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: bold;
+  color: #ffd700;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  white-space: nowrap;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
