@@ -15,7 +15,12 @@ export interface SlideViewerProps {
 export function SlideViewer({ slide, showAnswer = false, className = '' }: SlideViewerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [imageBounds, setImageBounds] = useState<{ width: number; height: number; left: number; top: number } | null>(null);
+  const [imageBounds, setImageBounds] = useState<{
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+  } | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -54,25 +59,28 @@ export function SlideViewer({ slide, showAnswer = false, className = '' }: Slide
 
   const handleImageLoad = () => {
     setImageLoaded(true);
-    // Calculate bounds immediately when image loads
-    if (imageRef.current && imageContainerRef.current) {
-      const imgRect = imageRef.current.getBoundingClientRect();
-      const containerRect = imageContainerRef.current.getBoundingClientRect();
+    // Wait TWO frames: first for state update to apply display:block, second for paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (imageRef.current && imageContainerRef.current) {
+          const imgRect = imageRef.current.getBoundingClientRect();
+          const containerRect = imageContainerRef.current.getBoundingClientRect();
 
-      setImageBounds({
-        width: Math.round(imgRect.width),
-        height: Math.round(imgRect.height),
-        left: Math.round(imgRect.left - containerRect.left),
-        top: Math.round(imgRect.top - containerRect.top),
+          setImageBounds({
+            width: Math.round(imgRect.width),
+            height: Math.round(imgRect.height),
+            left: Math.round(imgRect.left - containerRect.left),
+            top: Math.round(imgRect.top - containerRect.top),
+          });
+        }
       });
-    }
+    });
   };
 
   const handleImageError = () => {
     setImageError(true);
     setImageLoaded(false);
   };
-
 
   // Build class names
   const containerClass = styles['container'] ?? '';

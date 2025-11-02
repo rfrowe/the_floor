@@ -4,18 +4,22 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
-import { act } from 'react';
 import AudienceView from './AudienceView';
 import type { DuelState } from '@types';
 
 // Create mock function at module level using vi.hoisted
-const { mockUseDuelState } = vi.hoisted(() => ({
+const { mockUseDuelState, mockUseAuthoritativeTimer } = vi.hoisted(() => ({
   mockUseDuelState: vi.fn(),
+  mockUseAuthoritativeTimer: vi.fn(),
 }));
 
 // Mock the hooks and components
 vi.mock('@hooks/useDuelState', () => ({
   useDuelState: mockUseDuelState,
+}));
+
+vi.mock('@hooks/useAuthoritativeTimer', () => ({
+  useAuthoritativeTimer: mockUseAuthoritativeTimer,
 }));
 
 vi.mock('@components/slide/SlideViewer', () => ({
@@ -38,6 +42,17 @@ describe('AudienceView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+
+    // Mock useAuthoritativeTimer with default values
+    mockUseAuthoritativeTimer.mockReturnValue({
+      time1: 30,
+      time2: 30,
+      activePlayer: 1,
+      isSkipActive: false,
+      skipAnswer: null,
+      isRunning: false,
+      startTimer: vi.fn(),
+    });
 
     // Mock document.exitFullscreen
     document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
@@ -130,12 +145,20 @@ describe('AudienceView', () => {
     it('should render timers with one decimal place', () => {
       mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
 
+      // Mock authTimer with specific decimal values
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 28.7,
+        time2: 30.2,
+        activePlayer: 1,
+        isSkipActive: false,
+        skipAnswer: null,
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
+
       render(<AudienceView />);
 
       // ClockBar uses formatTime which shows 1 decimal place
-      // useGameTimer starts counting down immediately, so after one 100ms tick:
-      // timeRemaining1 = 28.7 - 0.1 = 28.6 -> "28.6s"
-      // timeRemaining2 = 30.2 - 0.0 = 30.1 -> "30.1s" (inactive player doesn't count)
       expect(screen.getByText(/28\.\ds/)).toBeInTheDocument();
       expect(screen.getByText(/30\.\ds/)).toBeInTheDocument();
     });
@@ -170,6 +193,17 @@ describe('AudienceView', () => {
     it('should highlight active player 2', () => {
       const duelWithPlayer2Active = { ...mockDuelState, activePlayer: 2 as const };
       mockUseDuelState.mockReturnValue([duelWithPlayer2Active, vi.fn()]);
+
+      // Mock authTimer with player 2 active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 28.7,
+        time2: 30.2,
+        activePlayer: 2,
+        isSkipActive: false,
+        skipAnswer: null,
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
 
       render(<AudienceView />);
 
@@ -263,6 +297,17 @@ describe('AudienceView', () => {
 
       mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
 
+      // Mock authTimer with skip active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'Answer 1',
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
+
       render(<AudienceView />);
 
       expect(screen.getByTestId('show-answer')).toHaveTextContent('true');
@@ -304,52 +349,8 @@ describe('AudienceView', () => {
     });
   });
 
-  describe('Polling for Updates', () => {
-    it('should poll localStorage every 200ms', () => {
-      const mockSetState = vi.fn();
-      mockUseDuelState.mockReturnValue([null, mockSetState]);
-
-      render(<AudienceView />);
-
-      // Initial render + useEffect for loadTimerState
-      const initialCalls = mockUseDuelState.mock.calls.length;
-
-      // Advance timer by 200ms
-      act(() => {
-        vi.advanceTimersByTime(200);
-      });
-
-      // Should trigger re-render (polling tick + timer state reload)
-      expect(mockUseDuelState.mock.calls.length).toBeGreaterThan(initialCalls);
-      const afterFirstPoll = mockUseDuelState.mock.calls.length;
-
-      // Advance by another 200ms
-      act(() => {
-        vi.advanceTimersByTime(200);
-      });
-
-      // Should have more calls after second poll
-      expect(mockUseDuelState.mock.calls.length).toBeGreaterThan(afterFirstPoll);
-    });
-
-    it('should clean up polling interval on unmount', () => {
-      mockUseDuelState.mockReturnValue([null, vi.fn()]);
-
-      const { unmount } = render(<AudienceView />);
-
-      const initialCallCount = mockUseDuelState.mock.calls.length;
-
-      unmount();
-
-      // Advance timers after unmount
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
-
-      // Should not call useDuelState after unmount
-      expect(mockUseDuelState).toHaveBeenCalledTimes(initialCallCount);
-    });
-  });
+  // NOTE: Polling tests removed - AudienceView now uses BroadcastChannel for real-time
+  // updates instead of polling localStorage. Timer updates come from useAuthoritativeTimer.
 
   describe('Image Preloading', () => {
     it('should preload next slide image when current slide is displayed', () => {
@@ -601,6 +602,17 @@ describe('AudienceView', () => {
 
       mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
 
+      // Mock authTimer with skip active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'The Eiffel Tower',
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
+
       const { container } = render(<AudienceView />);
 
       // Query for the skip answer overlay specifically
@@ -621,6 +633,17 @@ describe('AudienceView', () => {
       };
 
       mockUseDuelState.mockReturnValue([mockDuelStateNoSlides, vi.fn()]);
+
+      // Mock authTimer with skip active and fallback "Skipped" text
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'Skipped', // Fallback when no answer available
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
 
       render(<AudienceView />);
 
@@ -643,6 +666,17 @@ describe('AudienceView', () => {
       };
       mockUseDuelState.mockReturnValue([mockDuelStateActive, vi.fn()]);
 
+      // Mock authTimer with skip active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'The Eiffel Tower',
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
+
       rerender(<AudienceView />);
 
       // Overlay should appear
@@ -652,6 +686,17 @@ describe('AudienceView', () => {
 
       // Deactivate skip animation
       mockUseDuelState.mockReturnValue([mockDuelStateBase, vi.fn()]);
+
+      // Mock authTimer with skip inactive
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: false,
+        skipAnswer: null,
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
 
       rerender(<AudienceView />);
 
@@ -668,6 +713,17 @@ describe('AudienceView', () => {
 
       mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
 
+      // Mock authTimer with skip active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'The Eiffel Tower',
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
+
       render(<AudienceView />);
 
       // Check that SlideViewer receives showAnswer=true
@@ -681,6 +737,17 @@ describe('AudienceView', () => {
       };
 
       mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
+
+      // Mock authTimer with skip active
+      mockUseAuthoritativeTimer.mockReturnValue({
+        time1: 30,
+        time2: 30,
+        activePlayer: 1,
+        isSkipActive: true,
+        skipAnswer: 'The Eiffel Tower',
+        isRunning: true,
+        startTimer: vi.fn(),
+      });
 
       const { container } = render(<AudienceView />);
 
