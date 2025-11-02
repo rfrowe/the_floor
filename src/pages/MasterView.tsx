@@ -50,12 +50,24 @@ function MasterView() {
       }
       duelEndingRef.current = true;
 
+      // Ensure duelState exists
+      if (!duelState) {
+        console.error('Cannot end duel: duelState is null');
+        return;
+      }
+
       // Send duel end command to audience
       timerCommandsRef.current?.sendDuelEnd();
 
       try {
-        // Winner inherits the loser's category (the UNPLAYED category)
-        const inheritedCategory = loser.category;
+        // IMPORTANT: Winner inherits the category that was NOT played in the duel
+        // If duel used contestant1's category → winner gets contestant2's category
+        // If duel used contestant2's category → winner gets contestant1's category
+        // This ensures winner always gets the unplayed category
+        const inheritedCategory =
+          duelState.selectedCategory.name === duelState.contestant1.category.name
+            ? duelState.contestant2.category
+            : duelState.contestant1.category;
 
         await updateContestant({
           ...winner,
@@ -84,7 +96,7 @@ function MasterView() {
       }
     },
 
-    [updateContestant, setDuelState, navigate]
+    [duelState, updateContestant, setDuelState, navigate]
   );
 
   // Handle player timeout callback (from Audience View)
