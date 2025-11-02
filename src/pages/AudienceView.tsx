@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useDuelState } from '@hooks/useDuelState';
+import { useGameTimer } from '@hooks/useGameTimer';
 import { SlideViewer } from '@components/slide/SlideViewer';
+import { ClockBar } from '@components/duel/ClockBar';
+import { loadTimerState } from '@/storage/timerState';
 import type { Slide } from '@types';
 import styles from './AudienceView.module.css';
 
@@ -11,9 +14,52 @@ import styles from './AudienceView.module.css';
  */
 function AudienceView() {
   const [duelState] = useDuelState();
-  const [, setPollingTick] = useState(0);
+  const [pollingTick, setPollingTick] = useState(0);
   const [slideTransitioning, setSlideTransitioning] = useState(false);
   const [displaySlide, setDisplaySlide] = useState<Slide | undefined>(undefined);
+
+  // Store timer initial values as state to trigger proper re-renders
+  const [initialTime1, setInitialTime1] = useState(0);
+  const [initialTime2, setInitialTime2] = useState(0);
+  const [activePlayer, setActivePlayer] = useState<1 | 2>(1);
+
+  // Initialize timer values on mount
+  useEffect(() => {
+    const timerState = loadTimerState();
+    if (timerState) {
+      setInitialTime1(timerState.timeRemaining1);
+      setInitialTime2(timerState.timeRemaining2);
+      setActivePlayer(timerState.activePlayer);
+    } else if (duelState) {
+      setInitialTime1(duelState.timeRemaining1);
+      setInitialTime2(duelState.timeRemaining2);
+      setActivePlayer(duelState.activePlayer);
+    }
+  }, []); // Only on mount
+
+  // Update timer state whenever polling ticks (every 200ms)
+  useEffect(() => {
+    const loaded = loadTimerState();
+    if (loaded) {
+      setInitialTime1(loaded.timeRemaining1);
+      setInitialTime2(loaded.timeRemaining2);
+      setActivePlayer(loaded.activePlayer);
+    } else if (duelState) {
+      setInitialTime1(duelState.timeRemaining1);
+      setInitialTime2(duelState.timeRemaining2);
+      setActivePlayer(duelState.activePlayer);
+    }
+  }, [pollingTick, duelState]);
+
+  // Initialize game timer for live countdown (updates every 100ms)
+  const timer = useGameTimer({
+    initialTime1,
+    initialTime2,
+    activePlayer,
+    onTimeExpired: () => {
+      // Audience view is read-only, no action needed
+    },
+  });
 
   // Poll localStorage every 200ms for real-time updates
   useEffect(() => {
@@ -112,60 +158,29 @@ function AudienceView() {
 
   // Build class names
   const containerClass = styles['container'] ?? '';
-  const clockBarClass = styles['clock-bar'] ?? '';
-  const playerInfoClass = styles['player-info'] ?? '';
-  const playerNameClass = styles['player-name'] ?? '';
-  const activeClass = styles['active'] ?? '';
-  const timerClass = styles['timer'] ?? '';
-  const separatorClass = styles['separator'] ?? '';
-  const categoryClass = styles['category'] ?? '';
-  const skipAnswerOverlayClass = styles['skip-answer-overlay'] ?? '';
-  const skipAnswerTextClass = styles['skip-answer-text'] ?? '';
   const slideAreaClass = styles['slide-area'] ?? '';
   const transitioningClass = slideTransitioning ? (styles['transitioning'] ?? '') : '';
   const noSlideClass = styles['no-slide'] ?? '';
 
   const slideAreaClasses = `${slideAreaClass} ${transitioningClass}`.trim();
 
-  const player1NameClasses =
-    duelState.activePlayer === 1 ? `${playerNameClass} ${activeClass}`.trim() : playerNameClass;
-  const player2NameClasses =
-    duelState.activePlayer === 2 ? `${playerNameClass} ${activeClass}`.trim() : playerNameClass;
-
   return (
     <div className={containerClass}>
       {/* Clock bar with player info and timers */}
-      <div className={clockBarClass}>
-        <div className={playerInfoClass}>
-          <span className={player1NameClasses}>{duelState.contestant1.name}</span>
-          <span className={timerClass}>{Math.ceil(duelState.timeRemaining1)}s</span>
-        </div>
-
-        <div className={separatorClass}>◀▶</div>
-
-        <div className={playerInfoClass}>
-          <span className={timerClass}>{Math.ceil(duelState.timeRemaining2)}s</span>
-          <span className={player2NameClasses}>{duelState.contestant2.name}</span>
-        </div>
-
-        <div className={categoryClass}>{duelState.selectedCategory.name}</div>
-
-        {/* Skip answer overlay - appears in center when skip animation is active */}
-        {duelState.isSkipAnimationActive && (
-          <div className={skipAnswerOverlayClass}>
-            <div className={skipAnswerTextClass}>{skipAnswer}</div>
-          </div>
-        )}
-      </div>
+      <ClockBar
+        contestant1={duelState.contestant1}
+        contestant2={duelState.contestant2}
+        timeRemaining1={timer.timeRemaining1}
+        timeRemaining2={timer.timeRemaining2}
+        activePlayer={activePlayer}
+        categoryName={duelState.selectedCategory.name}
+        {...(duelState.isSkipAnimationActive ? { skipAnswer } : {})}
+      />
 
       {/* Slide display area */}
       <div className={slideAreaClasses}>
         {displaySlide ? (
-          <SlideViewer
-            slide={displaySlide}
-            fullscreen={true}
-            showAnswer={duelState.isSkipAnimationActive}
-          />
+          <SlideViewer slide={displaySlide} showAnswer={duelState.isSkipAnimationActive} />
         ) : (
           <div className={noSlideClass}>No slide available</div>
         )}
