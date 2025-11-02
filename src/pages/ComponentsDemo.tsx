@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Container, Button, Card, Modal, Spinner } from '@components/common';
 import { ContestantCard } from '@components/contestant/ContestantCard';
-import type { Contestant } from '@types';
+import { SlideViewer } from '@components/slide/SlideViewer';
+import type { Contestant, Slide } from '@types';
 import styles from './ComponentsDemo.module.css';
 
 export function ComponentsDemo() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const handleLoadingDemo = () => {
     setIsLoading(true);
@@ -47,6 +49,29 @@ export function ComponentsDemo() {
       eliminated: false,
     },
   ];
+
+  // Sample slide data for demo
+  const demoSlide: Slide = {
+    imageUrl:
+      'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%234a90a4"/%3E%3Ctext x="400" y="150" font-family="Arial" font-size="48" fill="white" text-anchor="middle"%3ESample Slide Image%3C/text%3E%3Ctext x="200" y="400" font-family="Arial" font-size="32" fill="%23ffd700"%3ECensored Content%3C/text%3E%3Ctext x="600" y="200" font-family="Arial" font-size="32" fill="%23ffd700"%3EHidden Text%3C/text%3E%3C/svg%3E',
+    answer: 'Sample Answer',
+    censorBoxes: [
+      {
+        x: 15,
+        y: 60,
+        width: 35,
+        height: 15,
+        color: '#000000',
+      },
+      {
+        x: 65,
+        y: 25,
+        width: 25,
+        height: 12,
+        color: 'rgba(0, 0, 0, 0.9)',
+      },
+    ],
+  };
 
   return (
     <Container>
@@ -229,6 +254,53 @@ export function ComponentsDemo() {
             </p>
             <p>Try pressing the Tab key to cycle through the focusable elements!</p>
           </Modal>
+        </section>
+
+        {/* SlideViewer Demo */}
+        <section className={styles['section']}>
+          <h2>SlideViewer</h2>
+          <p>
+            The SlideViewer component displays slide images with censorship boxes overlaid at
+            precise positions. It handles aspect ratio preservation with letterboxing.
+          </p>
+          <div className={styles['componentGrid']}>
+            <div>
+              <h3>Basic Usage</h3>
+              <div style={{ height: '400px', border: '1px solid #ccc' }}>
+                <SlideViewer slide={demoSlide} />
+              </div>
+            </div>
+
+            <div>
+              <h3>With Show Answer</h3>
+              <div style={{ marginBottom: '1rem' }}>
+                <Button
+                  onClick={() => {
+                    setShowAnswer(!showAnswer);
+                  }}
+                  size="small"
+                >
+                  {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                </Button>
+              </div>
+              <div style={{ height: '400px', border: '1px solid #ccc' }}>
+                <SlideViewer slide={demoSlide} showAnswer={showAnswer} />
+              </div>
+            </div>
+          </div>
+          <div className={styles['highlight']}>
+            <p>
+              <strong>Features:</strong>
+            </p>
+            <ul>
+              <li>Maintains image aspect ratio with letterboxing</li>
+              <li>Precisely positioned censorship boxes using percentage coordinates</li>
+              <li>White background for transparent images</li>
+              <li>Smooth transitions when hiding/showing boxes</li>
+              <li>Loading and error states</li>
+              <li>Responsive sizing to fit any container</li>
+            </ul>
+          </div>
         </section>
 
         {/* Accessibility Notes */}
