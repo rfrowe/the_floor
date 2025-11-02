@@ -41,6 +41,23 @@ function AudienceView() {
     };
   }, []);
 
+  // Preload next slide image for smooth transitions
+  useEffect(() => {
+    if (!duelState) {
+      return;
+    }
+
+    const nextSlideIndex = duelState.currentSlideIndex + 1;
+    const nextSlide = duelState.selectedCategory.slides[nextSlideIndex];
+
+    if (nextSlide) {
+      // Preload the next slide's image
+      const img = new Image();
+      img.src = nextSlide.imageUrl;
+      // No need to do anything with the image - browser will cache it
+    }
+  }, [duelState]);
+
   // If no active duel, show waiting screen
   if (!duelState) {
     return (
