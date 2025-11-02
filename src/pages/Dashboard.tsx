@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import type { Category, Contestant } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { createContestantFromCategory } from '@utils/jsonImport';
+import { useLocalStorage } from '@hooks/useLocalStorage';
 
 function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
-  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [contestants, setContestants] = useLocalStorage<Contestant[]>('contestants', []);
 
   const handleImport = (contestantName: string, category: Category) => {
     const newContestant = createContestantFromCategory(category, contestantName);
