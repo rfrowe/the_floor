@@ -313,27 +313,31 @@ describe('useContestantSelection', () => {
       expect(result.current.selected).toEqual([null, null]);
     });
 
-    it('can randomly select same contestant that is already selected (deselects)', () => {
+    it('excludes already selected contestants from random selection', () => {
       // Mock Math.random to always return the first eligible contestant
       const originalRandom = Math.random;
       vi.spyOn(Math, 'random').mockReturnValue(0);
 
       const { result } = renderHook(() => useContestantSelection(contestants));
       const alice = contestants[0];
+      const bob = contestants[1];
       if (!alice) throw new Error('Alice not found');
+      if (!bob) throw new Error('Bob not found');
 
       act(() => {
         result.current.select(alice);
       });
       expect(result.current.selected[0]).toBe(alice);
 
-      // Random select will pick Alice again (due to mock)
+      // Random select will now exclude Alice and pick from [Bob, Charlie]
+      // With Math.random returning 0, it will pick Bob (first in eligible list)
       act(() => {
         result.current.randomSelect();
       });
 
-      // Since Alice is already selected, she gets toggled off
-      expect(result.current.selected[0]).toBeNull();
+      // Alice should still be in slot 1, Bob should be in slot 2
+      expect(result.current.selected[0]).toBe(alice);
+      expect(result.current.selected[1]).toBe(bob);
 
       Math.random = originalRandom;
     });
