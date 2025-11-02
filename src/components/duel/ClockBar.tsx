@@ -9,8 +9,8 @@ import { formatTime } from '@utils/time';
 import styles from './ClockBar.module.css';
 
 export interface ClockBarProps {
-  contestant1: Contestant;
-  contestant2: Contestant;
+  contestant1: Contestant | null;
+  contestant2: Contestant | null;
   timeRemaining1: number;
   timeRemaining2: number;
   activePlayer: 1 | 2;
@@ -81,7 +81,7 @@ export function ClockBar({
         <div
           className={`${playerSectionClass} ${player1Active ? activeClass : inactiveClass}`.trim()}
         >
-          <div className={playerNameClass}>{contestant1.name}</div>
+          <div className={playerNameClass}>{contestant1?.name ?? '—'}</div>
           <div className={`${timeDisplayClass} ${time1Class}`.trim()}>
             {formatTime(timeRemaining1)}
           </div>
@@ -100,7 +100,7 @@ export function ClockBar({
           <div className={`${timeDisplayClass} ${time2Class}`.trim()}>
             {formatTime(timeRemaining2)}
           </div>
-          <div className={playerNameClass}>{contestant2.name}</div>
+          <div className={playerNameClass}>{contestant2?.name ?? '—'}</div>
         </div>
       </div>
 

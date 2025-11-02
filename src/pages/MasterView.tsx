@@ -16,14 +16,26 @@ import { useAudienceConnection } from '@hooks/useAudienceConnection';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
 import { clearTimerState } from '@/storage/timerState';
+import { consolidateTerritories } from '@utils/territoryConsolidation';
+import { onAppReset } from '@utils/resetApp';
 import type { Contestant } from '@types';
 import styles from './MasterView.module.css';
 
 function MasterView() {
   const navigate = useNavigate();
   const [duelState, setDuelState] = useDuelState();
-  const [, { update: updateContestant }] = useContestants();
+  const [contestants, { update: updateContestant }] = useContestants();
   const [controlsDisabled, setControlsDisabled] = useState(false);
+
+  // Listen for app reset from Dashboard
+  useEffect(() => {
+    const cleanup = onAppReset(() => {
+      // Redirect to dashboard when app is reset
+      void navigate('/');
+    });
+
+    return cleanup;
+  }, [navigate]);
 
   // Audience connection detection
   const { isConnected: audienceConnected } = useAudienceConnection();
@@ -69,17 +81,25 @@ function MasterView() {
             ? duelState.contestant2.category
             : duelState.contestant1.category;
 
+        // Consolidate territories - winner absorbs loser's grid squares
+        const updatedContestants = consolidateTerritories(winner, loser, contestants);
+
+        // Find the updated winner and loser from consolidated list
+        const updatedWinner = updatedContestants.find((c) => c.id === winner.id);
+        const updatedLoser = updatedContestants.find((c) => c.id === loser.id);
+
+        if (!updatedWinner || !updatedLoser) {
+          throw new Error('Failed to find updated contestants after territory consolidation');
+        }
+
+        // Update winner with category inheritance AND territory consolidation
         await updateContestant({
-          ...winner,
-          wins: winner.wins + 1,
+          ...updatedWinner,
           category: inheritedCategory,
         });
 
-        // Eliminate loser
-        await updateContestant({
-          ...loser,
-          eliminated: true,
-        });
+        // Update loser (eliminated + territory cleared)
+        await updateContestant(updatedLoser);
 
         // Clear duel state and timer state
         setDuelState(null);
@@ -95,8 +115,7 @@ function MasterView() {
         alert('Error ending duel. Check console for details.');
       }
     },
-
-    [duelState, updateContestant, setDuelState, navigate]
+    [duelState, contestants, updateContestant, setDuelState, navigate]
   );
 
   // Handle player timeout callback (from Audience View)

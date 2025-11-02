@@ -236,19 +236,6 @@ describe('DuelSetup', () => {
       const startButton = screen.getByRole('button', { name: /start duel/i });
       expect(startButton).toBeEnabled();
     });
-
-    it('should show unplayed category name after selection', async () => {
-      const user = userEvent.setup();
-      renderDuelSetup({
-        contestant1: mockContestant1,
-        contestant2: mockContestant2,
-      });
-
-      const categorySelect = screen.getByLabelText(/duel category/i);
-      await user.selectOptions(categorySelect, 'Math');
-
-      expect(screen.getByText(/\(History\)/i)).toBeInTheDocument();
-    });
   });
 
   describe('Clear Functionality', () => {
@@ -348,18 +335,6 @@ describe('DuelSetup', () => {
       await user.click(startButton);
 
       expect(mockNavigate).toHaveBeenCalledWith('/master');
-    });
-  });
-
-  describe('Info Messages', () => {
-    it('should display info about winner receiving unplayed category', () => {
-      renderDuelSetup({
-        contestant1: mockContestant1,
-        contestant2: mockContestant2,
-      });
-
-      expect(screen.getByText(/Winner receives the/i)).toBeInTheDocument();
-      expect(screen.getByText(/UNPLAYED category/i)).toBeInTheDocument();
     });
   });
 

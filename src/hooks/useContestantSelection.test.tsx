@@ -8,25 +8,38 @@ import { useContestantSelection } from './useContestantSelection';
 import type { Contestant } from '@types';
 
 // Helper function to create test contestants
-function createContestant(id: string, name: string, eliminated: boolean): Contestant {
-  return {
+function createContestant(
+  id: string,
+  name: string,
+  eliminated: boolean,
+  controlledSquares?: string[]
+): Contestant {
+  const contestant: Contestant = {
     id,
     name,
     category: { name: 'Test Category', slides: [] },
     wins: 0,
     eliminated,
   };
+
+  if (controlledSquares) {
+    contestant.controlledSquares = controlledSquares;
+  }
+
+  return contestant;
 }
 
 describe('useContestantSelection', () => {
   let contestants: Contestant[];
 
   beforeEach(() => {
+    // Create contestants with adjacent territories
+    // Alice: 0-0, Bob: 0-1 (right of Alice), Charlie: 0-2 (right of Bob), David: 1-0 (below Alice)
     contestants = [
-      createContestant('1', 'Alice', false),
-      createContestant('2', 'Bob', false),
-      createContestant('3', 'Charlie', false),
-      createContestant('4', 'David', true), // eliminated
+      createContestant('1', 'Alice', false, ['0-0']),
+      createContestant('2', 'Bob', false, ['0-1']), // Adjacent to Alice
+      createContestant('3', 'Charlie', false, ['0-2']), // Adjacent to Bob
+      createContestant('4', 'David', true, ['1-0']), // eliminated, adjacent to Alice
     ];
   });
 
