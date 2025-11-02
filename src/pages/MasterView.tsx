@@ -11,10 +11,11 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDuelState } from '@hooks/useDuelState';
 import { useContestants } from '@hooks/useIndexedDB';
-import { useGameTimer } from '@hooks/useGameTimer';
+import { useTimerCommands } from '@hooks/useTimerCommands';
+import { useAudienceConnection } from '@hooks/useAudienceConnection';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
-import { saveTimerState, clearTimerState } from '@/storage/timerState';
+import { clearTimerState } from '@/storage/timerState';
 import type { Contestant } from '@types';
 import styles from './MasterView.module.css';
 
@@ -24,11 +25,14 @@ function MasterView() {
   const [, { update: updateContestant }] = useContestants();
   const [controlsDisabled, setControlsDisabled] = useState(false);
 
-  // Skip timeout ref for cleanup
-  const skipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Audience connection detection
+  const { isConnected: audienceConnected } = useAudienceConnection();
 
   // Flag to prevent duplicate duel end handling
   const duelEndingRef = useRef(false);
+
+  // Timer commands ref (will be set after hook initialization)
+  const timerCommandsRef = useRef<ReturnType<typeof useTimerCommands> | null>(null);
 
   // Get time warning level
   const getTimeClass = (seconds: number): string => {
@@ -38,7 +42,6 @@ function MasterView() {
   };
 
   // Handle duel end
-  // Note: timer accessed in closure but not in deps to avoid circular dependency
   const handleDuelEnd = useCallback(
     async (winner: Contestant, loser: Contestant) => {
       // Prevent duplicate execution
@@ -47,14 +50,8 @@ function MasterView() {
       }
       duelEndingRef.current = true;
 
-      // Pause timer
-      timer.pause();
-
-      // Cancel any pending skip animation
-      if (skipTimeoutRef.current) {
-        clearTimeout(skipTimeoutRef.current);
-        skipTimeoutRef.current = null;
-      }
+      // Send duel end command to audience
+      timerCommandsRef.current?.sendDuelEnd();
 
       try {
         // Winner inherits the loser's category (the UNPLAYED category)
@@ -86,71 +83,72 @@ function MasterView() {
         alert('Error ending duel. Check console for details.');
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [updateContestant, setDuelState, navigate]
   );
 
-  // Handle time expiration
-  const handleTimeExpired = useCallback(
-    (player: 1 | 2) => {
+  // Handle player timeout callback (from Audience View)
+  const handlePlayerTimeout = useCallback(
+    (loser: 1 | 2) => {
       if (!duelState) return;
 
-      // Player who ran out of time loses
-      const loser = player === 1 ? duelState.contestant1 : duelState.contestant2;
-      const winner = player === 1 ? duelState.contestant2 : duelState.contestant1;
+      const loserContestant = loser === 1 ? duelState.contestant1 : duelState.contestant2;
+      const winnerContestant = loser === 1 ? duelState.contestant2 : duelState.contestant1;
 
-      void handleDuelEnd(winner, loser);
+      void handleDuelEnd(winnerContestant, loserContestant);
     },
     [duelState, handleDuelEnd]
   );
 
-  // Initialize game timer if duel is active
-  const timer = useGameTimer({
-    initialTime1: duelState?.timeRemaining1 ?? 0,
-    initialTime2: duelState?.timeRemaining2 ?? 0,
-    activePlayer: duelState?.activePlayer ?? 1,
-    onTimeExpired: handleTimeExpired,
+  // Handle skip end callback (from Audience View)
+  const handleSkipEndCallback = useCallback(
+    (switchToPlayer: 1 | 2) => {
+      if (!duelState) return;
+
+      // Advance slide
+      const nextIndex = duelState.currentSlideIndex + 1;
+
+      // Check if last slide - switched player continues
+      if (nextIndex >= duelState.selectedCategory.slides.length) {
+        // All slides completed - current active player wins
+        const winner = switchToPlayer === 1 ? duelState.contestant1 : duelState.contestant2;
+        const loser = switchToPlayer === 1 ? duelState.contestant2 : duelState.contestant1;
+        void handleDuelEnd(winner, loser);
+        return;
+      }
+
+      // Update duel state
+      const currentCommands = timerCommandsRef.current;
+      if (currentCommands) {
+        setDuelState({
+          ...duelState,
+          currentSlideIndex: nextIndex,
+          activePlayer: switchToPlayer,
+          isSkipAnimationActive: false,
+          timeRemaining1: currentCommands.currentTime1,
+          timeRemaining2: currentCommands.currentTime2,
+        });
+      }
+
+      // Re-enable controls after skip completes
+      setControlsDisabled(false);
+    },
+    [duelState, handleDuelEnd, setDuelState]
+  );
+
+  // Initialize timer commands hook
+  const timerCommands = useTimerCommands({
+    onPlayerTimeout: handlePlayerTimeout,
+    onSkipEnd: handleSkipEndCallback,
   });
 
-  // Store timer in ref for interval access
-  const timerRef = useRef(timer);
-  timerRef.current = timer;
-
-  // Sync timer values to separate storage every 200ms for AudienceView
-  // This doesn't affect duelState, so no re-renders!
-  useEffect(() => {
-    if (!duelState) {
-      return;
-    }
-
-    // Save timer state every 200ms (matches AudienceView polling)
-    const syncInterval = setInterval(() => {
-      saveTimerState({
-        timeRemaining1: timerRef.current.timeRemaining1,
-        timeRemaining2: timerRef.current.timeRemaining2,
-        activePlayer: duelState.activePlayer,
-        lastUpdate: Date.now(),
-      });
-    }, 200);
-
-    return () => {
-      clearInterval(syncInterval);
-    };
-  }, [duelState]);
+  // Store in ref for callbacks
+  timerCommandsRef.current = timerCommands;
 
   // Reset duel ending flag when duel changes
   useEffect(() => {
     duelEndingRef.current = false;
-  }, [duelState?.contestant1?.id, duelState?.contestant2?.id]);
-
-  // Cleanup skip timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (skipTimeoutRef.current) {
-        clearTimeout(skipTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [duelState?.contestant1.id, duelState?.contestant2.id]);
 
   // Handle exit duel
   const handleExitDuel = useCallback(() => {
@@ -163,10 +161,10 @@ function MasterView() {
 
     // Advance to next slide
     const nextIndex = duelState.currentSlideIndex + 1;
+    const nextPlayer = duelState.activePlayer === 1 ? 2 : 1;
 
     // Check if last slide - active player wins by completion
     if (nextIndex >= duelState.selectedCategory.slides.length) {
-      timer.pause();
       const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
       const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
       void handleDuelEnd(winner, loser);
@@ -174,15 +172,17 @@ function MasterView() {
     }
 
     // Update duel state: increment slide, switch player
-    // Timer continues running - the activePlayer change will make it switch to the new player
     setDuelState({
       ...duelState,
       currentSlideIndex: nextIndex,
-      activePlayer: duelState.activePlayer === 1 ? 2 : 1,
-      timeRemaining1: timer.timeRemaining1,
-      timeRemaining2: timer.timeRemaining2,
+      activePlayer: nextPlayer,
+      timeRemaining1: timerCommands.currentTime1,
+      timeRemaining2: timerCommands.currentTime2,
     });
-  }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
+
+    // Send switch command to Audience View
+    timerCommands.sendSwitch(nextPlayer);
+  }, [duelState, controlsDisabled, timerCommands, handleDuelEnd, setDuelState]);
 
   // Handle skip
   const handleSkip = useCallback(() => {
@@ -191,52 +191,21 @@ function MasterView() {
     // Disable controls during animation
     setControlsDisabled(true);
 
-    // Set skip animation flag (timer continues running)
+    // Get current slide answer
+    const currentSlide = duelState.selectedCategory.slides[duelState.currentSlideIndex];
+    const answer = currentSlide?.answer ?? 'Skipped';
+
+    // Send skip command to Audience View (which will handle timing and broadcasting)
+    timerCommands.sendSkipStart(answer, duelState.activePlayer);
+
+    // Update local duel state to show skip animation (will be updated when skip ends)
     setDuelState({
       ...duelState,
       isSkipAnimationActive: true,
-      timeRemaining1: timer.timeRemaining1,
-      timeRemaining2: timer.timeRemaining2,
+      timeRemaining1: timerCommands.currentTime1,
+      timeRemaining2: timerCommands.currentTime2,
     });
-
-    // After 3-second animation (during which timer continues counting down)
-    skipTimeoutRef.current = setTimeout(() => {
-      // Check if time expired during the animation
-      const currentTime =
-        duelState.activePlayer === 1 ? timer.timeRemaining1 : timer.timeRemaining2;
-
-      if (currentTime <= 0) {
-        const loser = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
-        const winner = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
-        void handleDuelEnd(winner, loser);
-        return;
-      }
-
-      // Advance slide and switch player
-      const nextIndex = duelState.currentSlideIndex + 1;
-
-      // Check if last slide - active player wins by completion
-      if (nextIndex >= duelState.selectedCategory.slides.length) {
-        const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
-        const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
-        void handleDuelEnd(winner, loser);
-        return;
-      }
-
-      // Update duel state with current timer values
-      setDuelState({
-        ...duelState,
-        currentSlideIndex: nextIndex,
-        activePlayer: duelState.activePlayer === 1 ? 2 : 1,
-        isSkipAnimationActive: false,
-        timeRemaining1: timer.timeRemaining1,
-        timeRemaining2: timer.timeRemaining2,
-      });
-
-      // Re-enable controls
-      setControlsDisabled(false);
-    }, 3000);
-  }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
+  }, [duelState, controlsDisabled, timerCommands, setDuelState]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -334,12 +303,12 @@ function MasterView() {
   // Player 1 classes
   const player1Class = `${playerClass} ${activePlayer === 1 ? activeClass : ''}`.trim();
   const player1TimeClass =
-    `${playerTimeClass} ${getTimeClass(timer.timeRemaining1) === 'warning' ? warningClass : ''} ${getTimeClass(timer.timeRemaining1) === 'danger' ? dangerClass : ''}`.trim();
+    `${playerTimeClass} ${getTimeClass(timerCommands.currentTime1) === 'warning' ? warningClass : ''} ${getTimeClass(timerCommands.currentTime1) === 'danger' ? dangerClass : ''}`.trim();
 
   // Player 2 classes
   const player2Class = `${playerClass} ${activePlayer === 2 ? activeClass : ''}`.trim();
   const player2TimeClass =
-    `${playerTimeClass} ${getTimeClass(timer.timeRemaining2) === 'warning' ? warningClass : ''} ${getTimeClass(timer.timeRemaining2) === 'danger' ? dangerClass : ''}`.trim();
+    `${playerTimeClass} ${getTimeClass(timerCommands.currentTime2) === 'warning' ? warningClass : ''} ${getTimeClass(timerCommands.currentTime2) === 'danger' ? dangerClass : ''}`.trim();
 
   return (
     <div className={masterViewClass}>
@@ -359,6 +328,21 @@ function MasterView() {
         </div>
       </header>
 
+      {/* Audience Disconnection Warning */}
+      {!audienceConnected && (
+        <div
+          style={{
+            backgroundColor: 'var(--status-danger)',
+            color: 'white',
+            padding: '1rem',
+            textAlign: 'center',
+            fontWeight: 'bold',
+          }}
+        >
+          ⚠️ Audience View Disconnected - Timer may not be accurate. Please reopen Audience View.
+        </div>
+      )}
+
       {/* Player Status */}
       <section className={playerStatusClass}>
         {/* Player 1 */}
@@ -367,7 +351,7 @@ function MasterView() {
             <h2 className={playerNameClass}>{duelState.contestant1.name}</h2>
             {activePlayer === 1 && <span className={activeIndicatorClass}>Active</span>}
           </div>
-          <div className={player1TimeClass}>{formatTime(timer.timeRemaining1)}</div>
+          <div className={player1TimeClass}>{formatTime(timerCommands.currentTime1)}</div>
         </div>
 
         {/* Player 2 */}
@@ -376,7 +360,7 @@ function MasterView() {
             <h2 className={playerNameClass}>{duelState.contestant2.name}</h2>
             {activePlayer === 2 && <span className={activeIndicatorClass}>Active</span>}
           </div>
-          <div className={player2TimeClass}>{formatTime(timer.timeRemaining2)}</div>
+          <div className={player2TimeClass}>{formatTime(timerCommands.currentTime2)}</div>
         </div>
       </section>
 

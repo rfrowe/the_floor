@@ -248,7 +248,8 @@ export function ComponentsDemo() {
   ];
 
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null);
-  const currentTestSlide = selectedSlideIndex !== null ? quadrantTestSlides[selectedSlideIndex] : null;
+  const currentTestSlide =
+    selectedSlideIndex !== null ? quadrantTestSlides[selectedSlideIndex] : null;
 
   return (
     <Container>
@@ -533,7 +534,14 @@ export function ComponentsDemo() {
           </div>
 
           {/* Quadrant Censor Box Testing */}
-          <div style={{ marginTop: '3rem', padding: '2rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
+          <div
+            style={{
+              marginTop: '3rem',
+              padding: '2rem',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '8px',
+            }}
+          >
             <h3>Censor Box Positioning Test</h3>
             <p style={{ marginBottom: '1rem' }}>
               Test slides with quadrant and edge case censor boxes to verify proper positioning:
@@ -552,19 +560,32 @@ export function ComponentsDemo() {
                 </Button>
               ))}
             </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              gap: '1rem',
-              marginTop: '1rem'
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                gap: '1rem',
+                marginTop: '1rem',
+              }}
+            >
               <div>
                 <h4 style={{ marginBottom: '0.5rem' }}>SlideViewer (like Audience View)</h4>
-                <div style={{ height: '450px', border: '2px solid var(--border-default)', backgroundColor: '#1e3a5f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div
+                  style={{
+                    height: '450px',
+                    border: '2px solid var(--border-default)',
+                    backgroundColor: '#1e3a5f',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   {currentTestSlide ? (
                     <SlideViewer slide={currentTestSlide} showAnswer={showAnswer} />
                   ) : (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>Select a test slide above</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
+                      Select a test slide above
+                    </p>
                   )}
                 </div>
                 {currentTestSlide && (
@@ -582,37 +603,45 @@ export function ComponentsDemo() {
               </div>
               <div>
                 <h4 style={{ marginBottom: '0.5rem' }}>Expected Box Positions</h4>
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '2px solid var(--border-default)',
-                  borderRadius: '4px',
-                  minHeight: '150px'
-                }}>
+                <div
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    border: '2px solid var(--border-default)',
+                    borderRadius: '4px',
+                    minHeight: '150px',
+                  }}
+                >
                   {currentTestSlide ? (
                     <>
-                      <p><strong>{currentTestSlide.answer}</strong></p>
+                      <p>
+                        <strong>{currentTestSlide.answer}</strong>
+                      </p>
                       <ul style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
                         {currentTestSlide.censorBoxes.map((box, i) => (
                           <li key={i}>
                             Box {i + 1}:
-                            <span style={{
-                              display: 'inline-block',
-                              width: '20px',
-                              height: '12px',
-                              backgroundColor: box.color,
-                              marginLeft: '0.5rem',
-                              marginRight: '0.5rem',
-                              verticalAlign: 'middle',
-                              border: '1px solid #333'
-                            }}></span>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                width: '20px',
+                                height: '12px',
+                                backgroundColor: box.color,
+                                marginLeft: '0.5rem',
+                                marginRight: '0.5rem',
+                                verticalAlign: 'middle',
+                                border: '1px solid #333',
+                              }}
+                            ></span>
                             Position: ({box.x}%, {box.y}%) | Size: {box.width}% × {box.height}%
                           </li>
                         ))}
                       </ul>
                     </>
                   ) : (
-                    <p style={{ color: 'var(--text-secondary)' }}>Select a test slide to see box details</p>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Select a test slide to see box details
+                    </p>
                   )}
                 </div>
               </div>

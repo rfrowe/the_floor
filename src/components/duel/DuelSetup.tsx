@@ -2,6 +2,8 @@ import { useState, useImperativeHandle, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_GAME_CONFIG, type Contestant, type Category } from '@types';
 import { useDuelState } from '@hooks/useDuelState';
+import { useAudienceConnection } from '@hooks/useAudienceConnection';
+import timerSyncService from '@services/timerSync';
 import { Button } from '@components/common/Button';
 import styles from './DuelSetup.module.css';
 
@@ -60,8 +62,12 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
   const [, setDuelState] = useDuelState();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
+  // Check for audience connection
+  const { isConnected: audienceConnected } = useAudienceConnection();
+
   // Determine if we can start the duel
-  const canStartDuel = contestant1 !== null && contestant2 !== null && selectedCategory !== null;
+  const canStartDuel =
+    contestant1 !== null && contestant2 !== null && selectedCategory !== null && audienceConnected;
 
   // Expose startDuel method via ref
   useImperativeHandle(ref, () => ({
@@ -75,6 +81,9 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
     }
     if (!selectedCategory) {
       return 'Select a category for the duel';
+    }
+    if (!audienceConnected) {
+      return '⚠️ No Audience View detected. Open Audience View in a new window to begin duel.';
     }
     return null;
   };
@@ -124,6 +133,14 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
     setDuelState(initialDuelState);
 
     console.log('✅ Saved!');
+
+    // Send TIMER_START command to Audience View
+    console.log('📡 Sending TIMER_START command to Audience View');
+    timerSyncService.sendStart(
+      DEFAULT_GAME_CONFIG.timePerPlayer,
+      DEFAULT_GAME_CONFIG.timePerPlayer,
+      1
+    );
 
     // Call parent callback
     onStartDuel({

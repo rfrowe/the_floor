@@ -223,7 +223,11 @@ describe('Dashboard', () => {
     const audienceButton = screen.getByRole('button', { name: 'Open Audience View' });
     await user.click(audienceButton);
 
-    expect(mockWindowOpen).toHaveBeenCalledWith('/the_floor/audience', '_blank', 'noopener,noreferrer');
+    expect(mockWindowOpen).toHaveBeenCalledWith(
+      '/the_floor/audience',
+      '_blank',
+      'noopener,noreferrer'
+    );
   });
 
   it('shows delete confirmation modal when Delete button clicked', async () => {
