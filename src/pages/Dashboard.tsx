@@ -9,14 +9,20 @@ import { Card } from '@components/common/Card';
 import { Modal } from '@components/common/Modal';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { useContestants } from '@hooks/useIndexedDB';
+import { useContestantSelection } from '@hooks/useContestantSelection';
 import styles from './Dashboard.module.css';
 
 function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
-  const [selectedContestant1, setSelectedContestant1] = useState<Contestant | null>(null);
-  const [selectedContestant2, setSelectedContestant2] = useState<Contestant | null>(null);
   const [contestants, { add: addContestant, remove: removeContestant }] = useContestants();
+  const {
+    selected,
+    select,
+    clear: clearSelection,
+    randomSelect,
+  } = useContestantSelection(contestants);
+  const [selectedContestant1, selectedContestant2] = selected;
   const duelSetupRef = useRef<DuelSetupHandle>(null);
 
   const handleImport = async (contestantName: string, category: Category) => {
@@ -66,36 +72,17 @@ function Dashboard() {
   };
 
   const handleContestantClick = (contestant: Contestant) => {
-    // Toggle selection logic: select contestant1, then contestant2
-    if (selectedContestant1?.id === contestant.id) {
-      // Deselect contestant1
-      setSelectedContestant1(null);
-    } else if (selectedContestant2?.id === contestant.id) {
-      // Deselect contestant2
-      setSelectedContestant2(null);
-    } else if (!selectedContestant1) {
-      // Select as contestant1
-      setSelectedContestant1(contestant);
-    } else if (!selectedContestant2) {
-      // Select as contestant2
-      setSelectedContestant2(contestant);
-    } else {
-      // Both slots full, replace contestant1 and shift contestant2 to contestant1
-      setSelectedContestant1(selectedContestant2);
-      setSelectedContestant2(contestant);
-    }
+    select(contestant);
   };
 
   const handleClearDuelSelection = () => {
-    setSelectedContestant1(null);
-    setSelectedContestant2(null);
+    clearSelection();
   };
 
   const handleStartDuel = (_duelConfig: DuelConfig) => {
     // DuelSetup component handles navigation and state saving
     // Clear selections after starting
-    setSelectedContestant1(null);
-    setSelectedContestant2(null);
+    clearSelection();
   };
 
   const isContestantSelected = (contestant: Contestant): boolean => {
@@ -115,7 +102,7 @@ function Dashboard() {
       if (e.key === 'Escape') {
         if (selectedContestant1 || selectedContestant2) {
           e.preventDefault();
-          handleClearDuelSelection();
+          clearSelection();
         }
       }
 
@@ -132,7 +119,7 @@ function Dashboard() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedContestant1, selectedContestant2]);
+  }, [selectedContestant1, selectedContestant2, clearSelection]);
 
   // Sort contestants: active first, then eliminated
   const sortedContestants = [...contestants].sort((a, b) => {
@@ -176,6 +163,7 @@ function Dashboard() {
           contestant2={selectedContestant2}
           onClear={handleClearDuelSelection}
           onStartDuel={handleStartDuel}
+          onRandomSelect={randomSelect}
         />
       </Card>
 
