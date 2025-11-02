@@ -7,16 +7,24 @@
  * Based on Task 14 requirements.
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDuelState } from '@hooks/useDuelState';
+import { useContestants } from '@hooks/useIndexedDB';
+import { useGameTimer } from '@hooks/useGameTimer';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
+import type { Contestant } from '@types';
 import styles from './MasterView.module.css';
 
 function MasterView() {
   const navigate = useNavigate();
-  const [duelState] = useDuelState();
+  const [duelState, setDuelState] = useDuelState();
+  const [, { update: updateContestant }] = useContestants();
+  const [controlsDisabled, setControlsDisabled] = useState(false);
+
+  // Skip timeout ref for cleanup
+  const skipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get time warning level
   const getTimeClass = (seconds: number): string => {
@@ -25,10 +33,181 @@ function MasterView() {
     return '';
   };
 
+  // Handle duel end
+  // Note: timer accessed in closure but not in deps to avoid circular dependency
+  const handleDuelEnd = useCallback(
+    async (winner: Contestant, loser: Contestant) => {
+      // Pause timer
+      timer.pause();
+
+      // Cancel any pending skip animation
+      if (skipTimeoutRef.current) {
+        clearTimeout(skipTimeoutRef.current);
+        skipTimeoutRef.current = null;
+      }
+
+      try {
+        // Winner inherits the loser's category (the UNPLAYED category)
+        const inheritedCategory = loser.category;
+
+        await updateContestant({
+          ...winner,
+          wins: winner.wins + 1,
+          category: inheritedCategory,
+        });
+
+        // Eliminate loser
+        await updateContestant({
+          ...loser,
+          eliminated: true,
+        });
+
+        // Clear duel state
+        setDuelState(null);
+
+        // Navigate to dashboard
+        void navigate('/');
+
+        // Show completion message
+        alert(`${winner.name} wins! They inherit "${inheritedCategory.name}" from ${loser.name}`);
+      } catch (error) {
+        console.error('Error ending duel:', error);
+        alert('Error ending duel. Check console for details.');
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [updateContestant, setDuelState, navigate]
+  );
+
+  // Handle time expiration
+  const handleTimeExpired = useCallback(
+    (player: 1 | 2) => {
+      if (!duelState) return;
+
+      // Player who ran out of time loses
+      const loser = player === 1 ? duelState.contestant1 : duelState.contestant2;
+      const winner = player === 1 ? duelState.contestant2 : duelState.contestant1;
+
+      void handleDuelEnd(winner, loser);
+    },
+    [duelState, handleDuelEnd]
+  );
+
+  // Initialize game timer if duel is active
+  const timer = useGameTimer({
+    initialTime1: duelState?.timeRemaining1 ?? 0,
+    initialTime2: duelState?.timeRemaining2 ?? 0,
+    activePlayer: duelState?.activePlayer ?? 1,
+    onTimeExpired: handleTimeExpired,
+  });
+
+  // Cleanup skip timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (skipTimeoutRef.current) {
+        clearTimeout(skipTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle exit duel
   const handleExitDuel = useCallback(() => {
     void navigate('/');
   }, [navigate]);
+
+  // Handle correct answer
+  const handleCorrect = useCallback(() => {
+    if (!duelState || controlsDisabled) return;
+
+    // Pause timer
+    timer.pause();
+
+    // Advance to next slide
+    const nextIndex = duelState.currentSlideIndex + 1;
+
+    // Check if last slide - active player wins by completion
+    if (nextIndex >= duelState.selectedCategory.slides.length) {
+      const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
+      const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
+      void handleDuelEnd(winner, loser);
+      return;
+    }
+
+    // Update duel state: increment slide, switch player
+    setDuelState({
+      ...duelState,
+      currentSlideIndex: nextIndex,
+      activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+      timeRemaining1: timer.timeRemaining1,
+      timeRemaining2: timer.timeRemaining2,
+    });
+
+    // Resume timer for new player
+    timer.resume();
+  }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
+
+  // Handle skip
+  const handleSkip = useCallback(() => {
+    if (!duelState || controlsDisabled) return;
+
+    // Disable controls during animation
+    setControlsDisabled(true);
+
+    // Pause timer during skip animation
+    timer.pause();
+
+    // Set skip animation flag
+    setDuelState({
+      ...duelState,
+      isSkipAnimationActive: true,
+      timeRemaining1: timer.timeRemaining1,
+      timeRemaining2: timer.timeRemaining2,
+    });
+
+    // Start 3-second countdown
+    skipTimeoutRef.current = setTimeout(() => {
+      // Deduct 3 seconds from current player
+      const currentTime =
+        duelState.activePlayer === 1 ? timer.timeRemaining1 : timer.timeRemaining2;
+      const newTime = currentTime - 3;
+
+      // Check if time expired due to penalty
+      if (newTime <= 0) {
+        const loser = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
+        const winner = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
+        void handleDuelEnd(winner, loser);
+        return;
+      }
+
+      // Update time via timer hook
+      timer.updateTime(duelState.activePlayer, newTime);
+
+      // Advance slide and switch player
+      const nextIndex = duelState.currentSlideIndex + 1;
+
+      // Check if last slide - active player wins by completion
+      if (nextIndex >= duelState.selectedCategory.slides.length) {
+        const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
+        const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
+        void handleDuelEnd(winner, loser);
+        return;
+      }
+
+      // Update duel state
+      setDuelState({
+        ...duelState,
+        currentSlideIndex: nextIndex,
+        activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+        isSkipAnimationActive: false,
+        timeRemaining1: duelState.activePlayer === 1 ? newTime : timer.timeRemaining1,
+        timeRemaining2: duelState.activePlayer === 2 ? newTime : timer.timeRemaining2,
+      });
+
+      // Re-enable controls and resume timer
+      setControlsDisabled(false);
+      timer.resume();
+    }, 3000);
+  }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -39,18 +218,20 @@ function MasterView() {
         return;
       }
 
-      // Space: Correct (placeholder for Task 16)
+      // Space: Correct
       if (e.key === ' ') {
         e.preventDefault();
-        console.log('[MasterView] Correct button (placeholder)');
-        // TODO: Task 16 - Implement correct answer logic
+        if (!controlsDisabled) {
+          handleCorrect();
+        }
       }
 
-      // S: Skip (placeholder for Task 16)
+      // S: Skip
       if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
-        console.log('[MasterView] Skip button (placeholder)');
-        // TODO: Task 16 - Implement skip logic
+        if (!controlsDisabled) {
+          handleSkip();
+        }
       }
 
       // Escape: Exit duel
@@ -64,7 +245,7 @@ function MasterView() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleExitDuel]);
+  }, [handleExitDuel, handleCorrect, handleSkip, controlsDisabled]);
 
   // No active duel state
   if (!duelState) {
@@ -124,12 +305,12 @@ function MasterView() {
   // Player 1 classes
   const player1Class = `${playerClass} ${activePlayer === 1 ? activeClass : ''}`.trim();
   const player1TimeClass =
-    `${playerTimeClass} ${getTimeClass(duelState.timeRemaining1) === 'warning' ? warningClass : ''} ${getTimeClass(duelState.timeRemaining1) === 'danger' ? dangerClass : ''}`.trim();
+    `${playerTimeClass} ${getTimeClass(timer.timeRemaining1) === 'warning' ? warningClass : ''} ${getTimeClass(timer.timeRemaining1) === 'danger' ? dangerClass : ''}`.trim();
 
   // Player 2 classes
   const player2Class = `${playerClass} ${activePlayer === 2 ? activeClass : ''}`.trim();
   const player2TimeClass =
-    `${playerTimeClass} ${getTimeClass(duelState.timeRemaining2) === 'warning' ? warningClass : ''} ${getTimeClass(duelState.timeRemaining2) === 'danger' ? dangerClass : ''}`.trim();
+    `${playerTimeClass} ${getTimeClass(timer.timeRemaining2) === 'warning' ? warningClass : ''} ${getTimeClass(timer.timeRemaining2) === 'danger' ? dangerClass : ''}`.trim();
 
   return (
     <div className={masterViewClass}>
@@ -157,7 +338,7 @@ function MasterView() {
             <h2 className={playerNameClass}>{duelState.contestant1.name}</h2>
             {activePlayer === 1 && <span className={activeIndicatorClass}>Active</span>}
           </div>
-          <div className={player1TimeClass}>{formatTime(duelState.timeRemaining1)}</div>
+          <div className={player1TimeClass}>{formatTime(timer.timeRemaining1)}</div>
         </div>
 
         {/* Player 2 */}
@@ -166,7 +347,7 @@ function MasterView() {
             <h2 className={playerNameClass}>{duelState.contestant2.name}</h2>
             {activePlayer === 2 && <span className={activeIndicatorClass}>Active</span>}
           </div>
-          <div className={player2TimeClass}>{formatTime(duelState.timeRemaining2)}</div>
+          <div className={player2TimeClass}>{formatTime(timer.timeRemaining2)}</div>
         </div>
       </section>
 
@@ -190,9 +371,11 @@ function MasterView() {
         <div className={controlsClass}>
           <button
             className={`${controlButtonClass} ${correctButtonClass}`.trim()}
-            onClick={() => {
-              console.log('[MasterView] Correct answer (placeholder)');
-              // TODO: Task 16 - Implement correct answer logic
+            onClick={handleCorrect}
+            disabled={controlsDisabled}
+            style={{
+              opacity: controlsDisabled ? 0.5 : 1,
+              cursor: controlsDisabled ? 'not-allowed' : 'pointer',
             }}
           >
             ✓ Correct
@@ -200,9 +383,11 @@ function MasterView() {
           </button>
           <button
             className={`${controlButtonClass} ${skipButtonClass}`.trim()}
-            onClick={() => {
-              console.log('[MasterView] Skip (placeholder)');
-              // TODO: Task 16 - Implement skip logic
+            onClick={handleSkip}
+            disabled={controlsDisabled}
+            style={{
+              opacity: controlsDisabled ? 0.5 : 1,
+              cursor: controlsDisabled ? 'not-allowed' : 'pointer',
             }}
           >
             ⊗ Skip
