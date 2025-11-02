@@ -604,6 +604,163 @@ describe('MasterView', () => {
 
         alertSpy.mockRestore();
       });
+
+      it('should give winner the unplayed category when duel uses third contestant category', async () => {
+        // Scenario: Alice owns "Math", Bob owns "History", but duel uses "Science" (from eliminated Charlie)
+        const thirdCategoryDuelState: DuelState = {
+          contestant1: {
+            id: '1',
+            name: 'Alice',
+            category: {
+              name: 'Math',
+              slides: [
+                { imageUrl: '/slides/math-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+                { imageUrl: '/slides/math-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+              ],
+            },
+            eliminated: false,
+            wins: 0,
+          },
+          contestant2: {
+            id: '2',
+            name: 'Bob',
+            category: {
+              name: 'History',
+              slides: [
+                { imageUrl: '/slides/history-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+                { imageUrl: '/slides/history-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+              ],
+            },
+            eliminated: false,
+            wins: 0,
+          },
+          selectedCategory: {
+            name: 'Science',
+            slides: [
+              { imageUrl: '/slides/science-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+              { imageUrl: '/slides/science-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+            ],
+          },
+          currentSlideIndex: 1, // Last slide
+          activePlayer: 2, // Bob is active
+          timeRemaining1: 45,
+          timeRemaining2: 30,
+          isSkipAnimationActive: false,
+        };
+
+        vi.mocked(useDuelState).mockReturnValue([
+          thirdCategoryDuelState,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Winner (Bob, player 2) should inherit the unplayed category
+        // Since selectedCategory ("Science") != contestant1.category ("Math"),
+        // winner should get contestant1.category = "Math"
+        await vi.waitFor(() => {
+          expect(mockUpdateContestant).toHaveBeenCalledWith(
+            expect.objectContaining({
+              id: '2',
+              category: expect.objectContaining({ name: 'Math' }) as object,
+            }) as object
+          );
+        });
+
+        alertSpy.mockRestore();
+      });
+
+      it('should give winner the unplayed category when duel uses contestant2 category', async () => {
+        // Scenario: Alice owns "Math", Bob owns "History", duel uses "History" (Bob's category)
+        const contestant2CategoryDuelState: DuelState = {
+          contestant1: {
+            id: '1',
+            name: 'Alice',
+            category: {
+              name: 'Math',
+              slides: [
+                { imageUrl: '/slides/math-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+                { imageUrl: '/slides/math-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+              ],
+            },
+            eliminated: false,
+            wins: 0,
+          },
+          contestant2: {
+            id: '2',
+            name: 'Bob',
+            category: {
+              name: 'History',
+              slides: [
+                { imageUrl: '/slides/history-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+                { imageUrl: '/slides/history-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+              ],
+            },
+            eliminated: false,
+            wins: 0,
+          },
+          selectedCategory: {
+            name: 'History',
+            slides: [
+              { imageUrl: '/slides/history-1.jpg', answer: 'Answer 1', censorBoxes: [] },
+              { imageUrl: '/slides/history-2.jpg', answer: 'Answer 2', censorBoxes: [] },
+            ],
+          },
+          currentSlideIndex: 1, // Last slide
+          activePlayer: 1, // Alice is active
+          timeRemaining1: 45,
+          timeRemaining2: 30,
+          isSkipAnimationActive: false,
+        };
+
+        vi.mocked(useDuelState).mockReturnValue([
+          contestant2CategoryDuelState,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Winner (Alice, player 1) should inherit the unplayed category
+        // Since selectedCategory ("History") != contestant1.category ("Math"),
+        // winner should get contestant1.category = "Math"
+        // (Alice keeps her own category in this case since Bob's was played)
+        await vi.waitFor(() => {
+          expect(mockUpdateContestant).toHaveBeenCalledWith(
+            expect.objectContaining({
+              id: '1',
+              category: expect.objectContaining({ name: 'Math' }) as object,
+            }) as object
+          );
+        });
+
+        alertSpy.mockRestore();
+      });
     });
   });
 

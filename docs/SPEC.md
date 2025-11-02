@@ -84,7 +84,7 @@ interface Contestant {
 }
 ```
 
-Note: Contestants own exactly one category at a time. When a contestant wins a duel, they replace their current category with the loser's category (not the category that was played in the duel).
+Note: Contestants own exactly one category at a time. When a contestant wins a duel, they replace their current category with **the unplayed category** (the category that was NOT selected for the duel slides). Specifically: if the duel used contestant1's category, the winner inherits contestant2's category; if the duel used contestant2's category, the winner inherits contestant1's category. This ensures the winner always receives the category that wasn't played, regardless of who won or lost.
 
 ### 4.2 Category
 ```typescript
@@ -202,7 +202,7 @@ interface GameConfig {
 - No undo/redo functionality for game master actions
 - No replay or history viewing (focus on live gameplay)
 - Game master is trusted to make correct/skip decisions based on verbal player answers
-- When a duel is played using a specific category, the winner inherits the loser's OTHER category (not the one that was just played)
+- When a duel is played using a specific category, the winner inherits the unplayed category (whichever of the two contestants' categories was NOT used for the duel)
 
 ## 8. Out of Scope (Future Enhancements)
 
