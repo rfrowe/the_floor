@@ -2,170 +2,236 @@
 
 This directory contains chronological status reports documenting the development of "The Floor" game show application.
 
+## Report Naming Convention
+
+Reports use the format: `YYYY-MM-DD-T+HHhMMm-description.md`
+
+- **Date:** Calendar date when report was written
+- **T+HHhMMm:** Elapsed time since session start (14:29 on Nov 1, 2025)
+- **Description:** Brief descriptor of milestone
+
+**Example:** `2025-11-02-T+13h31m-final-playable.md` = Report written on Nov 2 at 04:00 (13 hours 31 minutes into the session)
+
+---
+
 ## Complete Session: November 1-2, 2025
 
-**Duration:** 13 hours 31 minutes (14:29 Nov 1 → 04:00 Nov 2, including DST adjustment)
+**Duration:** 13h 31m (T+0:00 → T+13:31)
+**Start:** November 1, 2025, 14:29 PST
+**End:** November 2, 2025, 04:00 PST (includes DST adjustment)
 **Result:** MVP complete and fully playable
 
-### Read This First
+---
 
-**[2025-11-02-mvp-complete.md](./2025-11-02-mvp-complete.md)** - The definitive final report
-- Complete timeline with minute-level resolution
+## Read This First
+
+**[2025-11-02-T+13h31m-final-playable.md](./2025-11-02-T+13h31m-final-playable.md)** ⭐ The definitive final report
+- Complete timeline with parallelization analysis
 - All 27 completed tasks documented
-- The critical final sprint (timer synchronization fix)
-- Why 04:00 is the real MVP moment (not 23:36)
-- Comprehensive metrics and analysis
+- Critical workflow analysis (Phase 7 decision)
+- The 3-solution meta-strategy (Task 27.7)
+- Why T+13:31 is the real MVP moment (not T+9:07)
 - Architecture validation and lessons learned
 
-### Chronological Reports
+---
 
-Reports are listed in chronological order of generation:
+## Chronological Reports
 
-1. **[2025-11-01-progress-report.md](./2025-11-01-progress-report.md)** (22:42)
-   - Mid-session progress report
-   - First 8 hours of development
-   - Phases 1-4 complete, Phase 5 (Master View) in progress
-   - 17 tasks completed at this point
+### Report 1: Mid-Session Progress
+**[2025-11-01-T+08h13m-mid-session.md](./2025-11-01-T+08h13m-mid-session.md)**
 
-2. **[2025-11-01-final-status.md](./2025-11-01-final-status.md)** (00:00)
-   - "Basic MVP" milestone report
-   - 23 tasks completed (23:36 timestamp)
-   - Core features implemented
-   - **Note:** Not actually final - timer sync issues remained
+**Written:** November 1, 2025, 22:42 PST (T+8:13)
+**Status:** 19/27 tasks (70.4%), Task 16 remaining for MVP
 
-3. **[2025-11-02-current-status.md](./2025-11-02-current-status.md)** (00:20)
-   - Post-MVP polish phase
-   - Dark mode, deployment, test data added
-   - 26 tasks completed
-   - **Note:** Still not fully playable due to timer sync
+**Key Points:**
+- First 8 hours of development documented
+- Phases 1-4 complete, Phase 5 in progress
+- Task restructuring just completed (T+7:43)
+- Phase 7 marked as optional/skipped
+- Projected MVP completion: T+9:00 (~1 hour away)
 
-4. **[2025-11-02-session-complete.md](./2025-11-02-session-complete.md)** (01:36)
-   - Deployment milestone report
-   - GitHub Pages live with CI/CD
-   - Dark mode implementation complete
-   - DST-adjusted timeline analysis
-   - **Note:** Superseded by mvp-complete report
+**Historical Context:** This was written just before the MVP sprint. The task restructuring had just clarified that only Task 16 remained for a playable game.
 
-5. **[2025-11-02-mvp-complete.md](./2025-11-02-mvp-complete.md)** (04:00) ⭐ **READ THIS**
-   - **The definitive final report**
-   - 27 tasks completed (93.1%)
-   - Timer synchronization fixed (Task 28.1)
-   - Actually playable MVP achieved
-   - Complete session analysis
-   - High-resolution mermaid charts
+---
 
-## Key Milestones Timeline
+### Report 2: Basic MVP Complete
+**[2025-11-01-T+09h19m-basic-mvp.md](./2025-11-01-T+09h19m-basic-mvp.md)**
+
+**Written:** November 1, 2025, 23:48 PST (T+9:19)
+**Status:** 21/27 tasks (72.4%), MVP complete
+
+**Key Points:**
+- Task 16 completed in 45 minutes (matched projection)
+- Task 24 completed in 10 minutes (83% faster than projected)
+- 392 tests passing (100% rate)
+- MVP declared complete
+- Game fully playable from import to winner determination
+
+**Historical Context:** At this point, the MVP was believed to be complete. Timer sync issues had not yet been discovered. The report notes "small drift (~0.5-1s)" but considers it acceptable.
+
+**What we didn't know yet:**
+- Timer drift was actually 1-3 seconds (worse than observed)
+- Fairness issues (timer running when Audience closed)
+- Need for authoritative timer architecture
+- Task 28.1 would be necessary
+
+---
+
+### Report 3: Post-MVP Enhancement Work
+**[2025-11-02-T+09h44m-post-mvp-polish.md](./2025-11-02-T+09h44m-post-mvp-polish.md)**
+
+**Written:** November 2, 2025, 00:13 PST (T+9:44)
+**Status:** 21/27 tasks, enhancement work in progress
+
+**Key Points:**
+- 25 minutes after MVP declaration
+- Phase 9 planning documentation added
+- Contestant lifecycle features being developed
+- **WARNING:** 2 tests failing (regression from uncommitted work)
+- Needed to stabilize before continuing
+
+**Historical Context:** Brief snapshot showing the transition from MVP to enhancement work. Test failures indicate active development in progress.
+
+---
+
+### Report 4: Deployed MVP
+**[2025-11-02-T+11h07m-deployed.md](./2025-11-02-T+11h07m-deployed.md)**
+
+**Written:** November 2, 2025, 01:36 PST (T+11:07)
+**Status:** 26/29 tasks (89.7%), deployed to GitHub Pages
+
+**Key Points:**
+- Dark mode implemented (~60 minutes)
+- GitHub Pages deployment with CI/CD
+- Test contestant data added
+- Comprehensive polish across all views
+- 429 tests passing (100% rate)
+- Session declared "complete"
+
+**Historical Context:** Significant post-MVP work completed. Application is live, polished, and tested. DST occurred during this period (02:00 → 01:00).
+
+**What we didn't know yet:**
+- Timer sync issues still present
+- Manual testing at T+13:00 would reveal critical bugs
+- Task 28.1 (3-hour fix) still ahead
+- This wasn't actually the final session
+
+---
+
+### Report 5: Final Playable MVP ⭐
+**[2025-11-02-T+13h31m-final-playable.md](./2025-11-02-T+13h31m-final-playable.md)**
+
+**Written:** November 2, 2025, 04:00 PST (T+13:31)
+**Status:** 27/29 tasks (93.1%), **ACTUALLY PLAYABLE**
+
+**Key Points:**
+- Timer synchronization fixed (Task 28.1, 3 hours)
+- 3-solution meta-strategy documented
+- Parallel execution analysis
+- Critical workflow analysis (Phase 7 decision)
+- Comprehensive architecture validation
+- 405 tests passing (removed deprecated, added new)
+- **This is when the game became truly playable**
+
+**What makes this different:**
+- Timer sync < 100ms latency (was 1-3 seconds)
+- Fair play guaranteed (timer stops when Audience closed)
+- Authoritative timer architecture
+- Connection detection
+- 9 behavioral cases + 6 edge cases handled
+
+**This is the real MVP moment** - not T+9:07.
+
+---
+
+## The Evolution of "MVP"
+
+### Three Declarations, One Truth
+
+| Time | Report | Status | Reality |
+|------|--------|--------|---------|
+| **T+9:07** | Report 2 | "MVP Complete" | Features exist, timer broken |
+| **T+11:07** | Report 4 | "Session Complete" | Deployed and polished, timer still broken |
+| **T+13:31** | Report 5 | "Playable MVP" | **Actually works** ✅ |
+
+### Why Three "Completions"?
+
+**T+9:07 (Basic MVP):**
+- All features implemented
+- Game technically playable
+- **But:** Timer drift 1-3 seconds, fairness issues
+- **Verdict:** Technically complete, not actually playable
+
+**T+11:07 (Deployed MVP):**
+- Everything from T+9:07
+- Plus: Dark mode, GitHub Pages, polish
+- **But:** Still had timer sync issues
+- **Verdict:** Pretty and live, still not reliably playable
+
+**T+13:31 (Playable MVP):**
+- Everything from T+11:07
+- Plus: Timer sync fixed, fairness guaranteed
+- **Result:** Actually works correctly
+- **Verdict:** The real MVP ✅
+
+### The Lesson
+
+**"MVP" must mean "actually works" - not just "features implemented."**
+
+The timer sync bug was invisible in isolation but critical for playability. Integration testing at T+9:07 would have caught this 4 hours earlier.
+
+---
+
+## Timeline Summary
 
 ```
-14:29 - Session start (project bootstrap)
-18:17 - Phase 2 complete (PPTX import + storage)
-20:50 - Dashboard + Audience views ready
-22:12 - Task restructuring (velocity turning point)
-23:36 - Basic MVP (features complete, but timer sync broken)
-01:02 - Dark mode implemented
-01:55 - GitHub Pages deployed
-02:59 - UI polish and performance optimization
-03:57 - Timer sync fixed (critical for playability)
-04:00 - Session end: MVP COMPLETE AND PLAYABLE 🎉
+Session Timeline (T+ format):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+T+0:00  │ Session Start: Empty directory
+T+3:48  │ Foundation: PPTX import working
+T+5:46  │ Parallelization: 3 agents launched
+T+7:43  │ Restructuring: Phase 7 marked optional
+T+9:07  │ Basic MVP: Features complete
+T+10:33 │ Dark Mode: Theme switcher added
+T+11:07 │ Deployed: GitHub Pages live
+T+13:31 │ PLAYABLE MVP: Timer sync fixed ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## Understanding the MVP Evolution
-
-The session had three "MVP" moments:
-
-| Time | Status | Why Not Final? |
-|------|--------|----------------|
-| **23:36** | Basic MVP | Timers out of sync (1-3s drift), unfair gameplay |
-| **01:36** | Deployed MVP | Pretty and live, but still timer issues |
-| **04:00** | **Playable MVP** | **Timer sync working, actually usable** ✅ |
-
-**Key Lesson:** "Feature complete" ≠ "actually works." The timer synchronization bug was the difference between a demo and a product.
-
-## Critical Work in Final Sprint (02:59-04:00)
-
-The last 2 hours contained the most impactful work:
-
-### Commit 7140365 (02:59) - UI & Performance
-- Optimized rendering with requestAnimationFrame
-- Fixed censor box positioning discrepancies
-- Completed dark mode integration in CategoryImporter
-- Fixed navigation paths for GitHub Pages
-- Added comprehensive demo page with test slides
-
-### Commit 1f6e4b7 (03:57) - Timer Synchronization ⭐ **CRITICAL**
-- Implemented BroadcastChannel-based timer sync (<100ms latency)
-- Created authoritative timer architecture (Audience View = source of truth)
-- Fixed fair play (timer stops when Audience View closed)
-- Added automatic resume from exact saved position
-- Removed 535 lines of deprecated timer code
-- Updated all timer-related tests
-- **Result:** Timer drift <0.1s over 30s (was 1-3s before)
-
-**This commit made the game actually playable.**
-
-## Metrics Summary
-
-```
-┌──────────────────────────────────────────────────┐
-│             SESSION SUMMARY                      │
-├──────────────────────────────────────────────────┤
-│  Duration:         13h 31m (with DST)           │
-│  Tasks Completed:  27/29 (93.1%)                │
-│  Code Written:     13,200+ LOC                  │
-│  Tests Passing:    405/405 (100%)               │
-│  Commits:          71 total                     │
-│  Velocity:         2.0 tasks/hour (average)     │
-│  Speedup:          8.9-11.8x vs projection      │
-│  Quality:          0 runtime errors             │
-│  Result:           Playable MVP on GitHub Pages │
-└──────────────────────────────────────────────────┘
-```
-
-## Architecture Validation
-
-The final sprint (timer sync refactor) validated all architectural decisions:
-
-- **Hook Architecture:** Replaced entire timer system in 3 hours (would have taken 8-12h otherwise)
-- **Test Coverage:** 405 tests caught regressions immediately
-- **Strict TypeScript:** Caught timer bugs at compile time
-- **Component Reuse:** No changes needed to UI components
-- **BroadcastChannel:** Low-latency sync (<100ms)
-
-**ROI Proven:** Saved 40+ hours over the course of the session through superior architecture.
-
-## Future Work
-
-See backlog in `docs/tasks/phase-9/`:
-- Task 25: Integration tests (partial coverage exists)
-- Task 27.5: Keyboard shortcuts modal
-- Task 29: Schema-driven type generation
-- Task 30: Category Manager UI
+---
 
 ## Reading Recommendations
 
 **For Executive Summary:**
-- Read "Executive Summary" and "Key Milestones" sections of `2025-11-02-mvp-complete.md`
+- Start with Report 5 "Executive Summary" and "Key Milestones"
+- See final numbers and achievements
+
+**For Development Journey:**
+- Read Reports 1-5 in order
+- See how understanding evolved
+- Watch "MVP" definition change
 
 **For Technical Details:**
-- Read "The Critical Final Sprint" section for timer sync architecture
-- Review mermaid charts for visual timeline
+- Report 5: Timer sync architecture
+- Report 4: Dark mode and deployment
+- Report 2: Core gameplay implementation
 
 **For Lessons Learned:**
-- Read "Lessons Learned" section for development insights
-- Review "Architecture Validation" for ROI analysis
-
-**For Historical Context:**
-- Read reports 1-4 to see how understanding evolved during the session
-- See how "MVP" definition changed over time
-
-## Key Takeaways
-
-1. **MVP means playable** - Not just "features implemented"
-2. **Architecture matters** - 3-hour refactor vs 8-12 hours without proper design
-3. **Testing enables speed** - Fearless refactoring with 405 passing tests
-4. **Persistence pays off** - Staying 2 more hours to fix critical bugs
-5. **Quality enables velocity** - Strict TypeScript prevented entire bug classes
+- Report 5: "Critical Workflow Analysis"
+- Report 5: "What Could Have Been Improved"
+- Report 5: "The 3-Solution Meta-Strategy"
 
 ---
 
-*For questions about these reports, refer to the commit history or task documentation in `docs/tasks/`.*
+## Key Takeaways
+
+1. **MVP means actually playable** - Not just "features implemented"
+2. **Parallel execution works** - 2-8x speedup on appropriate tasks
+3. **Integration testing matters** - Would have saved 3+ hours
+4. **Quality enables velocity** - Strict TypeScript prevented bugs
+5. **Meta-strategies** - 3-solution approach when stuck
+6. **Persistence pays** - Staying 2 hours to fix timer sync made the difference
+
+---
+
+*For detailed analysis, start with [Report 5: Final Playable MVP](./2025-11-02-T+13h31m-final-playable.md)*
