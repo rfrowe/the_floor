@@ -12,6 +12,8 @@ import styles from './AudienceView.module.css';
 function AudienceView() {
   const [duelState] = useDuelState();
   const [, setPollingTick] = useState(0);
+  const [slideTransitioning, setSlideTransitioning] = useState(false);
+  const [displaySlide, setDisplaySlide] = useState<Slide | undefined>(undefined);
 
   // Poll localStorage every 200ms for real-time updates
   useEffect(() => {
@@ -58,6 +60,41 @@ function AudienceView() {
     }
   }, [duelState]);
 
+  // Handle slide transitions with fade effect
+  useEffect(() => {
+    if (!duelState) {
+      setDisplaySlide(undefined);
+      return undefined;
+    }
+
+    const currentSlide: Slide | undefined =
+      duelState.selectedCategory.slides[duelState.currentSlideIndex];
+
+    // If no slide is displayed yet (initial render), show it immediately
+    if (currentSlide && !displaySlide) {
+      setDisplaySlide(currentSlide);
+      return undefined;
+    }
+
+    // If slide changed, trigger transition
+    if (currentSlide && currentSlide !== displaySlide) {
+      // Fade out
+      setSlideTransitioning(true);
+
+      // After fade out, change slide and fade in
+      const timeout = setTimeout(() => {
+        setDisplaySlide(currentSlide);
+        setSlideTransitioning(false);
+      }, 250); // 250ms transition duration
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+
+    return undefined;
+  }, [duelState, displaySlide]);
+
   // If no active duel, show waiting screen
   if (!duelState) {
     return (
@@ -70,12 +107,8 @@ function AudienceView() {
     );
   }
 
-  // Get current slide
-  const currentSlide: Slide | undefined =
-    duelState.selectedCategory.slides[duelState.currentSlideIndex];
-
   // Get the answer to display during skip animation
-  const skipAnswer = currentSlide?.answer ?? 'Skipped';
+  const skipAnswer = displaySlide?.answer ?? 'Skipped';
 
   // Build class names
   const containerClass = styles['container'] ?? '';
@@ -89,7 +122,10 @@ function AudienceView() {
   const skipAnswerOverlayClass = styles['skip-answer-overlay'] ?? '';
   const skipAnswerTextClass = styles['skip-answer-text'] ?? '';
   const slideAreaClass = styles['slide-area'] ?? '';
+  const transitioningClass = slideTransitioning ? (styles['transitioning'] ?? '') : '';
   const noSlideClass = styles['no-slide'] ?? '';
+
+  const slideAreaClasses = `${slideAreaClass} ${transitioningClass}`.trim();
 
   const player1NameClasses =
     duelState.activePlayer === 1 ? `${playerNameClass} ${activeClass}`.trim() : playerNameClass;
@@ -123,10 +159,10 @@ function AudienceView() {
       </div>
 
       {/* Slide display area */}
-      <div className={slideAreaClass}>
-        {currentSlide ? (
+      <div className={slideAreaClasses}>
+        {displaySlide ? (
           <SlideViewer
-            slide={currentSlide}
+            slide={displaySlide}
             fullscreen={true}
             showAnswer={duelState.isSkipAnimationActive}
           />
