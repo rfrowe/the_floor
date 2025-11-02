@@ -199,13 +199,6 @@ describe('SlideViewer', () => {
     });
   });
 
-  it('applies fullscreen class when fullscreen prop is true', () => {
-    const { container } = render(<SlideViewer slide={mockSlide} fullscreen={true} />);
-
-    const containerDiv = container.firstChild as HTMLElement;
-    expect(containerDiv.className).toContain('fullscreen');
-  });
-
   it('applies custom className', () => {
     const { container } = render(<SlideViewer slide={mockSlide} className="custom-class" />);
 

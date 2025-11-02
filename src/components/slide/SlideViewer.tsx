@@ -4,7 +4,6 @@ import styles from './SlideViewer.module.css';
 
 export interface SlideViewerProps {
   slide: Slide;
-  fullscreen?: boolean;
   showAnswer?: boolean;
   className?: string;
 }
@@ -13,12 +12,7 @@ export interface SlideViewerProps {
  * SlideViewer component displays slide images with censorship boxes overlaid
  * at precise positions. Handles aspect ratio preservation with letterboxing.
  */
-export function SlideViewer({
-  slide,
-  fullscreen = false,
-  showAnswer = false,
-  className = '',
-}: SlideViewerProps) {
+export function SlideViewer({ slide, showAnswer = false, className = '' }: SlideViewerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -97,7 +91,6 @@ export function SlideViewer({
 
   // Build class names
   const containerClass = styles['container'] ?? '';
-  const fullscreenClass = fullscreen ? (styles['fullscreen'] ?? '') : '';
   const imageContainerClass = styles['image-container'] ?? '';
   const imageClass = styles['image'] ?? '';
   const loadedClass = imageLoaded ? (styles['loaded'] ?? '') : '';
@@ -107,7 +100,7 @@ export function SlideViewer({
   const censorBoxClass = styles['censor-box'] ?? '';
   const hiddenClass = showAnswer ? (styles['hidden'] ?? '') : '';
 
-  const combinedContainerClass = `${containerClass} ${fullscreenClass} ${className}`.trim();
+  const combinedContainerClass = `${containerClass} ${className}`.trim();
   const combinedImageClass = `${imageClass} ${loadedClass}`.trim();
 
   return (
