@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_GAME_CONFIG, type Contestant, type Category } from '@types';
 import { useDuelState } from '@hooks/useDuelState';
@@ -32,6 +32,14 @@ export interface DuelSetupProps {
 }
 
 /**
+ * Ref handle for DuelSetup component
+ */
+export interface DuelSetupHandle {
+  /** Programmatically trigger the start duel action */
+  startDuel: () => void;
+}
+
+/**
  * DuelSetup component for configuring and starting a duel between two contestants.
  *
  * Features:
@@ -41,13 +49,21 @@ export interface DuelSetupProps {
  * - Clear and Start Duel actions
  * - Information about winner receiving unplayed category
  */
-export function DuelSetup({ contestant1, contestant2, onClear, onStartDuel }: DuelSetupProps) {
+export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function DuelSetup(
+  { contestant1, contestant2, onClear, onStartDuel },
+  ref
+) {
   const navigate = useNavigate();
   const [, setDuelState] = useDuelState();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   // Determine if we can start the duel
   const canStartDuel = contestant1 !== null && contestant2 !== null && selectedCategory !== null;
+
+  // Expose startDuel method via ref
+  useImperativeHandle(ref, () => ({
+    startDuel: handleStartDuel,
+  }));
 
   // Get validation messages
   const getValidationMessage = (): string | null => {
@@ -215,4 +231,4 @@ export function DuelSetup({ contestant1, contestant2, onClear, onStartDuel }: Du
       </div>
     </div>
   );
-}
+});
