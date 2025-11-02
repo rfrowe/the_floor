@@ -9,7 +9,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .section {
@@ -32,39 +32,39 @@
 
 .contestant-label {
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   min-width: 120px;
 }
 
 .contestant-name {
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .category-select {
   padding: 0.5rem;
   font-size: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.2s;
 }
 
 .category-select:hover:not(:disabled) {
-  border-color: var(--color-primary);
+  border-color: var(--border-focus);
 }
 
 .category-select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: var(--color-background-secondary);
+  background-color: var(--bg-secondary);
 }
 
 .category-select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -72,10 +72,10 @@
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem;
-  background-color: var(--color-info-bg, #eff6ff);
-  border: 1px solid var(--color-info-border, #3b82f6);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--status-info);
   border-radius: 4px;
-  color: var(--color-info-text, #1e40af);
+  color: var(--text-primary);
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -87,10 +87,10 @@
 
 .validation-message {
   padding: 0.75rem;
-  background-color: var(--color-warning-bg, #fef3c7);
-  border: 1px solid var(--color-warning-border, #f59e0b);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--status-warning);
   border-radius: 4px;
-  color: var(--color-warning-text, #92400e);
+  color: var(--text-primary);
   font-size: 0.875rem;
   text-align: center;
 }
@@ -100,19 +100,4 @@
   gap: 0.75rem;
   justify-content: flex-end;
   padding-top: 0.5rem;
-}
-
-/* Dark mode support (if CSS variables are configured) */
-@media (prefers-color-scheme: dark) {
-  .info-box {
-    background-color: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-    color: #93c5fd;
-  }
-
-  .validation-message {
-    background-color: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.3);
-    color: #fcd34d;
-  }
 }

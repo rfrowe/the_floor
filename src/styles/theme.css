@@ -1,0 +1,91 @@
+/* Theme System for The Floor Application */
+
+/* Light Theme (Default) */
+:root {
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e0e0e0;
+
+  /* Text */
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #bdbdbd;
+
+  /* Borders */
+  --border-default: #e0e0e0;
+  --border-focus: #2196F3;
+
+  /* Buttons */
+  --btn-primary-bg: #2196F3;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #757575;
+  --btn-danger-bg: #f44336;
+
+  /* Status */
+  --status-success: #4CAF50;
+  --status-warning: #FF9800;
+  --status-danger: #f44336;
+  --status-info: #2196F3;
+
+  /* Timer */
+  --timer-normal: #4CAF50;
+  --timer-warning: #FF9800;
+  --timer-danger: #f44336;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.19);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #3a3a3a;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-disabled: #666666;
+
+  /* Borders */
+  --border-default: #3a3a3a;
+  --border-focus: #64B5F6;
+
+  /* Buttons - slightly adjusted for dark bg */
+  --btn-primary-bg: #42A5F5;
+  --btn-primary-text: #000000;
+  --btn-secondary-bg: #616161;
+  --btn-danger-bg: #EF5350;
+
+  /* Status */
+  --status-success: #66BB6A;
+  --status-warning: #FFA726;
+  --status-danger: #EF5350;
+  --status-info: #42A5F5;
+
+  /* Timer */
+  --timer-normal: #66BB6A;
+  --timer-warning: #FFA726;
+  --timer-danger: #EF5350;
+
+  /* Shadows - lighter for dark theme */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

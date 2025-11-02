@@ -1,8 +1,8 @@
 .card {
-  background-color: white;
-  border: 2px solid #e5e7eb;
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-default);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
   overflow: hidden;
 }
@@ -22,7 +22,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .wins-badge-wrapper {
@@ -31,8 +31,8 @@
 }
 
 .wins-badge {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-weight: 700;
   font-size: 1rem;
   padding: 0.25rem 0.625rem;
@@ -66,21 +66,21 @@
 .category-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .category-name {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .eliminated-badge {
   margin-top: 0.75rem;
   padding: 0.375rem 0.75rem;
-  background-color: #ef4444;
+  background-color: var(--btn-danger-bg);
   color: white;
   font-size: 0.875rem;
   font-weight: 600;
@@ -94,10 +94,8 @@
 }
 
 .interactive:hover {
-  border-color: #3b82f6;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
@@ -107,32 +105,32 @@
 
 /* Selected state */
 .selected {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--border-focus);
+  background-color: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
 .selected .name {
-  color: #1e40af;
+  color: var(--btn-primary-bg);
 }
 
 /* Eliminated state */
 .eliminated {
   opacity: 0.6;
-  background-color: #f3f4f6;
+  background-color: var(--bg-secondary);
   cursor: not-allowed;
 }
 
 .eliminated .name {
-  color: #6b7280;
+  color: var(--text-disabled);
 }
 
 .eliminated .wins-badge {
-  background-color: #9ca3af;
+  background-color: var(--text-disabled);
 }
 
 .eliminated .category-name {
-  color: #9ca3af;
+  color: var(--text-disabled);
 }
 
 /* Eliminated cards should NOT have hover effects or transform */
@@ -143,7 +141,7 @@
 .eliminated.interactive:hover {
   /* Override interactive hover - no transform, no shadow change */
   transform: none;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border-color: #e5e7eb;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-default);
   opacity: 0.6;
 }

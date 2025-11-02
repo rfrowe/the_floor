@@ -51,7 +51,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1rem;
   text-align: center;
 }
@@ -62,11 +62,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #d32f2f;
+  color: var(--status-danger);
   font-size: 1rem;
   text-align: center;
   padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--bg-primary);
   border-radius: 8px;
 }
 

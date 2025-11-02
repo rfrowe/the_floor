@@ -7,6 +7,7 @@ import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
 import { Card } from '@components/common/Card';
 import { Modal } from '@components/common/Modal';
+import { ThemeToggle } from '@components/common/ThemeToggle';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useContestantSelection } from '@hooks/useContestantSelection';
@@ -141,6 +142,7 @@ function Dashboard() {
       <header className={headerClass}>
         <h1 className={titleClass}>The Floor</h1>
         <div className={headerActionsClass}>
+          <ThemeToggle />
           <Button variant="secondary" onClick={handleOpenAudienceView}>
             Open Audience View
           </Button>
