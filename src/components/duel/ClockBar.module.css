@@ -6,11 +6,11 @@
 
 .clock-bar {
   position: relative;
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   padding: 1rem 2rem;
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  border: 3px solid #333;
+  border: 3px solid var(--border-default);
   border-radius: 8px;
   transition: background-color 0.3s ease;
 }

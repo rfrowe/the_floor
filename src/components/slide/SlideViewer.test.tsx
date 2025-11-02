@@ -323,4 +323,72 @@ describe('SlideViewer', () => {
     const overlayContainer = container.querySelector('[style*="width"]');
     expect(overlayContainer).toBeInTheDocument();
   });
+
+  it('rounds pixel values to avoid sub-pixel rendering issues', async () => {
+    // Mock fractional pixel values
+    const mockFractionalRect = vi.fn(() => ({
+      width: 800.7,
+      height: 600.3,
+      top: 10.9,
+      left: 5.2,
+      bottom: 611.2,
+      right: 805.9,
+      x: 5.2,
+      y: 10.9,
+      toJSON: () => {},
+    }));
+
+    HTMLElement.prototype.getBoundingClientRect = mockFractionalRect;
+
+    const { container } = render(<SlideViewer slide={mockSlide} />);
+    const img = screen.getByAltText('Slide content');
+
+    act(() => {
+      img.dispatchEvent(new Event('load'));
+    });
+
+    await waitFor(() => {
+      expect(img).toHaveStyle({ display: 'block' });
+    });
+
+    // Check that overlay container uses rounded values
+    await waitFor(() => {
+      const overlayContainer = container.querySelector('[style*="width"]') as HTMLElement;
+      if (overlayContainer) {
+        const style = overlayContainer.getAttribute('style');
+        // Should have rounded width (801px) and height (600px)
+        expect(style).toContain('width: 801px');
+        expect(style).toContain('height: 600px');
+      }
+    });
+  });
+
+  it('handles cached images efficiently without delays', async () => {
+    const { container, rerender } = render(<SlideViewer slide={mockSlide} />);
+    const img = screen.getByAltText('Slide content');
+
+    // Mock image as already complete (cached)
+    Object.defineProperty(img, 'complete', {
+      get: () => true,
+      configurable: true,
+    });
+    Object.defineProperty(img, 'naturalHeight', {
+      get: () => 600,
+      configurable: true,
+    });
+
+    // Trigger a slide change to simulate cached image scenario
+    const newSlide: Slide = {
+      ...mockSlide,
+      imageUrl: 'data:image/png;base64,different',
+    };
+
+    rerender(<SlideViewer slide={newSlide} />);
+
+    // Should quickly render without delay
+    await waitFor(() => {
+      const censorBoxes = container.querySelectorAll('[aria-hidden="true"]');
+      expect(censorBoxes.length).toBeGreaterThanOrEqual(1);
+    }, { timeout: 100 }); // Should happen very quickly, within 100ms
+  });
 });

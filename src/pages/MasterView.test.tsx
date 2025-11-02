@@ -478,8 +478,8 @@ describe('MasterView', () => {
           fireEvent.click(skipButton);
         }
 
-        // Should pause timer
-        expect(mockTimerPause).toHaveBeenCalled();
+        // Timer should NOT be paused - it continues running during skip animation
+        expect(mockTimerPause).not.toHaveBeenCalled();
 
         // Should set skip animation flag
         expect(mockSetDuelState).toHaveBeenCalledWith(
@@ -506,15 +506,11 @@ describe('MasterView', () => {
           fireEvent.click(skipButton);
         }
 
+        // Timer should continue running (not paused)
+        expect(mockTimerPause).not.toHaveBeenCalled();
+
         // Advance timers by 3 seconds
         await vi.advanceTimersByTimeAsync(3000);
-
-        // Should apply 3-second penalty
-        expect(mockTimerUpdateTime).toHaveBeenCalledWith(1, expect.any(Number));
-        const callArg = vi.mocked(mockTimerUpdateTime).mock.calls[0]?.[1] as number | undefined;
-        if (callArg !== undefined) {
-          expect(callArg).toBeLessThan(28.5); // Original time minus 3
-        }
 
         // Should advance slide and switch player
         expect(mockSetDuelState).toHaveBeenCalledWith(
@@ -525,18 +521,22 @@ describe('MasterView', () => {
           })
         );
 
-        // Should resume timer
-        expect(mockTimerResume).toHaveBeenCalled();
+        // Timer should never be resumed (it was never paused)
+        expect(mockTimerResume).not.toHaveBeenCalled();
       });
 
       it('should end duel if skip penalty causes time expiration', async () => {
-        // Set timer to have only 2 seconds left
+        // Set timer to have only 2 seconds left, simulating countdown during skip
+        let currentTime1 = 2.0;
         const localMockTimerPause = vi.fn();
         const localMockTimerResume = vi.fn();
         const localMockTimerUpdateTime = vi.fn();
 
+        // Mock timer that counts down during the test
         vi.mocked(useGameTimer).mockReturnValue({
-          timeRemaining1: 2.0,
+          get timeRemaining1() {
+            return currentTime1;
+          },
           timeRemaining2: 30.0,
           isRunning: true,
           pause: localMockTimerPause as () => void,
@@ -557,10 +557,13 @@ describe('MasterView', () => {
           fireEvent.click(skipButton);
         }
 
+        // Simulate timer counting down by 3+ seconds during animation
+        currentTime1 = -1.0;
+
         // Advance timers by 3 seconds
         await vi.advanceTimersByTimeAsync(3000);
 
-        // Should end duel (2s - 3s penalty = -1s)
+        // Should end duel (time ran out during animation)
         await vi.waitFor(() => {
           expect(mockUpdateContestant).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -608,7 +611,8 @@ describe('MasterView', () => {
 
         fireEvent.keyDown(document, { key: 's' });
 
-        expect(mockTimerPause).toHaveBeenCalled();
+        // Timer should continue running (not paused)
+        expect(mockTimerPause).not.toHaveBeenCalled();
         expect(mockSetDuelState).toHaveBeenCalledWith(
           expect.objectContaining({
             isSkipAnimationActive: true,
