@@ -1,13 +1,19 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { Category } from '@types';
+import type { Category, Contestant } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
+import { ContestantCard } from '@components/contestant/ContestantCard';
+import { Container } from '@components/common/Container';
+import { Button } from '@components/common/Button';
+import { Card } from '@components/common/Card';
+import { Modal } from '@components/common/Modal';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { useContestants } from '@hooks/useIndexedDB';
+import styles from './Dashboard.module.css';
 
 function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
-  const [contestants, { add: addContestant }] = useContestants();
+  const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
+  const [contestants, { add: addContestant, remove: removeContestant }] = useContestants();
 
   const handleImport = async (contestantName: string, category: Category) => {
     const newContestant = createContestantFromCategory(category, contestantName);
@@ -29,77 +35,155 @@ function Dashboard() {
     setShowImporter(false);
   };
 
+  const handleDeleteClick = (contestant: Contestant) => {
+    setContestantToDelete(contestant);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (contestantToDelete) {
+      try {
+        await removeContestant(contestantToDelete.id);
+        setContestantToDelete(null);
+      } catch (error) {
+        console.error('Failed to delete contestant:', error);
+        alert(
+          `Failed to delete contestant: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setContestantToDelete(null);
+  };
+
+  const handleOpenAudienceView = () => {
+    window.open('/audience', '_blank', 'noopener,noreferrer');
+  };
+
+  // Sort contestants: active first, then eliminated
+  const sortedContestants = [...contestants].sort((a, b) => {
+    if (a.eliminated === b.eliminated) {
+      return 0;
+    }
+    return a.eliminated ? 1 : -1;
+  });
+
+  const dashboardClass = styles['dashboard'] ?? '';
+  const headerClass = styles['header'] ?? '';
+  const titleClass = styles['title'] ?? '';
+  const headerActionsClass = styles['header-actions'] ?? '';
+  const duelPanelClass = styles['duel-panel'] ?? '';
+  const duelPanelContentClass = styles['duel-panel-content'] ?? '';
+  const placeholderTextClass = styles['placeholder-text'] ?? '';
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Dashboard - Game Master Control Center</h1>
-      <p>
-        This is the game master control center where you can manage contestants, configure game
-        settings, and control the overall game flow.
-      </p>
+    <Container className={dashboardClass}>
+      {/* Header */}
+      <header className={headerClass}>
+        <h1 className={titleClass}>The Floor</h1>
+        <div className={headerActionsClass}>
+          <Button variant="secondary" onClick={handleOpenAudienceView}>
+            Open Audience View
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setShowImporter(true);
+            }}
+          >
+            Import Contestant
+          </Button>
+        </div>
+      </header>
 
-      {!showImporter && (
-        <>
-          <div style={{ marginTop: '2rem' }}>
-            <h2>Contestant Management</h2>
-            <button
-              type="button"
-              onClick={() => {
-                setShowImporter(true);
-              }}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Import Contestant from JSON
-            </button>
+      {/* Duel Setup Panel - Placeholder for task-12 */}
+      <Card className={duelPanelClass}>
+        <div className={duelPanelContentClass}>
+          <p className={placeholderTextClass}>Duel setup controls will be implemented in task-12</p>
+        </div>
+      </Card>
 
-            {contestants.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <h3>Imported Contestants ({contestants.length})</h3>
-                <ul>
-                  {contestants.map((contestant, index) => (
-                    <li key={index}>
-                      <strong>{contestant.name}</strong> - {contestant.category.name} (
-                      {contestant.category.slides.length} slides)
-                    </li>
-                  ))}
-                </ul>
+      {/* Contestants Section */}
+      <section className={styles['contestants-section'] ?? ''}>
+        <div className={styles['section-header'] ?? ''}>
+          <h2>Contestants ({contestants.length})</h2>
+        </div>
+
+        {contestants.length === 0 ? (
+          // Empty State
+          <Card className={styles['empty-state'] ?? ''}>
+            <div className={styles['empty-state-content'] ?? ''}>
+              <h3>No Contestants Yet</h3>
+              <p>Get started by importing contestant data from a PPTX file.</p>
+              <Button
+                variant="primary"
+                size="large"
+                onClick={() => {
+                  setShowImporter(true);
+                }}
+              >
+                Import Your First Contestant
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          // Contestants Grid
+          <div className={styles['contestants-grid'] ?? ''}>
+            {sortedContestants.map((contestant) => (
+              <div key={contestant.id} className={styles['contestant-card-wrapper'] ?? ''}>
+                <ContestantCard contestant={contestant} />
+                <Button
+                  variant="danger"
+                  size="small"
+                  onClick={() => {
+                    handleDeleteClick(contestant);
+                  }}
+                  className={styles['delete-button'] ?? ''}
+                >
+                  Delete
+                </Button>
               </div>
-            )}
+            ))}
           </div>
+        )}
+      </section>
 
-          <nav style={{ marginTop: '2rem' }}>
-            <h2>Navigation</h2>
-            <ul>
-              <li>
-                <Link to="/master">Go to Master View</Link>
-              </li>
-              <li>
-                <Link to="/audience">Go to Audience View</Link>
-              </li>
-            </ul>
-          </nav>
-
-          <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f0f0f0' }}>
-            <h3>Planned Features (Future Tasks)</h3>
-            <ul>
-              <li>Contestant management (add, edit, remove)</li>
-              <li>Category selection and configuration</li>
-              <li>Game state controls (start, pause, reset)</li>
-              <li>Territory grid visualization</li>
-            </ul>
-          </div>
-        </>
+      {/* Import Modal */}
+      {showImporter && (
+        <Modal isOpen={showImporter} onClose={handleCancel} title="Import Contestant">
+          <CategoryImporter onImport={handleImport} onCancel={handleCancel} />
+        </Modal>
       )}
 
-      {showImporter && <CategoryImporter onImport={handleImport} onCancel={handleCancel} />}
-    </div>
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={contestantToDelete !== null}
+        onClose={handleCancelDelete}
+        title="Delete Contestant"
+        footer={
+          <div className={styles['modal-footer'] ?? ''}>
+            <Button variant="secondary" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                void handleConfirmDelete();
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p>
+          Are you sure you want to delete{' '}
+          <strong>{contestantToDelete?.name ?? 'this contestant'}</strong>?
+        </p>
+        <p>This action cannot be undone.</p>
+      </Modal>
+    </Container>
   );
 }
 
