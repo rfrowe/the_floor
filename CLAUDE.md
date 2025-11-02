@@ -108,12 +108,64 @@ A task is complete when:
 - [ ] Code pushed to remote
 
 ## Development Workflow
+
+### Standard Workflow
 1. Reference task PROMPT.md for requirements
 2. Use TodoWrite to plan and track progress
 3. Implement with tests
 4. Verify all checks pass (build, test, lint)
 5. Commit and push
 6. Move to next task
+
+### Worktree Workflow (Recommended for Tasks)
+
+Use git worktrees to isolate task work and enable parallel development:
+
+**1. Create Worktree:**
+```bash
+git worktree add /path/to/project-task-XX-name -b task-XX-name
+```
+Pattern: `/path/to/project-task-[number]-[kebab-case-name]`
+
+**2. Work in Worktree:**
+```bash
+cd /path/to/project-task-XX-name
+npm install  # Install dependencies if needed
+npm run dev  # Start dev server (will use different port if 5173 is taken)
+# Implement task...
+```
+
+**3. Verify Before Commit:**
+```bash
+npm run build  # Must pass
+npm test -- --run  # Must pass
+npm run lint  # Must pass
+```
+
+**4. Commit and Push:**
+```bash
+git add .
+git commit -m "feat: implement task description"
+git push -u origin task-XX-name
+```
+
+**5. Create Pull Request:**
+```bash
+gh pr create --title "feat: task description" --base main --body "..."
+```
+
+**6. Clean Up After Merge:**
+```bash
+cd /path/to/main-project
+git worktree remove /path/to/project-task-XX-name
+git branch -d task-XX-name  # Delete local branch after merge
+```
+
+**Benefits:**
+- Isolates task work from main branch
+- Allows switching between tasks without stashing
+- Each worktree has its own node_modules and build artifacts
+- Clean separation for code review
 
 ## CSS Modules with TypeScript Strict Mode
 
