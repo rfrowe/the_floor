@@ -401,3 +401,49 @@ function handleDuelEnd(duelState: DuelState) {
 - The bug may have been introduced by conflating "duel category" with "owned category"
 - Clear naming conventions would prevent this: `playedCategory` vs `ownedCategory`
 - Consider refactoring variable names for clarity after fix
+
+---
+
+## EDIT NOTE - Implementation Clarification (2025-11-02)
+
+**Status:** ✅ Task completed successfully
+
+During implementation, it was discovered that the original SPEC.md description of the inheritance rule was ambiguous and potentially incorrect. The phrase "loser's category" was unclear when the loser's category might be the one being played.
+
+**Corrected Understanding:**
+
+The winner should inherit **the unplayed category** - specifically, whichever of the two contestants' categories was NOT used for the duel slides.
+
+**Correct Implementation Formula:**
+```typescript
+const inheritedCategory =
+  duelState.selectedCategory.name === duelState.contestant1.category.name
+    ? duelState.contestant2.category
+    : duelState.contestant1.category;
+```
+
+**This means:**
+- If duel uses contestant1's category → winner gets contestant2's category
+- If duel uses contestant2's category → winner gets contestant1's category
+- Winner ALWAYS gets the category that wasn't played
+
+**Why This Differs from Original PROMPT:**
+
+The PROMPT (lines 66-82) suggested using `loser.category` directly, but this is incorrect when:
+- Alice owns "Math", Bob owns "History"
+- Duel uses "History" (Bob's category)
+- Alice wins
+- Old logic: Alice gets "History" (loser's category) ❌
+- Correct: Alice gets "Math" (her own = unplayed) ✅
+
+**Files Updated:**
+- `src/pages/MasterView.tsx` - Implemented unplayed category logic
+- `docs/SPEC.md` (lines 87, 205) - Clarified inheritance rule
+- `src/pages/MasterView.test.tsx` - Added 3 comprehensive tests covering all scenarios
+
+**Verification:**
+- All 407 tests passing
+- Build and lint checks pass
+- Logic verified for all three scenarios (contestant1's category, contestant2's category, third category)
+
+The original PROMPT was based on the ambiguous SPEC language. Both have now been corrected to reflect the accurate game rule.
