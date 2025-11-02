@@ -86,13 +86,40 @@
   transform: translateY(-2px);
 }
 
-.delete-button {
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
   width: 100%;
+}
+
+.revive-button,
+.eliminate-button,
+.delete-button {
+  flex: 1;
   transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.revive-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.revive-button:hover {
+  transform: translateY(-1px) scale(1.1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.eliminate-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.eliminate-button:hover {
+  transform: translateY(-1px) scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .delete-button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.1);
 }
 
 /* Empty State */
