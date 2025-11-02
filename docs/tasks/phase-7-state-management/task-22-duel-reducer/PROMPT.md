@@ -1,132 +1,85 @@
-# Task 22: Duel Reducer
+# Task 22: Duel Reducer (DEPRECATED)
 
-## Objective
-Create a reducer to manage duel state transitions, handling actions like advancing slides, switching players, skip animations, and time updates.
+## Status
+**NOT NEEDED**: This task is deprecated for the hook-based architecture.
 
-## Acceptance Criteria
-- [ ] Reducer handles all duel state transitions
-- [ ] Actions are type-safe with discriminated unions
-- [ ] State updates are immutable
-- [ ] Logic is well-tested and bug-free
-- [ ] Handles edge cases (last slide, time expiring, etc.)
-- [ ] Pure functions (no side effects)
-- [ ] Clear action types and creators
-- [ ] Tests verify all state transitions
+## Why Deprecated
 
-## Duel Actions
+The original task planned to use `useReducer` for duel state management. However:
+
+1. **Simple state updates** - Duel state changes are straightforward
+2. **Existing hooks work well** - `useDuelState()` hook provides get/set
+3. **No complex state transitions** - Direct updates are clearer than actions
+4. **Smaller bundle** - No need for additional reducer abstraction
+
+## Current Approach (Better)
+
+Duel state is managed via `useDuelState()` hook with direct updates:
+
 ```typescript
-type DuelAction =
-  | { type: 'ADVANCE_SLIDE' }
-  | { type: 'SWITCH_PLAYER' }
-  | { type: 'UPDATE_TIME'; player: 1 | 2; time: number }
-  | { type: 'START_SKIP_ANIMATION'; answer: string }
-  | { type: 'END_SKIP_ANIMATION' }
-  | { type: 'SET_ACTIVE_PLAYER'; player: 1 | 2 }
-  | { type: 'RESET_DUEL'; duelState: DuelState };
+const [duelState, setDuelState] = useDuelState();
+
+// Update duel state directly
+setDuelState({
+  ...duelState,
+  currentSlideIndex: duelState.currentSlideIndex + 1,
+  activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+});
 ```
 
-## Implementation Guidance
-1. Create `src/reducers/duelReducer.ts`:
-   ```typescript
-   export function duelReducer(
-     state: DuelState,
-     action: DuelAction
-   ): DuelState {
-     switch (action.type) {
-       case 'ADVANCE_SLIDE':
-         return { ...state, currentSlideIndex: state.currentSlideIndex + 1 };
+This is:
+- ✅ Simple and clear
+- ✅ Easy to understand
+- ✅ Sufficient for duel state complexity
+- ✅ No additional abstraction needed
 
-       case 'SWITCH_PLAYER':
-         return { ...state, activePlayer: state.activePlayer === 1 ? 2 : 1 };
+## When You Might Need a Reducer
 
-       case 'UPDATE_TIME':
-         if (action.player === 1) {
-           return { ...state, timeRemaining1: action.time };
-         } else {
-           return { ...state, timeRemaining2: action.time };
-         }
+Consider adding a reducer if:
+- State updates become very complex (10+ fields changing together)
+- Need to enforce specific state transition rules
+- Multiple components need to dispatch same actions
+- State logic becomes difficult to test
 
-       // ... other cases
-     }
-   }
-   ```
+Currently, none of these apply.
 
-2. Action creators (optional but recommended):
-   ```typescript
-   export const duelActions = {
-     advanceSlide: (): DuelAction => ({ type: 'ADVANCE_SLIDE' }),
-     switchPlayer: (): DuelAction => ({ type: 'SWITCH_PLAYER' }),
-     updateTime: (player: 1 | 2, time: number): DuelAction => ({
-       type: 'UPDATE_TIME',
-       player,
-       time,
-     }),
-     // ...
-   };
-   ```
+## Alternative: Utility Functions
 
-3. Handle complex actions:
-   - **ADVANCE_SLIDE**: Increment currentSlideIndex, check bounds
-   - **SWITCH_PLAYER**: Toggle activePlayer (1 ↔ 2)
-   - **UPDATE_TIME**: Update correct player's time
-   - **START_SKIP_ANIMATION**: Set isSkipAnimationActive = true
-   - **END_SKIP_ANIMATION**: Set isSkipAnimationActive = false
-   - **RESET_DUEL**: Replace entire state (for new duel)
+If update logic gets repetitive, create utility functions:
 
-4. Compose actions for complex operations:
-   - Correct answer: ADVANCE_SLIDE + SWITCH_PLAYER
-   - Skip: START_SKIP_ANIMATION + (wait 3s) + END_SKIP_ANIMATION + ADVANCE_SLIDE + SWITCH_PLAYER
-   - These compositions happen at the hook/component level, not in reducer
-
-5. Handle edge cases:
-   - currentSlideIndex >= total slides: don't advance further
-   - Time < 0: clamp to 0
-   - Invalid player: throw error or ignore
-
-6. Keep reducer pure:
-   - No side effects (API calls, localStorage, timers)
-   - Always return new state object
-   - Don't mutate input state
-   - Deterministic: same input → same output
-
-7. Write comprehensive tests:
-   - Each action type produces correct state
-   - Edge cases handled properly
-   - State immutability maintained
-   - Invalid actions handled gracefully
-
-## Usage Example
 ```typescript
-const [duelState, dispatch] = useReducer(duelReducer, initialDuelState);
+// src/utils/duelHelpers.ts
+export function advanceSlide(duelState: DuelState): DuelState {
+  return {
+    ...duelState,
+    currentSlideIndex: duelState.currentSlideIndex + 1,
+    activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+  };
+}
 
-// When correct button clicked:
-dispatch({ type: 'ADVANCE_SLIDE' });
-dispatch({ type: 'SWITCH_PLAYER' });
+export function applySkipPenalty(duelState: DuelState): DuelState {
+  const time = duelState.activePlayer === 1
+    ? duelState.timeRemaining1 - 3
+    : duelState.timeRemaining2 - 3;
 
-// When time ticks:
-dispatch({ type: 'UPDATE_TIME', player: activePlayer, time: newTime });
+  return {
+    ...duelState,
+    timeRemaining1: duelState.activePlayer === 1 ? time : duelState.timeRemaining1,
+    timeRemaining2: duelState.activePlayer === 2 ? time : duelState.timeRemaining2,
+  };
+}
+
+// Usage
+setDuelState(advanceSlide(duelState));
 ```
 
-## Success Criteria
-- All duel state transitions work correctly
-- Reducer is pure and testable
-- Actions are type-safe
-- Edge cases don't break the reducer
-- Tests cover all actions and edge cases
-- Code is clear and maintainable
-- No mutations of state
-
-## Out of Scope
-- Side effects (handled by hooks/components)
-- Async actions
-- Middleware
-- Time management (handled separately)
+## Next Steps
+- Skip this task
+- Continue with Task 23 (BroadcastChannel sync)
+- Only reconsider if state management becomes problematic
 
 ## Notes
-- Keep the reducer simple and focused
-- Complex logic should be in action creators or hooks
-- Reducer should be easy to reason about
-- Consider using Immer if updates get complex
-- Coordinate with task-21 (game context) for integration
-- Coordinate with task-15 (duel controls) for action usage
-- Reference SPEC.md sections 3.3, 4.5, and 5.2 for requirements
+- **YAGNI** - You Aren't Gonna Need It
+- Keep it simple until complexity demands abstraction
+- Direct state updates are perfectly fine for this app's scale
+- Reducers add indirection without clear benefit here

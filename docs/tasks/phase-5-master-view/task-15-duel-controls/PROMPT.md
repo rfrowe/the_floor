@@ -1,110 +1,114 @@
-# Task 15: Duel Control Buttons
+# Task 15: Game Timer Hook
 
 ## Objective
-Implement the Correct and Skip button functionality that controls duel flow, transfers control between players, and handles skip animations.
+Create a useGameTimer hook that manages countdown timers for both players with accurate timing, pause/resume, and time expiration callbacks.
+
+## Status
+**NOT STARTED**: Timer functionality needs to be built.
 
 ## Acceptance Criteria
-- [ ] Correct button transfers control to opponent immediately
-- [ ] Correct button advances to next slide
-- [ ] Skip button triggers 3-second answer display on audience view
-- [ ] Skip button counts 3 seconds against current player's time
-- [ ] Skip button advances to next slide after animation
-- [ ] Buttons disabled during skip animation
-- [ ] Duel ends when player reaches 0 seconds
-- [ ] Winner/loser determined and handled correctly
-- [ ] State updates persist to localStorage
-- [ ] Tests verify all control logic
+- [ ] Create `useGameTimer()` hook in `src/hooks/useGameTimer.ts`
+- [ ] Counts down for active player only
+- [ ] Updates every 100ms for smooth display
+- [ ] Provides pause/resume functionality
+- [ ] Triggers callback when player time reaches 0
+- [ ] No time drift over long duels (accuracy within 0.1s)
+- [ ] Hook is well-tested
 
-## Button Behaviors
-
-### Correct Button
-From SPEC.md section 3.3:
-1. Stop current player's clock
-2. Advance to next slide
-3. Transfer control to opponent (switch activePlayer)
-4. Start opponent's clock
-5. Update duel state in localStorage
-
-### Skip Button
-From SPEC.md sections 3.3 and 3.4:
-1. Set `isSkipAnimationActive = true`
-2. Trigger 3-second countdown (against current player)
-3. Display answer on audience view
-4. After 3 seconds:
-   - Set `isSkipAnimationActive = false`
-   - Advance to next slide
-   - Check if current player's time <= 0:
-     - If yes: end duel (they lose)
-     - If no: transfer control to opponent
-5. Update duel state in localStorage
+## Dependencies
+- Task 14: Master View Layout (can develop independently with tests)
 
 ## Implementation Guidance
-1. Create custom hook `src/hooks/useDuelControls.ts`:
+
+1. **Hook Interface**:
    ```typescript
-   interface DuelControls {
-     handleCorrect: () => void;
-     handleSkip: () => void;
-     canInteract: boolean; // false during skip animation
+   interface GameTimerOptions {
+     initialTime1: number;  // seconds
+     initialTime2: number;  // seconds
+     activePlayer: 1 | 2;
+     onTimeExpired: (player: 1 | 2) => void;
    }
+
+   interface GameTimerReturn {
+     timeRemaining1: number;
+     timeRemaining2: number;
+     isRunning: boolean;
+     pause: () => void;
+     resume: () => void;
+     updateTime: (player: 1 | 2, newTime: number) => void;
+   }
+
+   export function useGameTimer(options: GameTimerOptions): GameTimerReturn
    ```
-2. Correct logic:
-   - Pause timer (stop interval)
-   - Increment `currentSlideIndex`
-   - Toggle `activePlayer` (1 → 2 or 2 → 1)
-   - If no more slides: handle duel end
-   - Update state and save to localStorage
-   - Resume timer for new active player
-3. Skip logic:
-   - Set `isSkipAnimationActive = true`
-   - Start 3-second countdown using separate interval
-   - Decrement current player's time during countdown
-   - After 3 seconds:
-     - Check if time <= 0: call `handleDuelEnd(loser)`
-     - Otherwise: same as correct (advance slide, switch player)
-   - Set `isSkipAnimationActive = false`
-4. Duel end logic:
-   - Determine winner and loser
-   - Update contestant records:
-     - Winner: increment wins
-     - Loser: set eliminated = true
-     - Winner: inherit loser's unplayed category
-   - Clear duel state from localStorage
-   - Navigate back to dashboard
-   - Show end-of-duel modal/message
-5. Disable buttons during skip animation:
-   - Return `canInteract = false` while `isSkipAnimationActive`
-   - Visually disable buttons (opacity, cursor)
-6. Handle edge cases:
-   - Last slide: end duel after correct/skip
-   - Time reaches 0 during skip: handle immediately
-   - Multiple rapid clicks: debounce or disable after click
-7. Write tests:
-   - Correct button advances slide and switches player
-   - Skip button triggers animation and deducts 3 seconds
-   - Duel ends correctly when time runs out
-   - Winner inherits correct category
+
+2. **Timer Implementation**:
+   - Use `setInterval` with 100ms interval
+   - Track last update timestamp with `Date.now()` or `performance.now()`
+   - Calculate elapsed time since last update
+   - Decrement active player's time only
+   - Prevent drift by comparing actual vs expected time
+
+3. **Accuracy Pattern**:
+   ```typescript
+   const [lastUpdate, setLastUpdate] = useState(Date.now());
+
+   useEffect(() => {
+     const interval = setInterval(() => {
+       const now = Date.now();
+       const elapsed = (now - lastUpdate) / 1000; // to seconds
+
+       setTimeRemaining(prev => Math.max(0, prev - elapsed));
+       setLastUpdate(now);
+     }, 100);
+
+     return () => clearInterval(interval);
+   }, [lastUpdate]);
+   ```
+
+4. **Pause/Resume**:
+   - Clear interval on pause
+   - Restart interval on resume
+   - Maintain accurate time during pause
+
+5. **Time Expiration**:
+   - Check if time <= 0 after each update
+   - Call `onTimeExpired(player)` when triggered
+   - Automatically pause timer after expiration
+
+6. **Update Time**:
+   - Allow external updates (for skip penalty deductions)
+   - Example: `updateTime(1, currentTime - 3)` for 3-second skip
+
+7. **Testing**:
+   - Timer counts down accurately
+   - Only active player's time decrements
+   - Pause stops counting
+   - Resume continues from correct time
+   - Time expiration triggers callback
+   - No memory leaks from intervals
+   - Drift stays within 0.1s over 60 seconds
 
 ## Success Criteria
-- Correct button works instantly and reliably
-- Skip animation timing is accurate (exactly 3 seconds)
-- Control transfers smoothly between players
-- Time deduction during skip is accurate
-- Duel ends correctly with proper winner/loser handling
-- Category inheritance works as specified
-- State persists correctly throughout
-- Buttons cannot be spammed or cause race conditions
-- Tests verify all scenarios
+- Timer accuracy within ±0.1 seconds over 60-second duration
+- Smooth updates without flickering
+- Pause/resume works instantly
+- Time expiration handled correctly
+- No memory leaks or performance issues
+- All tests passing
+- Easy to integrate with Master View
 
 ## Out of Scope
-- Undo functionality
-- Pause/resume duel
-- Manual slide navigation
-- Sound effects or additional feedback
+- Time display formatting (separate utility function)
+- Visual countdown animations
+- Sound effects or audio cues
+- Time boost features
+- Multiple simultaneous timers
 
 ## Notes
-- This is the core game mechanic - must be rock solid
-- Timing precision is critical for fair gameplay
-- Test thoroughly with edge cases (low time, last slide, etc.)
-- Coordinate with task-16 (timer logic) for time management
-- Coordinate with task-23 (cross-window sync) for audience updates
-- Reference SPEC.md sections 3.3, 5.2 for requirements
+- **This is a critical component** - timing must be accurate
+- Use high-precision timestamps
+- Test thoroughly with various scenarios
+- Consider using `useRef` to store interval ID
+- Cleanup interval on unmount is essential
+- The hook manages timing logic only, not display formatting
+- Master View will use this hook and format time for display
