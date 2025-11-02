@@ -31,7 +31,7 @@ A React + TypeScript web application implementing "The Floor" game show format f
 ### 3.2 Game Master Dashboard
 - Display all contestants with:
   - Name
-  - Category (or categories if they've won duels)
+  - Category (current owned category)
   - Win count
   - Visual indication when eliminated (greyed out)
 - Controls:
@@ -78,11 +78,13 @@ A React + TypeScript web application implementing "The Floor" game show format f
 interface Contestant {
   id: string;
   name: string;
-  categories: Category[]; // Can have multiple categories from winning duels
+  category: Category; // Current category owned (replaced when winning duels)
   wins: number;
   eliminated: boolean;
 }
 ```
+
+Note: Contestants own exactly one category at a time. When a contestant wins a duel, they replace their current category with the loser's category (not the category that was played in the duel).
 
 ### 4.2 Category
 ```typescript

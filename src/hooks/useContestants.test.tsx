@@ -22,12 +22,14 @@ describe('useContestants', () => {
 
     const contestants: Contestant[] = [
       {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
         eliminated: false,
       },
       {
+        id: 'bob-test',
         name: 'Bob',
         category: { name: 'Science', slides: [] },
         wins: 1,
@@ -46,6 +48,7 @@ describe('useContestants', () => {
   it('should persist contestants across remounts', () => {
     const contestants: Contestant[] = [
       {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 2,
@@ -67,6 +70,7 @@ describe('useContestants', () => {
 
     const initialContestants: Contestant[] = [
       {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
@@ -82,6 +86,7 @@ describe('useContestants', () => {
       result.current[1]((prev) => [
         ...prev,
         {
+          id: 'bob-test',
           name: 'Bob',
           category: { name: 'Science', slides: [] },
           wins: 0,
