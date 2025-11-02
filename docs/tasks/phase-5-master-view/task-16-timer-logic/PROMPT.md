@@ -1,99 +1,174 @@
-# Task 16: Timer Logic & Display
+# Task 16: Duel Control Logic
 
 ## Objective
-Implement accurate countdown timers for both players that update in real-time, pause/resume correctly, and trigger duel end when time expires.
+Implement Correct and Skip button functionality in Master View that controls duel flow, manages timing, and handles duel completion.
+
+## Status
+**NOT STARTED**: Control buttons exist in layout but have no functionality.
 
 ## Acceptance Criteria
-- [ ] Timer counts down for active player only
-- [ ] Updates every 100ms for smooth display
-- [ ] Pauses when control transfers (between correct/skip actions)
-- [ ] Continues for skip animation (3 seconds against current player)
-- [ ] Triggers duel end when player reaches 0 seconds
-- [ ] Displays time remaining in clear format (MM:SS or SS.S)
-- [ ] Visual warning when time is low (< 10 seconds)
-- [ ] Timer state persists across page refreshes
-- [ ] No time drift or inaccuracy over long duels
-- [ ] Tests verify timer accuracy
+- [ ] Correct button advances slide and switches players
+- [ ] Skip button triggers 3-second animation with time penalty
+- [ ] Skip button disables controls during animation
+- [ ] Duel ends when slides exhausted or time expires
+- [ ] Winner/loser determined correctly
+- [ ] Contestant records updated (wins, eliminated, category inheritance)
+- [ ] Navigation back to dashboard after duel ends
+- [ ] All state changes persist to localStorage
+- [ ] Tests verify all control logic
 
-## Timer Requirements
-- **Precision**: Update every 100ms (10 times per second) for smooth countdown
-- **Accuracy**: Use performance.now() or Date.now() to prevent drift
-- **Format**: Display as "30s" or "0:30" for readability
-- **Warning state**: Red color or pulsing when < 10 seconds
-- **Persistence**: Save time remaining to localStorage periodically
+## Dependencies
+- Task 14: Master View Layout (✅ or in progress)
+- Task 15: useGameTimer hook (⚠️ must be complete)
+- Task 05: useDuelState hook (✅ complete)
+- Task 05: useContestants hook (✅ complete)
 
 ## Implementation Guidance
-1. Create custom hook `src/hooks/useGameTimer.ts`:
-   ```typescript
-   interface GameTimer {
-     timeRemaining1: number; // seconds
-     timeRemaining2: number; // seconds
-     isRunning: boolean;
-     activePlayer: 1 | 2;
-     pause: () => void;
-     resume: () => void;
-     reset: () => void;
-   }
-   ```
-2. Timer implementation:
-   - Use `setInterval` with 100ms interval
-   - Track last update timestamp to calculate exact elapsed time
-   - Prevent drift by comparing actual time vs expected time
-   - Update only the active player's timer
-   - Round to 1 decimal place for display
-3. Pause/resume logic:
-   - Pause when control transfers
-   - Resume after state update completes
-   - Maintain accurate time during pause
-4. Persistence:
-   - Save time remaining to localStorage every second
-   - Load from localStorage on page refresh
-   - Adjust for time elapsed during refresh (optional)
-5. Time display component:
-   - Format seconds as "MM:SS" (e.g., "1:23") or "SS" (e.g., "45s")
-   - Large, clear font
-   - Color coding:
-     - Green: > 15 seconds
-     - Yellow: 10-15 seconds
-     - Red: < 10 seconds
-     - Pulsing red: < 5 seconds
-6. End-of-time handling:
-   - When time reaches 0, trigger `onTimeExpired(player)`
-   - Coordinate with task-15 for duel end logic
-   - Ensure timer stops immediately (no negative time)
-7. Write tests:
-   - Timer counts down accurately
-   - Only active player's timer decrements
-   - Pause and resume work correctly
-   - Time expiration triggers callback
-   - No memory leaks from intervals
 
-## Display Format Options
-Choose based on UX testing:
-- **Option 1**: "30s" (simple, clean)
-- **Option 2**: "0:30" (familiar format)
-- **Option 3**: "30.0s" (shows precision)
+1. **Correct Button Logic**:
+   ```typescript
+   const handleCorrect = () => {
+     // 1. Pause timer
+     pauseTimer();
+
+     // 2. Advance to next slide
+     const nextIndex = duelState.currentSlideIndex + 1;
+
+     // 3. Check if last slide
+     if (nextIndex >= slides.length) {
+       handleDuelEnd(/* active player wins */);
+       return;
+     }
+
+     // 4. Update duel state: increment slide, switch player
+     setDuelState({
+       ...duelState,
+       currentSlideIndex: nextIndex,
+       activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+     });
+
+     // 5. Resume timer for new player
+     resumeTimer();
+   };
+   ```
+
+2. **Skip Button Logic**:
+   ```typescript
+   const handleSkip = () => {
+     // 1. Set skip animation flag
+     setDuelState({
+       ...duelState,
+       isSkipAnimationActive: true,
+     });
+
+     // 2. Start 3-second countdown
+     setTimeout(() => {
+       // 3. Deduct 3 seconds from current player
+       const newTime = activePlayer === 1
+         ? timeRemaining1 - 3
+         : timeRemaining2 - 3;
+
+       // 4. Check if time expired
+       if (newTime <= 0) {
+         handleDuelEnd(/* other player wins */);
+         return;
+       }
+
+       // 5. Update time via timer hook
+       updateTime(activePlayer, newTime);
+
+       // 6. Advance slide and switch player (same as correct)
+       const nextIndex = duelState.currentSlideIndex + 1;
+       if (nextIndex >= slides.length) {
+         handleDuelEnd(/* active player wins by completion */);
+         return;
+       }
+
+       setDuelState({
+         ...duelState,
+         currentSlideIndex: nextIndex,
+         activePlayer: duelState.activePlayer === 1 ? 2 : 1,
+         isSkipAnimationActive: false,
+       });
+     }, 3000);
+   };
+   ```
+
+3. **Duel End Logic**:
+   ```typescript
+   const handleDuelEnd = (winner: Contestant, loser: Contestant) => {
+     // 1. Pause timer
+     pauseTimer();
+
+     // 2. Update winner
+     updateContestant(winner.id, {
+       wins: winner.wins + 1,
+       // Winner inherits UNPLAYED category (not the duel category)
+       category: loser.category,
+     });
+
+     // 3. Eliminate loser
+     updateContestant(loser.id, {
+       eliminated: true,
+     });
+
+     // 4. Clear duel state
+     setDuelState(null);
+
+     // 5. Navigate to dashboard
+     navigate('/');
+
+     // 6. Show completion message (optional)
+     alert(`${winner.name} wins! They inherit ${loser.category.name}`);
+   };
+   ```
+
+4. **Button Disabled State**:
+   - Disable both buttons when `isSkipAnimationActive === true`
+   - Visual indication: reduced opacity, cursor: not-allowed
+
+5. **Keyboard Shortcuts**:
+   - Space: trigger Correct
+   - S key: trigger Skip
+   - Ensure shortcuts don't fire during animation
+
+6. **Edge Cases**:
+   - Last slide + correct → winner by completion
+   - Time expires during normal play → loser loses
+   - Time expires during skip → loser loses
+   - Both times at 0 (shouldn't happen) → handle gracefully
+
+7. **Testing**:
+   - Correct advances slide and switches player
+   - Skip deducts 3 seconds and triggers animation
+   - Duel ends correctly with winner/loser
+   - Category inheritance is correct (UNPLAYED category)
+   - Controls disabled during skip animation
+   - Keyboard shortcuts work
 
 ## Success Criteria
-- Timer is accurate to within 0.1 seconds over 60-second duration
-- Display updates smoothly without flickering
-- No drift or cumulative errors
-- Pause/resume works instantly
-- Low time warning is visually obvious
-- Time expiration handled immediately
-- No memory leaks or performance issues
-- Tests verify timing accuracy
+- Correct button works instantly and reliably
+- Skip animation timing is exactly 3 seconds
+- Time deduction during skip is accurate
+- Duel completion logic is correct
+- Winner/loser determination is accurate
+- Category inheritance works as specified
+- State persists correctly
+- No bugs or race conditions
+- All tests passing
 
 ## Out of Scope
-- Time boost power-up (future feature)
-- Adding time back to clock
-- Custom timer speeds
-- Slow-motion or fast-forward
+- Undo functionality
+- Pause/resume duel
+- Manual slide navigation
+- Sound effects
+- Detailed end-game modal/screen
 
 ## Notes
-- Timing accuracy is critical for fair gameplay
-- Use high-precision timestamps (performance.now())
-- Test with various scenarios: quick answers, long waits, skip animations
-- Consider audio cues for low time (< 10s) as future enhancement
-- Coordinate with task-15 (controls) for integration
-- Reference SPEC.md sections 3.3, 3.4, and 5.2 for requirements
+- **This is core gameplay logic** - must be rock solid
+- Timing precision is critical for fairness
+- Test edge cases thoroughly
+- Category inheritance: winner gets UNPLAYED category (not the duel category)
+- The DuelResult type in @types already has `inheritedCategory` field
+- Coordinate with Task 15 (timer) for time management
+- Reference SPEC.md sections 3.3, 5.2 for requirements

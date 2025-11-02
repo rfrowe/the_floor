@@ -1,90 +1,88 @@
-# Task 10: Dashboard Layout (Refactor)
+# Task 10: Dashboard Layout Polish
 
 ## Objective
-Refactor the existing Dashboard page to use common components, add contestant management features, and create an intuitive layout prioritizing game master workflow.
+Polish the Dashboard page with responsive layout improvements, proper use of common components, and refined contestant selection UX.
+
+## Status
+**PARTIALLY COMPLETE**: Dashboard exists with core functionality including:
+- ✅ Basic layout with header and contestant grid
+- ✅ ContestantCard components with selection
+- ✅ DuelSetup component integration
+- ✅ Import and delete functionality
+- ✅ IndexedDB integration via useContestants hook
+- ⚠️ Needs: Responsive layout refinement, keyboard shortcuts, improved UX polish
 
 ## Acceptance Criteria
-- [ ] Dashboard uses common components (Container, Button, Card) instead of inline styles
-- [ ] Contestant grid displays all contestants using ContestantCard component
-- [ ] Delete button for each contestant (with confirmation)
-- [ ] Header with game title and controls
-- [ ] Area for game configuration (time settings)
-- [ ] Section for duel setup controls
-- [ ] Responsive layout works on different screen sizes
-- [ ] Clean, scannable interface for game master
-- [ ] Navigation link to open audience view in new window
-- [ ] Empty state guides user to import data
-- [ ] Page uses IndexedDB via useContestants() hook
+- [ ] Responsive grid: 4 columns on desktop, 2 on tablet, 1 on mobile
+- [ ] Common components used throughout (Container, Button, Card)
+- [ ] Keyboard shortcuts: Space to start duel, Escape to clear selection
+- [ ] Empty state displays prominently when no contestants
+- [ ] Smooth visual feedback for all interactions
+- [ ] All tests passing with new features
 
-## Layout Structure
-```
-┌─────────────────────────────────────────┐
-│  Header: "The Floor" + Config Button    │
-├─────────────────────────────────────────┤
-│  Duel Setup Panel                       │
-│  [Selected Players] [Category] [Start]  │
-├─────────────────────────────────────────┤
-│  Contestants Grid                       │
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐          │
-│  │ C1 │ │ C2 │ │ C3 │ │ C4 │          │
-│  └────┘ └────┘ └────┘ └────┘          │
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐          │
-│  │ C5 │ │ C6 │ │ C7 │ │ C8 │          │
-│  └────┘ └────┘ └────┘ └────┘          │
-└─────────────────────────────────────────┘
-```
+## Dependencies
+- Task 08: ContestantCard component (✅ complete)
+- Task 07: Common components - Container, Button, Card (✅ complete)
+- Task 13: DuelSetup component (✅ complete - see note below)
 
 ## Implementation Guidance
-1. **Refactor existing** `src/pages/Dashboard.tsx` (already exists with basic import functionality)
-2. Replace inline styles with common components (Container, Button, Card)
-3. Use IndexedDB integration via `useContestants()` hook (already in place)
-4. Header section:
-   - Application title
-   - Button to open audience view in new window
-   - Button to access game configuration
-   - Import PPTX button (from task-06)
-4. Duel setup panel (implementation details in task-12):
-   - Shows selected contestants
-   - Category selection dropdown
-   - Random select button
-   - Start duel button
-5. Contestants grid:
-   - Use ContestantCard from task-08
-   - Grid layout (CSS Grid or Flexbox)
-   - Responsive: 4 columns on desktop, 2 on tablet, 1 on mobile
-   - Sort contestants (active first, then eliminated)
-6. Keep existing IndexedDB integration using `useContestants()` hook
-7. Add delete functionality:
-   - Delete button on each ContestantCard
-   - Confirmation dialog before deleting
-   - Use `remove()` method from useContestants hook
-7. Handle empty state (no contestants yet):
-   - Show message prompting to import PPTX files
-   - Display import button prominently
-8. Add keyboard shortcuts for common actions (optional but nice):
-   - Space bar to start duel
-   - Escape to clear selection
+
+1. **Responsive Grid (Primary Focus)**:
+   - Update CSS Grid in `Dashboard.module.css`:
+     ```css
+     .contestants-grid {
+       display: grid;
+       grid-template-columns: repeat(4, 1fr);
+       gap: 1.5rem;
+     }
+
+     @media (max-width: 1024px) {
+       .contestants-grid {
+         grid-template-columns: repeat(2, 1fr);
+       }
+     }
+
+     @media (max-width: 640px) {
+       .contestants-grid {
+         grid-template-columns: 1fr;
+       }
+     }
+     ```
+
+2. **Keyboard Shortcuts**:
+   - Add `useEffect` with keyboard event listener:
+     - Space: Start duel if 2 contestants + category selected
+     - Escape: Clear selection
+   - Ensure shortcuts don't interfere with text inputs
+
+3. **UX Polish**:
+   - Smooth transitions when selecting contestants
+   - Clear visual hierarchy in empty state
+   - Consistent spacing throughout
+
+4. **Testing**:
+   - Test responsive breakpoints in browser
+   - Verify keyboard shortcuts work
+   - Ensure existing functionality unchanged
 
 ## Success Criteria
-- Dashboard displays all contestants clearly
-- Layout is clean and easy to navigate
-- Responsive design works on different screen sizes
-- Can open audience view in separate window
-- Empty state guides user to import data
-- All interactive elements are accessible
-- Page loads data from localStorage successfully
+- Grid layout responds smoothly to screen size changes
+- Keyboard shortcuts feel natural and don't cause conflicts
+- Empty state is clear and actionable
+- No regressions in existing features
+- All tests passing
 
 ## Out of Scope
-- Actual duel setup logic (task-12)
-- Game configuration modal (task-13)
-- PPTX import UI (task-06)
-- Detailed contestant editing
-- Statistics or analytics
+- Random contestant selection (save for task 11)
+- Game configuration modal (not needed - using defaults)
+- Contestant editing
+- Statistics/analytics
+- Reordering contestants
 
 ## Notes
-- Dashboard.tsx already exists with basic functionality - this is a **refactoring task**
-- Current implementation uses IndexedDB (not localStorage) - keep this
-- Prioritize usability over matching the exact mockup layout
-- Focus on game master workflow: import → manage contestants → configure → select → start duel
-- Add contestant management (delete) as this is essential for GM control
-- Reference SPEC.md section 3.2 for requirements
+- **This is a polish task** - core functionality already exists
+- Focus on responsive design and keyboard UX
+- Don't refactor working code unnecessarily
+- The Dashboard is in good shape - just needs finishing touches
+- DuelSetup component exists and works (Task 13 renamed/merged)
+- Reference SPEC.md section 3.2 for game master workflow

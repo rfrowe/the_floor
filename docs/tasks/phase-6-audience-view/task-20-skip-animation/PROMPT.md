@@ -1,111 +1,111 @@
-# Task 20: Skip Animation
+# Task 20: Skip Animation Synchronization
 
 ## Objective
-Implement the 3-second answer display animation that appears in the center of the clock bar when a player skips, as specified in SPEC.md section 3.4.
+Implement skip animation synchronization so the audience view displays the answer overlay when master view triggers a skip.
+
+## Status
+**NOT STARTED**: ClockBar has `skipAnswer` prop support, but synchronization logic needs implementation.
 
 ## Acceptance Criteria
-- [ ] Answer displays in center of clock bar for exactly 3 seconds
-- [ ] Triggers when master view clicks "Skip" button
-- [ ] Answer is clearly visible and readable
-- [ ] Animation is synchronized with master view
-- [ ] Counts 3 seconds against skipping player's time
-- [ ] Automatically dismisses after 3 seconds
-- [ ] Next slide appears after animation completes
+- [ ] Master view sets `isSkipAnimationActive` flag in duel state
+- [ ] Audience view detects flag and shows answer in ClockBar
+- [ ] Answer displays for exactly 3 seconds
 - [ ] Smooth fade in/out transitions
-- [ ] Tests verify timing accuracy
+- [ ] Synchronizes across windows via localStorage
+- [ ] No flickering or race conditions
 
-## Animation Behavior
-From SPEC.md section 3.4:
-1. Master clicks "Skip" button
-2. Answer appears on audience view in center of clock bar
-3. Displayed for 3 seconds (counted against current player)
-4. Answer fades out
-5. Next slide appears
-6. Control transfers to other player
+## Dependencies
+- Task 16: Duel control logic in Master View (⚠️ skip button must be implemented)
+- Task 19: ClockBar component (✅ complete - has `skipAnswer` prop)
+- Task 18: Timer integration (⚠️ should be complete)
 
 ## Implementation Guidance
-1. Update `ClockBar` component to support skip animation:
-   ```typescript
-   interface ClockBarProps {
-     // ... existing props
-     isSkipAnimationActive: boolean;
-     skipAnswer?: string;
-   }
-   ```
-2. Answer display overlay:
-   - Position: center of clock bar
-   - Large, bold text for readability
-   - High contrast background (e.g., semi-transparent dark overlay)
-   - Bright text color (white or yellow)
-3. Animation sequence:
-   - Fade in (200ms)
-   - Display for 3 seconds
-   - Fade out (200ms)
-   - Total: ~3.4 seconds (but time deduction is exactly 3s)
-4. Synchronization:
-   - Audience view listens to `isSkipAnimationActive` flag in duel state
-   - When true: display answer overlay
-   - When false: hide overlay
-   - Master view controls this flag (task-15)
-5. Styling:
-   ```css
-   .skip-answer-overlay {
-     position: absolute;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     background: rgba(0, 0, 0, 0.9);
-     padding: 20px 40px;
-     border-radius: 8px;
-     font-size: 48px;
-     font-weight: bold;
-     color: #ffff00; /* bright yellow */
-     animation: fadeInOut 3.4s;
-   }
-   ```
-6. Handle edge cases:
-   - Very long answers: truncate or wrap
-   - Multiple rapid skips: queue or ignore
-   - Answer missing: show "Skipped" instead
-7. Add countdown indicator (optional):
-   - Small 3...2...1 countdown
-   - Progress bar under answer
-8. Write tests:
-   - Answer displays for correct duration
-   - Syncs with master view skip action
-   - Fades in/out smoothly
-   - Doesn't interfere with other UI elements
 
-## Visual Example
-```
-┌──────────────────────────────────────────────────┐
-│  Alice (25s) ◀                     ▶ Bob (30s)   │
-│                                                   │
-│          ┌─────────────────────────┐             │
-│          │  The Eiffel Tower       │             │
-│          └─────────────────────────┘             │
-└──────────────────────────────────────────────────┘
-```
+1. **Master View Skip Logic** (in Task 16):
+   ```typescript
+   const handleSkip = () => {
+     const currentSlide = duelState.selectedCategory.slides[duelState.currentSlideIndex];
+     const answer = currentSlide?.answer ?? 'Skipped';
+
+     // Set skip animation state
+     setDuelState({
+       ...duelState,
+       isSkipAnimationActive: true,
+       skipAnswer: answer,  // Add this field to DuelState type
+     });
+
+     // After 3 seconds, clear flag and continue
+     setTimeout(() => {
+       // ... existing skip logic
+       setDuelState({
+         ...duelState,
+         isSkipAnimationActive: false,
+         skipAnswer: undefined,
+         // ... other updates
+       });
+     }, 3000);
+   };
+   ```
+
+2. **Update DuelState Type**:
+   ```typescript
+   // In @types/game.ts or wherever DuelState is defined
+   interface DuelState {
+     // ... existing fields
+     isSkipAnimationActive: boolean;
+     skipAnswer?: string;  // NEW: answer to display during skip
+   }
+   ```
+
+3. **Audience View Integration**:
+   ```typescript
+   function AudienceView() {
+     const [duelState] = useDuelState();
+
+     return (
+       <ClockBar
+         // ... other props
+         skipAnswer={duelState?.isSkipAnimationActive ? duelState.skipAnswer : undefined}
+       />
+     );
+   }
+   ```
+
+4. **ClockBar Skip Overlay** (already exists):
+   - ClockBar component already handles `skipAnswer` prop
+   - Displays overlay in center of clock bar
+   - Fades in/out with CSS transitions
+
+5. **Synchronization**:
+   - useDuelState hook saves to localStorage automatically
+   - Audience view listens to storage events (existing)
+   - Changes propagate within ~100-300ms
+
+6. **Testing**:
+   - Open master and audience views side-by-side
+   - Click skip in master view
+   - Verify answer appears in audience view
+   - Confirm it displays for 3 seconds
+   - Check that it disappears automatically
 
 ## Success Criteria
-- Answer is clearly readable on projected display
-- Timing is accurate (3.0 seconds ±100ms)
-- Animation doesn't obscure important information
-- Synchronization with master view is reliable
-- Professional, polished appearance
-- No performance issues or jank
-- Works across different screen sizes
+- Skip answer appears in audience view when skip triggered
+- Timing is accurate (3 seconds ±0.1s)
+- Synchronization works reliably
+- No visual glitches or flickering
+- Answer text is readable from distance
+- Transitions are smooth
 
 ## Out of Scope
-- Sound effects
-- Fancy animations (keep it simple)
-- Answer validation or scoring
-- Replay or pause functionality
+- Custom animation styles (keep existing fade)
+- Skip animation preview in master view
+- Configurable skip duration
+- Sound effects or audio cues
 
 ## Notes
-- This is a key gameplay moment - make it clear and impactful
-- 3 seconds feels fast when testing, but appropriate during gameplay
-- Ensure answer text is large enough to read from distance
-- Coordinate with task-15 (skip button logic) for state management
-- Coordinate with task-23 (cross-window sync) for real-time updates
-- Reference SPEC.md sections 3.3 and 3.4 for requirements
+- ClockBar component is already built with skip overlay support
+- Focus on state synchronization between views
+- localStorage events provide automatic cross-window sync
+- Skip timing happens in master view, audience just displays
+- This enables the dramatic "reveal the answer" moment in gameplay
+- Reference SPEC.md sections 3.3 and 3.4 for skip animation requirements

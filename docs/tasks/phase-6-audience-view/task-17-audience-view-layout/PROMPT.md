@@ -1,87 +1,102 @@
-# Task 17: Audience View Layout
+# Task 17: Audience View Polish
 
 ## Objective
-Create the full-screen audience display view that shows slides, player information, and timers for projection or display to the audience/players.
+Polish the existing Audience View with improved styling, smooth transitions, and waiting state refinements.
+
+## Status
+**MOSTLY COMPLETE**: AudienceView.tsx exists with core functionality including:
+- ✅ Full-screen layout
+- ✅ ClockBar integration
+- ✅ SlideViewer with censorship boxes
+- ✅ Duel state loading from localStorage
+- ✅ Basic waiting state
+- ⚠️ Needs: Styling polish, smooth transitions, improved waiting screen
 
 ## Acceptance Criteria
-- [ ] Full-screen layout optimized for display/projection
-- [ ] Clock bar at top with player names, times, and active indicator
-- [ ] Large slide display area with proper aspect ratio
-- [ ] Loads duel state from localStorage
-- [ ] Updates in real-time as master view makes changes
-- [ ] Clean, distraction-free interface
-- [ ] Works at minimum 1280x720 resolution
-- [ ] Handles no active duel gracefully
-- [ ] Smooth transitions between slides
+- [ ] Full-screen layout fills viewport (100vw × 100vh)
+- [ ] No scrollbars or overflow visible
+- [ ] Smooth fade transitions between slides (200-300ms)
+- [ ] Waiting screen is visually appealing
+- [ ] Clock bar is readable from distance
+- [ ] Works at 1280×720 and higher resolutions
+- [ ] Clean, professional appearance
 
-## Layout Structure
-```
-┌─────────────────────────────────────────┐
-│ Alice  28s  ◀▶  30s  Bob   [Category]  │  ← Clock bar
-├─────────────────────────────────────────┤
-│                                         │
-│                                         │
-│           Current Slide                 │
-│          (full screen)                  │
-│         with censor boxes               │
-│                                         │
-│                                         │
-│                                         │
-└─────────────────────────────────────────┘
-```
+## Dependencies
+- Task 09: SlideViewer component (✅ complete)
+- Task 19: ClockBar component (✅ complete - see phase reorganization)
 
 ## Implementation Guidance
-1. Create `src/pages/AudienceView.tsx`
-2. Load duel state from localStorage/context:
-   - Use `useDuelState()` hook
-   - Poll or listen for changes from master view
-   - If no duel: show waiting screen or "The Floor" title card
-3. Full-screen layout:
-   - Use viewport units (100vw, 100vh)
-   - No scrolling, no overflow
-   - Background color: solid dark (black or dark gray)
-4. Clock bar section (details in task-19):
-   - Fixed height (e.g., 80-100px)
-   - Contains player info and timers
-   - Stays visible at all times
-5. Slide display area:
-   - Fills remaining vertical space
-   - Use SlideViewer component from task-09
-   - Set `fullscreen={true}` prop
-   - Centered horizontally and vertically
-6. Handle state updates:
-   - Listen to localStorage changes OR
-   - Poll duel state every 200ms OR
-   - Use BroadcastChannel (task-23)
-   - Re-render when duel state changes
-7. No active duel state:
-   - Show branded waiting screen
-   - "Waiting for next duel..." message
-   - Optional: Show game logo or sponsor graphics
-8. Add keyboard shortcut to exit fullscreen (Escape key)
-9. Remove any UI chrome (hide cursor after inactivity - optional)
+
+1. **Full-Screen Layout** (verify existing):
+   ```css
+   .audience-view {
+     width: 100vw;
+     height: 100vh;
+     display: flex;
+     flex-direction: column;
+     overflow: hidden;
+     background: #000;
+   }
+
+   .clock-bar-container {
+     height: 100px;
+     flex-shrink: 0;
+   }
+
+   .slide-container {
+     flex: 1;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+   }
+   ```
+
+2. **Slide Transitions**:
+   - Add CSS transitions for slide changes
+   - Fade out old slide, fade in new slide
+   - Duration: 200-300ms
+   - Use opacity transitions for smoothness
+
+3. **Waiting Screen Enhancement**:
+   - Large "The Floor" title
+   - Subtitle: "Waiting for next duel..."
+   - Optional: animated background or subtle motion
+   - High contrast for visibility
+
+4. **Typography & Readability**:
+   - Use large, bold fonts
+   - High contrast (white text on dark background)
+   - Test readability from 10+ feet away
+
+5. **Performance**:
+   - Ensure 60fps rendering
+   - Use CSS transforms for animations (GPU accelerated)
+   - Avoid layout thrashing
+
+6. **Testing**:
+   - Test at different resolutions (1280×720, 1920×1080, 4K)
+   - Verify no scrollbars appear
+   - Check slide transitions are smooth
+   - Confirm waiting state looks professional
 
 ## Success Criteria
-- Layout fills entire screen properly
-- Slide is visible and clear at all distances
-- Clock bar is readable from across room
-- Updates reflect master view changes within < 500ms
-- No distracting elements or scrollbars
-- Works at 1280x720 and higher resolutions
-- Gracefully handles missing duel state
-- Smooth, professional appearance
+- Layout perfectly fills screen without overflow
+- Transitions are smooth and professional
+- Waiting screen is polished and branded
+- Readable from typical projection distance
+- Works across different screen sizes
+- No performance issues or jank
 
 ## Out of Scope
-- Clock bar implementation (task-19)
-- Skip animation (task-20)
-- Slide transitions/animations (keep simple)
-- Fullscreen API (can add later)
-- Multi-screen support
+- Skip animation (Task 20 - needs ClockBar implementation)
+- Cross-window synchronization improvements (Phase 7)
+- Fullscreen API integration
+- Custom fonts or branding assets
 
 ## Notes
-- This view is for audience/players to see - must be clear and professional
-- Optimize for readability at distance (large text, high contrast)
-- Minimize distractions - keep it clean
-- Test on actual projector or large screen if possible
-- Coordinate with task-23 for cross-window synchronization
-- Reference SPEC.md section 3.4 for requirements
+- **This is a polish task** - core functionality exists
+- Focus on visual refinement and transitions
+- Test on actual projector if possible
+- The audience view should look professional and ready for live use
+- Current implementation uses localStorage polling - works but could be improved in Phase 7
+- Reference SPEC.md section 3.4 for audience view requirements
