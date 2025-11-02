@@ -4,7 +4,9 @@ import { userEvent } from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import * as indexedDBHook from '@hooks/useIndexedDB';
-import type { Contestant } from '@types';
+import * as duelStateHook from '@hooks/useDuelState';
+import * as resetApp from '@utils/resetApp';
+import type { Contestant, DuelState } from '@types';
 
 // Mock window.open
 const mockWindowOpen = vi.fn();
@@ -13,6 +15,23 @@ window.open = mockWindowOpen;
 // Mock window.alert
 const mockAlert = vi.fn();
 window.alert = mockAlert;
+
+// Mock window.location.reload
+const mockReload = vi.fn();
+Object.defineProperty(window, 'location', {
+  value: { reload: mockReload },
+  writable: true,
+});
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 const mockContestant: Contestant = {
   id: '1',
@@ -38,14 +57,28 @@ const mockEliminatedContestant: Contestant = {
   eliminated: true,
 };
 
+const mockDuelState: DuelState = {
+  contestant1: mockContestant,
+  contestant2: mockEliminatedContestant,
+  selectedCategory: mockContestant.category,
+  currentSlideIndex: 0,
+  activePlayer: 1,
+  timeRemaining1: 30,
+  timeRemaining2: 30,
+  isSkipAnimationActive: false,
+};
+
 describe('Dashboard', () => {
   const mockAdd = vi.fn();
   const mockRemove = vi.fn();
   const mockUpdate = vi.fn();
   const mockRefresh = vi.fn();
+  const mockSetDuelState = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no active duel
+    vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([null, mockSetDuelState]);
   });
 
   afterEach(() => {
@@ -201,7 +234,7 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    const deleteButton = screen.getByTitle('Delete contestant permanently');
     await user.click(deleteButton);
 
     await waitFor(() => {
@@ -225,7 +258,7 @@ describe('Dashboard', () => {
     );
 
     // Click delete button
-    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    const deleteButton = screen.getByTitle('Delete contestant permanently');
     await user.click(deleteButton);
 
     // Confirm deletion
@@ -233,10 +266,8 @@ describe('Dashboard', () => {
       expect(screen.getByRole('dialog', { name: 'Delete Contestant' })).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button', { name: 'Delete' })[1];
-    if (confirmButton) {
-      await user.click(confirmButton);
-    }
+    const confirmButton = screen.getByTestId('confirm-delete-button');
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(mockRemove).toHaveBeenCalledWith('1');
@@ -257,7 +288,7 @@ describe('Dashboard', () => {
     );
 
     // Click delete button
-    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    const deleteButton = screen.getByTitle('Delete contestant permanently');
     await user.click(deleteButton);
 
     // Cancel deletion
@@ -290,7 +321,7 @@ describe('Dashboard', () => {
     );
 
     // Click delete button
-    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    const deleteButton = screen.getByTitle('Delete contestant permanently');
     await user.click(deleteButton);
 
     // Confirm deletion
@@ -298,10 +329,8 @@ describe('Dashboard', () => {
       expect(screen.getByRole('dialog', { name: 'Delete Contestant' })).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button', { name: 'Delete' })[1];
-    if (confirmButton) {
-      await user.click(confirmButton);
-    }
+    const confirmButton = screen.getByTestId('confirm-delete-button');
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(mockAlert).toHaveBeenCalledWith('Failed to delete contestant: Delete failed');
@@ -337,5 +366,262 @@ describe('Dashboard', () => {
     );
 
     expect(screen.getByText('Contestants (2)')).toBeInTheDocument();
+  });
+
+  it('does not show Resume Duel button when no active duel', () => {
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [],
+      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Resume Duel' })).not.toBeInTheDocument();
+  });
+
+  it('shows Resume Duel button when there is an active duel', () => {
+    vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([mockDuelState, mockSetDuelState]);
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [],
+      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByRole('button', { name: 'Resume Duel' })).toBeInTheDocument();
+  });
+
+  it('navigates to master view when Resume Duel is clicked', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([mockDuelState, mockSetDuelState]);
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [],
+      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const resumeButton = screen.getByRole('button', { name: 'Resume Duel' });
+    await user.click(resumeButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/master');
+  });
+
+  it('sorts active contestants alphabetically by name', () => {
+    const zebra: Contestant = { ...mockContestant, id: '1', name: 'Zebra', eliminated: false };
+    const alice: Contestant = { ...mockContestant, id: '2', name: 'Alice', eliminated: false };
+    const mike: Contestant = { ...mockContestant, id: '3', name: 'Mike', eliminated: false };
+
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [zebra, alice, mike],
+      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // Get all contestant names in the order they appear in the DOM
+    const contestantNames = screen.getAllByText(/Alice|Mike|Zebra/);
+
+    // Should be in alphabetical order: Alice, Mike, Zebra
+    expect(contestantNames[0]).toHaveTextContent('Alice');
+    expect(contestantNames[1]).toHaveTextContent('Mike');
+    expect(contestantNames[2]).toHaveTextContent('Zebra');
+  });
+
+  it('sorts contestants alphabetically within active and eliminated groups', () => {
+    const zebraActive: Contestant = {
+      ...mockContestant,
+      id: '1',
+      name: 'Zebra',
+      eliminated: false,
+    };
+    const aliceActive: Contestant = {
+      ...mockContestant,
+      id: '2',
+      name: 'Alice',
+      eliminated: false,
+    };
+    const mikeEliminated: Contestant = {
+      ...mockContestant,
+      id: '3',
+      name: 'Mike',
+      eliminated: true,
+    };
+    const bobEliminated: Contestant = { ...mockContestant, id: '4', name: 'Bob', eliminated: true };
+
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [zebraActive, mikeEliminated, aliceActive, bobEliminated],
+      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // Get all contestant names in order
+    const contestantElements = screen.getAllByText(/Alice|Bob|Mike|Zebra/);
+
+    // Should be: Active (alphabetical): Alice, Zebra, then Eliminated (alphabetical): Bob, Mike
+    expect(contestantElements[0]).toHaveTextContent('Alice');
+    expect(contestantElements[1]).toHaveTextContent('Zebra');
+    expect(contestantElements[2]).toHaveTextContent('Bob');
+    expect(contestantElements[3]).toHaveTextContent('Mike');
+  });
+
+  describe('Reset Application', () => {
+    it('shows Reset App button in header', () => {
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      expect(screen.getByRole('button', { name: /Reset App/i })).toBeInTheDocument();
+    });
+
+    it('shows confirmation modal when Reset App button clicked', async () => {
+      const user = userEvent.setup();
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      const resetButton = screen.getByRole('button', { name: /Reset App/i });
+      await user.click(resetButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: 'Reset Application' })).toBeInTheDocument();
+        expect(
+          screen.getByText(/This will permanently delete ALL application data/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('cancels reset when Cancel button clicked', async () => {
+      const user = userEvent.setup();
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Click Reset App
+      const resetButton = screen.getByRole('button', { name: /Reset App/i });
+      await user.click(resetButton);
+
+      // Cancel reset
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: 'Reset Application' })).toBeInTheDocument();
+      });
+
+      const cancelButton = screen.getByRole('button', { name: /Cancel/i });
+      await user.click(cancelButton);
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Reset Application' })).not.toBeInTheDocument();
+      });
+    });
+
+    it('resets app and reloads when confirmed', async () => {
+      const user = userEvent.setup();
+      const resetSpy = vi.spyOn(resetApp, 'resetAppState').mockResolvedValue();
+
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [mockContestant],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Click Reset App
+      const resetButton = screen.getByRole('button', { name: /Reset App/i });
+      await user.click(resetButton);
+
+      // Confirm reset
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: 'Reset Application' })).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByTestId('confirm-reset-button');
+      await user.click(confirmButton);
+
+      await waitFor(() => {
+        expect(resetSpy).toHaveBeenCalledOnce();
+        expect(mockReload).toHaveBeenCalledOnce();
+      });
+    });
+
+    it('handles reset error gracefully', async () => {
+      const user = userEvent.setup();
+      const resetError = new Error('Reset failed');
+      const resetSpy = vi.spyOn(resetApp, 'resetAppState').mockRejectedValue(resetError);
+
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [mockContestant],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Click Reset App
+      const resetButton = screen.getByRole('button', { name: /Reset App/i });
+      await user.click(resetButton);
+
+      // Confirm reset
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: 'Reset Application' })).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByTestId('confirm-reset-button');
+      await user.click(confirmButton);
+
+      await waitFor(() => {
+        expect(resetSpy).toHaveBeenCalledOnce();
+        expect(mockAlert).toHaveBeenCalledWith('Failed to reset application: Reset failed');
+        expect(mockReload).not.toHaveBeenCalled();
+      });
+    });
   });
 });
