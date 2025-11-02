@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Category, Contestant } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { ContestantCard } from '@components/contestant/ContestantCard';
-import { DuelSetup, type DuelConfig } from '@components/duel/DuelSetup';
+import { DuelSetup, type DuelConfig, type DuelSetupHandle } from '@components/duel/DuelSetup';
 import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
 import { Card } from '@components/common/Card';
@@ -17,6 +17,7 @@ function Dashboard() {
   const [selectedContestant1, setSelectedContestant1] = useState<Contestant | null>(null);
   const [selectedContestant2, setSelectedContestant2] = useState<Contestant | null>(null);
   const [contestants, { add: addContestant, remove: removeContestant }] = useContestants();
+  const duelSetupRef = useRef<DuelSetupHandle>(null);
 
   const handleImport = async (contestantName: string, category: Category) => {
     const newContestant = createContestantFromCategory(category, contestantName);
@@ -101,6 +102,38 @@ function Dashboard() {
     return selectedContestant1?.id === contestant.id || selectedContestant2?.id === contestant.id;
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // Escape: Clear selection
+      if (e.key === 'Escape') {
+        if (selectedContestant1 || selectedContestant2) {
+          e.preventDefault();
+          handleClearDuelSelection();
+        }
+      }
+
+      // Space: Start duel if ready
+      if (e.key === ' ') {
+        if (selectedContestant1 && selectedContestant2 && duelSetupRef.current) {
+          e.preventDefault();
+          duelSetupRef.current.startDuel();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedContestant1, selectedContestant2]);
+
   // Sort contestants: active first, then eliminated
   const sortedContestants = [...contestants].sort((a, b) => {
     if (a.eliminated === b.eliminated) {
@@ -138,6 +171,7 @@ function Dashboard() {
       {/* Duel Setup Panel */}
       <Card className={duelPanelClass}>
         <DuelSetup
+          ref={duelSetupRef}
           contestant1={selectedContestant1}
           contestant2={selectedContestant2}
           onClear={handleClearDuelSelection}

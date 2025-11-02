@@ -32,6 +32,11 @@
 /* Duel Setup Panel */
 .duel-panel {
   margin-bottom: 2rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.duel-panel:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .duel-panel-content {
@@ -74,10 +79,20 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.contestant-card-wrapper:hover {
+  transform: translateY(-2px);
 }
 
 .delete-button {
   width: 100%;
+  transition: all 0.2s ease;
+}
+
+.delete-button:hover {
+  transform: translateY(-1px);
 }
 
 /* Empty State */
