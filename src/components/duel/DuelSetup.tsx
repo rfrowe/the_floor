@@ -29,6 +29,9 @@ export interface DuelSetupProps {
 
   /** Callback when duel is started with valid configuration */
   onStartDuel: (duelConfig: DuelConfig) => void;
+
+  /** Optional callback for random contestant selection */
+  onRandomSelect?: () => void;
 }
 
 /**
@@ -50,7 +53,7 @@ export interface DuelSetupHandle {
  * - Information about winner receiving unplayed category
  */
 export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function DuelSetup(
-  { contestant1, contestant2, onClear, onStartDuel },
+  { contestant1, contestant2, onClear, onStartDuel, onRandomSelect },
   ref
 ) {
   const navigate = useNavigate();
@@ -222,6 +225,11 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
 
       {/* Actions */}
       <div className={actionsClass}>
+        {onRandomSelect && (
+          <Button variant="secondary" onClick={onRandomSelect}>
+            Random Select
+          </Button>
+        )}
         <Button variant="secondary" onClick={handleClear} disabled={!contestant1 && !contestant2}>
           Clear
         </Button>
