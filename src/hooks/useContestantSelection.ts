@@ -57,7 +57,12 @@ export function useContestantSelection(contestants: Contestant[]): ContestantSel
   };
 
   const randomSelect = () => {
-    const selected = randomSelectUtil(contestants);
+    // Filter out already selected contestants to avoid toggling them off
+    const eligibleContestants = contestants.filter(
+      (c) => c.id !== selectedContestant1?.id && c.id !== selectedContestant2?.id
+    );
+
+    const selected = randomSelectUtil(eligibleContestants);
     if (selected) {
       // Add to selection using the same logic as manual selection
       select(selected);
