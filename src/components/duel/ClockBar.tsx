@@ -5,6 +5,7 @@
  */
 
 import type { Contestant } from '@types';
+import { formatTime } from '@utils/time';
 import styles from './ClockBar.module.css';
 
 export interface ClockBarProps {
@@ -15,23 +16,6 @@ export interface ClockBarProps {
   activePlayer: 1 | 2;
   categoryName: string;
   skipAnswer?: string; // When present, displays the answer in an overlay
-}
-
-/**
- * Formats time in seconds to display format with milliseconds
- * Examples: "28.5s" or "0:28.5" or "3.14s"
- */
-function formatTime(seconds: number): string {
-  const clampedSeconds = Math.max(0, seconds);
-  const wholeSeconds = Math.floor(clampedSeconds);
-  const milliseconds = Math.floor((clampedSeconds - wholeSeconds) * 10); // Show 1 decimal place
-
-  if (wholeSeconds < 60) {
-    return `${wholeSeconds.toString()}.${milliseconds.toString()}s`;
-  }
-  const mins = Math.floor(wholeSeconds / 60);
-  const secs = wholeSeconds % 60;
-  return `${mins.toString()}:${secs.toString().padStart(2, '0')}.${milliseconds.toString()}`;
 }
 
 /**

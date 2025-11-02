@@ -33,8 +33,9 @@ function isNumber(value: unknown): value is number {
 
 /**
  * Type guard for CensorBox
+ * Exported for testing
  */
-function isCensorBox(box: unknown): box is CensorBox {
+export function isCensorBox(box: unknown): box is CensorBox {
   if (typeof box !== 'object' || box === null) {
     return false;
   }
@@ -56,8 +57,9 @@ function isCensorBox(box: unknown): box is CensorBox {
 
 /**
  * Type guard for Slide
+ * Exported for testing
  */
-function isSlide(slide: unknown): slide is Slide {
+export function isSlide(slide: unknown): slide is Slide {
   if (typeof slide !== 'object' || slide === null) {
     return false;
   }
@@ -75,8 +77,9 @@ function isSlide(slide: unknown): slide is Slide {
 
 /**
  * Type guard for Category
+ * Exported for testing
  */
-function isCategory(category: unknown): category is Category {
+export function isCategory(category: unknown): category is Category {
   if (typeof category !== 'object' || category === null) {
     return false;
   }
