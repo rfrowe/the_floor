@@ -1,0 +1,189 @@
+/**
+ * Full-screen audience view styles
+ * Optimized for projection/display at 1280x720 minimum resolution
+ */
+
+/* Main container - fills entire viewport */
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Clock bar at top */
+.clock-bar {
+  flex-shrink: 0;
+  height: 90px;
+  background-color: #1a1a1a;
+  border-bottom: 3px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  gap: 2rem;
+}
+
+/* Player info container */
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* Player names */
+.player-name {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ccc;
+  transition: all 0.3s ease;
+}
+
+/* Active player indicator */
+.player-name.active {
+  color: #fff;
+  font-size: 2.25rem;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+/* Timer display */
+.timer {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #4caf50;
+  min-width: 4rem;
+  text-align: center;
+}
+
+/* Separator between players */
+.separator {
+  font-size: 2rem;
+  color: #666;
+  user-select: none;
+}
+
+/* Category display */
+.category {
+  font-size: 1.5rem;
+  color: #888;
+  text-align: right;
+  flex: 0 0 auto;
+  max-width: 20rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Slide display area - fills remaining space */
+.slide-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  background-color: #000;
+}
+
+/* No slide message */
+.no-slide {
+  font-size: 2rem;
+  color: #666;
+  text-align: center;
+}
+
+/* Waiting screen for no active duel */
+.waiting-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+}
+
+.waiting-title {
+  font-size: 5rem;
+  font-weight: 700;
+  margin: 0 0 2rem 0;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+}
+
+.waiting-message {
+  font-size: 2rem;
+  color: #888;
+  margin: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Pulse animation for waiting message */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments for smaller displays */
+@media (max-width: 1280px) {
+  .clock-bar {
+    padding: 0 2rem;
+    height: 80px;
+  }
+
+  .player-name {
+    font-size: 1.75rem;
+  }
+
+  .player-name.active {
+    font-size: 2rem;
+  }
+
+  .timer {
+    font-size: 1.75rem;
+  }
+
+  .category {
+    font-size: 1.25rem;
+  }
+
+  .waiting-title {
+    font-size: 4rem;
+  }
+
+  .waiting-message {
+    font-size: 1.75rem;
+  }
+}
+
+/* High contrast mode for better readability */
+@media (prefers-contrast: high) {
+  .clock-bar {
+    background-color: #000;
+    border-bottom-color: #fff;
+  }
+
+  .player-name {
+    color: #fff;
+  }
+
+  .category {
+    color: #fff;
+  }
+}
