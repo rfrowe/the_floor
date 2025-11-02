@@ -353,6 +353,205 @@ describe('AudienceView', () => {
     });
   });
 
+  describe('Image Preloading', () => {
+    it('should preload next slide image when current slide is displayed', () => {
+      const mockDuelState: DuelState = {
+        contestant1: {
+          id: 'alice-1',
+          name: 'Alice',
+          category: { name: 'Math', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        contestant2: {
+          id: 'bob-2',
+          name: 'Bob',
+          category: { name: 'Science', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        activePlayer: 1,
+        timeRemaining1: 30,
+        timeRemaining2: 30,
+        currentSlideIndex: 0,
+        selectedCategory: {
+          name: 'Math',
+          slides: [
+            {
+              imageUrl: 'data:image/png;base64,slide1data',
+              answer: 'Answer 1',
+              censorBoxes: [],
+            },
+            {
+              imageUrl: 'data:image/png;base64,slide2data',
+              answer: 'Answer 2',
+              censorBoxes: [],
+            },
+          ],
+        },
+        isSkipAnimationActive: false,
+      };
+
+      // Spy on Image constructor
+      const imageSrcSpy = vi.fn();
+      const OriginalImage = window.Image;
+      window.Image = class extends OriginalImage {
+        constructor() {
+          super();
+          Object.defineProperty(this, 'src', {
+            set: imageSrcSpy,
+          });
+        }
+      } as typeof Image;
+
+      mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
+
+      render(<AudienceView />);
+
+      // Should preload slide 2 (next after slide 1)
+      expect(imageSrcSpy).toHaveBeenCalledWith('data:image/png;base64,slide2data');
+
+      // Restore original Image
+      window.Image = OriginalImage;
+    });
+
+    it('should not preload when there is no next slide', () => {
+      const mockDuelState: DuelState = {
+        contestant1: {
+          id: 'alice-1',
+          name: 'Alice',
+          category: { name: 'Math', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        contestant2: {
+          id: 'bob-2',
+          name: 'Bob',
+          category: { name: 'Science', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        activePlayer: 1,
+        timeRemaining1: 30,
+        timeRemaining2: 30,
+        currentSlideIndex: 0,
+        selectedCategory: {
+          name: 'Math',
+          slides: [
+            {
+              imageUrl: 'data:image/png;base64,slide1data',
+              answer: 'Answer 1',
+              censorBoxes: [],
+            },
+          ],
+        },
+        isSkipAnimationActive: false,
+      };
+
+      // Spy on Image constructor
+      const imageSrcSpy = vi.fn();
+      const OriginalImage = window.Image;
+      window.Image = class extends OriginalImage {
+        constructor() {
+          super();
+          Object.defineProperty(this, 'src', {
+            set: imageSrcSpy,
+          });
+        }
+      } as typeof Image;
+
+      mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
+
+      render(<AudienceView />);
+
+      // Should not preload anything - we're on the last slide
+      expect(imageSrcSpy).not.toHaveBeenCalled();
+
+      // Restore original Image
+      window.Image = OriginalImage;
+    });
+
+    it('should preload new next slide when current slide changes', () => {
+      const mockDuelStateSlide0: DuelState = {
+        contestant1: {
+          id: 'alice-1',
+          name: 'Alice',
+          category: { name: 'Math', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        contestant2: {
+          id: 'bob-2',
+          name: 'Bob',
+          category: { name: 'Science', slides: [] },
+          wins: 0,
+          eliminated: false,
+        },
+        activePlayer: 1,
+        timeRemaining1: 30,
+        timeRemaining2: 30,
+        currentSlideIndex: 0,
+        selectedCategory: {
+          name: 'Math',
+          slides: [
+            {
+              imageUrl: 'data:image/png;base64,slide1data',
+              answer: 'Answer 1',
+              censorBoxes: [],
+            },
+            {
+              imageUrl: 'data:image/png;base64,slide2data',
+              answer: 'Answer 2',
+              censorBoxes: [],
+            },
+            {
+              imageUrl: 'data:image/png;base64,slide3data',
+              answer: 'Answer 3',
+              censorBoxes: [],
+            },
+          ],
+        },
+        isSkipAnimationActive: false,
+      };
+
+      // Spy on Image constructor
+      const imageSrcSpy = vi.fn();
+      const OriginalImage = window.Image;
+      window.Image = class extends OriginalImage {
+        constructor() {
+          super();
+          Object.defineProperty(this, 'src', {
+            set: imageSrcSpy,
+          });
+        }
+      } as typeof Image;
+
+      mockUseDuelState.mockReturnValue([mockDuelStateSlide0, vi.fn()]);
+
+      const { rerender } = render(<AudienceView />);
+
+      // Should preload slide 2
+      expect(imageSrcSpy).toHaveBeenCalledWith('data:image/png;base64,slide2data');
+
+      imageSrcSpy.mockClear();
+
+      // Move to slide 1
+      const mockDuelStateSlide1 = {
+        ...mockDuelStateSlide0,
+        currentSlideIndex: 1,
+      };
+      mockUseDuelState.mockReturnValue([mockDuelStateSlide1, vi.fn()]);
+
+      rerender(<AudienceView />);
+
+      // Should now preload slide 3
+      expect(imageSrcSpy).toHaveBeenCalledWith('data:image/png;base64,slide3data');
+
+      // Restore original Image
+      window.Image = OriginalImage;
+    });
+  });
+
   describe('Escape Key Handler', () => {
     it('should call exitFullscreen when Escape is pressed in fullscreen mode', () => {
       mockUseDuelState.mockReturnValue([null, vi.fn()]);
