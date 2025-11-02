@@ -5,14 +5,20 @@ Create the interface and logic for setting up a duel between two selected contes
 
 ## Acceptance Criteria
 - [ ] Duel setup panel shows selected contestants
-- [ ] Dropdown to choose which category to use for the duel
+- [ ] Dropdown to choose which category to use for the duel (2 options: one from each contestant)
 - [ ] Start Duel button (disabled until valid setup)
-- [ ] Validation: requires 2 contestants and 1 category
+- [ ] Validation: requires 2 contestants and 1 category selected
 - [ ] Starting duel initializes duel state and navigates to master view
-- [ ] Category dropdown shows all categories from both contestants
-- [ ] Clear indication of which contestant owns which category
-- [ ] Handles edge cases (contestant with 0 categories)
+- [ ] Category dropdown clearly shows which contestant owns which category
+- [ ] Clear visual indication that winner gets the UNPLAYED category
 - [ ] Tests verify setup logic
+
+## Important: Single Category Model
+- **Each contestant owns exactly ONE category**
+- The GM selects which of the TWO categories to use for the duel
+- **Winner inherits the UNPLAYED category** (the one NOT used in the duel)
+- Example: Alice has "Math", Bob has "History" → GM picks "Math" → Winner gets "History"
+- This is already reflected in the `DuelResult.inheritedCategory` type
 
 ## Duel Setup Panel UI
 ```
@@ -22,10 +28,12 @@ Create the interface and logic for setting up a duel between two selected contes
 │  Contestant 1: [Name]                 │
 │  Contestant 2: [Name]                 │
 │                                       │
-│  Category: [Dropdown ▼]              │
+│  Duel Category: [Dropdown ▼]         │
 │    - Category A (from Contestant 1)   │
 │    - Category B (from Contestant 2)   │
-│    - Category C (from Contestant 1)   │
+│                                       │
+│  ℹ️ Winner receives the UNPLAYED      │
+│     category from the loser           │
 │                                       │
 │  [Clear] [Start Duel]                 │
 └───────────────────────────────────────┘
@@ -49,17 +57,18 @@ Create the interface and logic for setting up a duel between two selected contes
    }
    ```
 3. Category selection:
-   - Gather all categories from both contestants
-   - Display in dropdown with labels showing owner:
+   - **Each contestant has exactly ONE category** (Contestant.category, not categories[])
+   - Display dropdown with TWO options showing owner:
      - "State Capitals (from Alice)"
      - "80s Movies (from Bob)"
    - Store selected category in local state
+   - Show info text: "Winner receives the unplayed category"
 4. Validation:
    - Disable "Start Duel" button if:
      - Less than 2 contestants selected
      - No category selected
-     - Any contestant has 0 categories
    - Show helpful error messages
+   - Note: Every contestant has exactly 1 category, so no need to check for 0 categories
 5. Start Duel logic:
    - Create initial DuelState:
      - Set both contestants
@@ -70,9 +79,8 @@ Create the interface and logic for setting up a duel between two selected contes
    - Save duel state to localStorage (via context/hook)
    - Navigate to `/master` route
 6. Handle edge cases:
-   - Contestant with multiple categories: show all in dropdown
    - Only 1 contestant selected: disable start button
-   - No categories available: show error message
+   - Both contestants have same category name: distinguish by owner in dropdown
 7. Write tests:
    - Can select category from dropdown
    - Start button disabled when invalid
@@ -98,5 +106,8 @@ Create the interface and logic for setting up a duel between two selected contes
 - This is a critical step before gameplay begins
 - Validation prevents invalid game states
 - Make sure state is saved before navigation
+- **Critical**: The selected category is for THE DUEL. The winner gets the OTHER category (unplayed)
+- This logic is handled later in duel resolution, not in setup
+- The DuelResult type already has `inheritedCategory` field for tracking this
 - Reference SPEC.md sections 3.2, 5.2, and 4.5 for requirements
 - Coordinate with task-21 (game context) for state management

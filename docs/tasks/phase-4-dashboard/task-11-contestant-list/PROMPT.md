@@ -44,6 +44,7 @@ From SPEC.md section 3.2:
      }
      ```
 2. Update Dashboard to use selection hook
+3. **Reuse existing components**: ContestantCard from task-08 already supports `isSelected` and `onSelect` props - use these!
 3. Pass selection props to ContestantCard components:
    - `isSelected` prop based on selection state
    - `onClick` handler to toggle selection
@@ -83,4 +84,5 @@ From SPEC.md section 3.2:
 - Make it feel responsive and intuitive
 - Consider edge cases: only 1 contestant left, all eliminated, etc.
 - Random selection should be truly random (no bias)
+- **Data Model Note**: Each contestant owns ONE category. When selecting contestants for a duel, you're selecting two contestants (each with their own single category)
 - Reference SPEC.md section 3.2 and 5.2 for requirements
