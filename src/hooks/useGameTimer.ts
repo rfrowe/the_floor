@@ -92,6 +92,37 @@ export function useGameTimer(options: GameTimerOptions): GameTimerReturn {
   const [timeRemaining2, setTimeRemaining2] = useState(initialTime2);
   const [isRunning, setIsRunning] = useState(true);
 
+  // Track previous initial times to detect significant changes (for storage sync)
+  const prevInitialTime1Ref = useRef(initialTime1);
+  const prevInitialTime2Ref = useRef(initialTime2);
+
+  // Reinitialize timer state when initial times change significantly
+  // This handles both initial load and cross-window sync updates
+  useEffect(() => {
+    console.log('[useGameTimer] Checking reinit:', {
+      initialTime1: initialTime1.toFixed(1),
+      initialTime2: initialTime2.toFixed(1),
+      prevInitialTime1: prevInitialTime1Ref.current.toFixed(1),
+      prevInitialTime2: prevInitialTime2Ref.current.toFixed(1),
+    });
+
+    const time1Changed = Math.abs(initialTime1 - prevInitialTime1Ref.current) > 0.5;
+    const time2Changed = Math.abs(initialTime2 - prevInitialTime2Ref.current) > 0.5;
+
+    // Update if times changed significantly (more than 0.5s difference)
+    // This prevents constant reinitialization from 200ms polling updates
+    if (time1Changed || time2Changed) {
+      console.log('[useGameTimer] REINITIALIZING with:', {
+        initialTime1: initialTime1.toFixed(1),
+        initialTime2: initialTime2.toFixed(1),
+      });
+      setTimeRemaining1(initialTime1);
+      setTimeRemaining2(initialTime2);
+      prevInitialTime1Ref.current = initialTime1;
+      prevInitialTime2Ref.current = initialTime2;
+    }
+  }, [initialTime1, initialTime2]);
+
   // Track last update timestamp for accurate timing
   const lastUpdateRef = useRef<number>(Date.now());
 
@@ -140,6 +171,9 @@ export function useGameTimer(options: GameTimerOptions): GameTimerReturn {
     if (!isRunning) {
       return;
     }
+
+    // Reset timestamp when starting or when activePlayer changes
+    lastUpdateRef.current = Date.now();
 
     // Update timer every 100ms for smooth display
     const interval = setInterval(() => {

@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import MasterView from './MasterView';
-import type { DuelState } from '@types';
+import type { DuelState, Contestant } from '@types';
 
 // Mock hooks
 vi.mock('@hooks/useDuelState', () => ({
@@ -348,23 +348,28 @@ describe('MasterView', () => {
       mockTimerResume = vi.fn();
       mockTimerUpdateTime = vi.fn();
 
-      vi.mocked(useDuelState).mockReturnValue([mockDuelState, mockSetDuelState]);
+      vi.mocked(useDuelState).mockReturnValue([
+        mockDuelState,
+        mockSetDuelState as (
+          value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+        ) => void,
+      ]);
       vi.mocked(useContestants).mockReturnValue([
         [],
         {
-          add: vi.fn(),
-          update: mockUpdateContestant,
-          remove: vi.fn(),
-          refresh: vi.fn(),
+          add: vi.fn() as (contestant: Contestant) => Promise<void>,
+          update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+          remove: vi.fn() as (id: string) => Promise<void>,
+          refresh: vi.fn() as () => Promise<void>,
         },
       ]);
       vi.mocked(useGameTimer).mockReturnValue({
         timeRemaining1: 28.5,
         timeRemaining2: 30.0,
         isRunning: true,
-        pause: mockTimerPause,
-        resume: mockTimerResume,
-        updateTime: mockTimerUpdateTime,
+        pause: mockTimerPause as () => void,
+        resume: mockTimerResume as () => void,
+        updateTime: mockTimerUpdateTime as (player: 1 | 2, newTime: number) => void,
       });
     });
 
@@ -381,9 +386,6 @@ describe('MasterView', () => {
           fireEvent.click(correctButton);
         }
 
-        // Should pause timer
-        expect(mockTimerPause).toHaveBeenCalled();
-
         // Should advance slide and switch player
         expect(mockSetDuelState).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -392,8 +394,9 @@ describe('MasterView', () => {
           })
         );
 
-        // Should resume timer
-        expect(mockTimerResume).toHaveBeenCalled();
+        // Timer should NOT be paused during player switch (it continues running)
+        expect(mockTimerPause).not.toHaveBeenCalled();
+        expect(mockTimerResume).not.toHaveBeenCalled();
       });
 
       it('should end duel when last slide is answered correctly', async () => {
@@ -402,7 +405,12 @@ describe('MasterView', () => {
           currentSlideIndex: 1, // Last slide (2 slides total)
         };
 
-        vi.mocked(useDuelState).mockReturnValue([lastSlideDuelState, mockSetDuelState]);
+        vi.mocked(useDuelState).mockReturnValue([
+          lastSlideDuelState,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
 
         // Mock window.alert
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
@@ -523,13 +531,17 @@ describe('MasterView', () => {
 
       it('should end duel if skip penalty causes time expiration', async () => {
         // Set timer to have only 2 seconds left
+        const localMockTimerPause = vi.fn();
+        const localMockTimerResume = vi.fn();
+        const localMockTimerUpdateTime = vi.fn();
+
         vi.mocked(useGameTimer).mockReturnValue({
           timeRemaining1: 2.0,
           timeRemaining2: 30.0,
           isRunning: true,
-          pause: mockTimerPause,
-          resume: mockTimerResume,
-          updateTime: mockTimerUpdateTime,
+          pause: localMockTimerPause as () => void,
+          resume: localMockTimerResume as () => void,
+          updateTime: localMockTimerUpdateTime as (player: 1 | 2, newTime: number) => void,
         });
 
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
@@ -582,7 +594,8 @@ describe('MasterView', () => {
 
         fireEvent.keyDown(document, { key: ' ' });
 
-        expect(mockTimerPause).toHaveBeenCalled();
+        // Timer should NOT be paused when pressing Space (Correct action)
+        expect(mockTimerPause).not.toHaveBeenCalled();
         expect(mockSetDuelState).toHaveBeenCalled();
       });
 
@@ -633,7 +646,12 @@ describe('MasterView', () => {
           currentSlideIndex: 1, // Last slide
         };
 
-        vi.mocked(useDuelState).mockReturnValue([lastSlideDuelState, mockSetDuelState]);
+        vi.mocked(useDuelState).mockReturnValue([
+          lastSlideDuelState,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
 
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
 
