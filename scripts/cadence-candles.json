@@ -1,0 +1,49 @@
+{
+  "category": {
+    "name": "Candles",
+    "slides": [
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjVlZSIvPjxyZWN0IHg9IjM1MCIgeT0iMjUwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZmZmZiIgcng9IjUiLz48ZWxsaXBzZSBjeD0iNDAwIiBjeT0iMjUwIiByeD0iNTAiIHJ5PSIxMCIgZmlsbD0iI2YwZjBmMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSI0NTAiIHJ4PSI1MCIgcnk9IjEwIiBmaWxsPSIjZTBlMGUwIi8+PHBhdGggZD0iTSA0MDAgMjUwIEwgNDAwIDIyMCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjQiLz48ZWxsaXBzZSBjeD0iNDAwIiBjeT0iMjEwIiByeD0iMTgiIHJ5PSIyNSIgZmlsbD0iI2ZmYTUwMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIyMDAiIHJ4PSIxNSIgcnk9IjIwIiBmaWxsPSIjZmZkNzAwIi8+PHBhdGggZD0iTSA0MDAgMTkwIFEgMzk1IDE3NSAzOTAgMTYwIiBzdHJva2U9IiNmZjg4MDAiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjQwMCIgeT0iNTQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBpbGxhciBDYW5kbGU8L3RleHQ+PC9zdmc+",
+        "answer": "Pillar Candle",
+        "censorBoxes": [
+          {
+            "x": 32,
+            "y": 84,
+            "width": 36,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhlZSIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjM1MCIgcj0iODAiIGZpbGw9IiNmZmU2ZTYiLz48Y2lyY2xlIGN4PSI0MDAiIGN5PSIzNTAiIHI9IjcwIiBmaWxsPSIjZmZjY2NjIi8+PHBhdGggZD0iTSA0MDAgMjcwIEwgNDAwIDI0MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjMiLz48ZWxsaXBzZSBjeD0iNDAwIiBjeT0iMjMwIiByeD0iMTQiIHJ5PSIyMCIgZmlsbD0iI2ZmYTUwMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIyMjIiIHJ4PSIxMiIgcnk9IjE2IiBmaWxsPSIjZmZkNzAwIi8+PHBhdGggZD0iTSA0MDAgMjEwIFEgMzk2IDE5OCAzOTIgMTg1IiBzdHJva2U9IiNmZjg4MDAiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjM1MCIgcj0iNTUiIGZpbGw9IiNmZmJiYmIiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UZWEgTGlnaHQ8L3RleHQ+PC9zdmc+",
+        "answer": "Tea Light",
+        "censorBoxes": [
+          {
+            "x": 40,
+            "y": 82,
+            "width": 20,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhmYSIvPjxyZWN0IHg9IjM3MCIgeT0iMjAwIiB3aWR0aD0iNjAiIGhlaWdodD0iMjgwIiBmaWxsPSIjZmZlNmQ1IiByeD0iOCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIyMDAiIHJ4PSIzMCIgcnk9IjgiIGZpbGw9IiNmZmQ4YjgiLz48ZWxsaXBzZSBjeD0iNDAwIiBjeT0iNDgwIiByeD0iMzAiIHJ5PSI4IiBmaWxsPSIjZmZjYzk1Ii8+PHBhdGggZD0iTSA0MDAgMjAwIEwgNDAwIDE3MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjMiLz48ZWxsaXBzZSBjeD0iNDAwIiBjeT0iMTYwIiByeD0iMTIiIHJ5PSIxOCIgZmlsbD0iI2ZmYTUwMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxNTUiIHJ4PSIxMCIgcnk9IjE1IiBmaWxsPSIjZmZkNzAwIi8+PHBhdGggZD0iTSA0MDAgMTQ1IFEgMzk3IDEzNSAzOTQgMTI1IiBzdHJva2U9IiNmZjg4MDAiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjxsaW5lIHgxPSIzNzAiIHkxPSIyNTAiIHgyPSI0MzAiIHkyPSIyNTAiIHN0cm9rZT0iI2ZmYzg5NSIgc3Ryb2tlLXdpZHRoPSIyIi8+PGxpbmUgeDE9IjM3MCIgeTE9IjMwMCIgeDI9IjQzMCIgeTI9IjMwMCIgc3Ryb2tlPSIjZmZjODk1IiBzdHJva2Utd2lkdGg9IjIiLz48bGluZSB4MT0iMzcwIiB5MT0iMzUwIiB4Mj0iNDMwIiB5Mj0iMzUwIiBzdHJva2U9IiNmZmM4OTUiIHN0cm9rZS13aWR0aD0iMiIvPjxsaW5lIHgxPSIzNzAiIHkxPSI0MDAiIHgyPSI0MzAiIHkyPSI0MDAiIHN0cm9rZT0iI2ZmYzg5NSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iNDAwIiB5PSI1NTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0OCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VGFwZXIgQ2FuZGxlPC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Taper Candle",
+        "censorBoxes": [
+          {
+            "x": 30,
+            "y": 86,
+            "width": 40,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "contestantName": "Cadence"
+  }
+}
