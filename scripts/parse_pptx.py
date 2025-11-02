@@ -94,10 +94,18 @@ def emu_to_percentage(emu_value: int, slide_dimension_emu: int) -> float:
     return (emu_value / slide_dimension_emu) * 100
 
 
-def extract_image_as_base64(slide, slide_index: int) -> str | None:
+def extract_image_as_base64(slide, slide_index: int, max_width: int = 3840, max_height: int = 2160, quality: int = 85) -> str | None:
     """
     Extract the main image from a slide and convert to base64.
     Applies any cropping that was set in the PPTX.
+    Resizes images to 4K resolution for optimal quality on large displays.
+
+    Args:
+        slide: The slide object
+        slide_index: Index of the slide (for logging)
+        max_width: Maximum width in pixels (default: 3840, 4K resolution)
+        max_height: Maximum height in pixels (default: 2160, 4K resolution)
+        quality: JPEG quality 1-100 (default: 85)
     """
     for shape in slide.shapes:
         if shape.shape_type == 13:  # MSO_SHAPE_TYPE.PICTURE
@@ -110,6 +118,7 @@ def extract_image_as_base64(slide, slide_index: int) -> str | None:
             # Convert to PNG with white background if needed
             try:
                 img = Image.open(BytesIO(image_bytes))
+                original_size = img.size
 
                 # Apply cropping if specified
                 if any([crop_left, crop_top, crop_right, crop_bottom]):
@@ -125,6 +134,14 @@ def extract_image_as_base64(slide, slide_index: int) -> str | None:
                     img = img.crop((left_px, top_px, right_px, bottom_px))
                     print(f"  Applied crop to image: {crop_left*100:.1f}%/{crop_top*100:.1f}%/{crop_right*100:.1f}%/{crop_bottom*100:.1f}%, new size: {img.size}", file=sys.stderr)
 
+                # Resize if image is too large
+                if img.width > max_width or img.height > max_height:
+                    # Calculate new size maintaining aspect ratio
+                    ratio = min(max_width / img.width, max_height / img.height)
+                    new_size = (int(img.width * ratio), int(img.height * ratio))
+                    img = img.resize(new_size, Image.Resampling.LANCZOS)
+                    print(f"  Resized image: {original_size} -> {img.size}", file=sys.stderr)
+
                 # If image has transparency, add white background
                 if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
                     background = Image.new('RGB', img.size, (255, 255, 255))
@@ -133,11 +150,11 @@ def extract_image_as_base64(slide, slide_index: int) -> str | None:
                     background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                     img = background
 
-                # Convert to base64
+                # Convert to JPEG for better compression (smaller file size)
                 buffer = BytesIO()
-                img.save(buffer, format='PNG')
+                img.convert('RGB').save(buffer, format='JPEG', quality=quality, optimize=True)
                 img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                return f"data:image/png;base64,{img_base64}"
+                return f"data:image/jpeg;base64,{img_base64}"
             except Exception as e:
                 print(f"Warning: Failed to process image on slide {slide_index + 1}: {e}", file=sys.stderr)
                 # Fallback: return original image as base64
@@ -350,7 +367,12 @@ def main():
         description="Parse PPTX file and extract game data as JSON"
     )
     parser.add_argument("input", type=Path, help="Input PPTX file path")
-    parser.add_argument("output", type=Path, help="Output JSON file path")
+    parser.add_argument(
+        "output",
+        type=Path,
+        nargs='?',
+        help="Output JSON file path (optional, defaults to input name with .json extension)"
+    )
     parser.add_argument(
         "--contestant",
         type=str,
@@ -364,6 +386,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Default output to input filename with .json extension if not provided
+    if args.output is None:
+        args.output = args.input.with_suffix('.json')
 
     # Validate input file
     if not args.input.exists():

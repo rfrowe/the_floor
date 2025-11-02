@@ -23,7 +23,10 @@ export interface Category {
  * (not the one that was played in the duel).
  */
 export interface Contestant {
-  /** Full name of the contestant (used as unique identifier) */
+  /** Unique identifier for IndexedDB storage */
+  id: string;
+
+  /** Full name of the contestant */
   name: string;
 
   /** The category currently owned by this contestant */
@@ -39,9 +42,9 @@ export interface Contestant {
 /**
  * Helper type for creating a new contestant
  */
-export type ContestantInput = Omit<Contestant, 'wins' | 'eliminated'>;
+export type ContestantInput = Omit<Contestant, 'id' | 'wins' | 'eliminated'>;
 
 /**
  * Helper type for partial contestant updates
  */
-export type ContestantUpdate = Partial<Omit<Contestant, 'name'>>;
+export type ContestantUpdate = Partial<Omit<Contestant, 'id' | 'name'>>;

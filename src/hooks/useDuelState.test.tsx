@@ -22,12 +22,14 @@ describe('useDuelState', () => {
 
     const duelState: DuelState = {
       contestant1: {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
         eliminated: false,
       },
       contestant2: {
+        id: 'bob-test',
         name: 'Bob',
         category: { name: 'Science', slides: [] },
         wins: 0,
@@ -52,12 +54,14 @@ describe('useDuelState', () => {
   it('should persist duel state across remounts', () => {
     const duelState: DuelState = {
       contestant1: {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
         eliminated: false,
       },
       contestant2: {
+        id: 'bob-test',
         name: 'Bob',
         category: { name: 'Science', slides: [] },
         wins: 0,
@@ -82,12 +86,14 @@ describe('useDuelState', () => {
 
     const duelState: DuelState = {
       contestant1: {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
         eliminated: false,
       },
       contestant2: {
+        id: 'bob-test',
         name: 'Bob',
         category: { name: 'Science', slides: [] },
         wins: 0,
@@ -120,12 +126,14 @@ describe('useDuelState', () => {
 
     const initialDuel: DuelState = {
       contestant1: {
+        id: 'alice-test',
         name: 'Alice',
         category: { name: 'Math', slides: [] },
         wins: 0,
         eliminated: false,
       },
       contestant2: {
+        id: 'bob-test',
         name: 'Bob',
         category: { name: 'Science', slides: [] },
         wins: 0,

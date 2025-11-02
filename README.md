@@ -90,6 +90,48 @@ Check formatting without modifying files:
 npm run format:check
 ```
 
+### PPTX Parsing
+
+Parse PowerPoint files exported from Google Slides to extract game data.
+
+**Prerequisites:**
+
+1. **Install Poetry** (Python package manager):
+   ```bash
+   # macOS/Linux
+   curl -sSL https://install.python-poetry.org | python3 -
+
+   # Windows (PowerShell)
+   (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+   ```
+
+   Or visit: https://python-poetry.org/docs/#installation
+
+2. **Install Python dependencies:**
+   ```bash
+   cd scripts
+   poetry install
+   cd ..
+   ```
+
+**Usage:**
+
+Parse PowerPoint files exported from Google Slides:
+
+```bash
+npm run parse:pptx input.pptx output.json -- --category "Category Name"
+```
+
+**Note:** The output parameter is optional - if omitted, it defaults to the input filename with a `.json` extension.
+
+**What the parser extracts:**
+- **Slide images** - Automatically resized to 4K resolution (3840x2160 max) and converted to JPEG (quality 85) for optimal display on large screens while managing file size
+- **Speaker notes** - Used as answers for each slide
+- **Censor boxes** - Rectangle shapes on slides that will overlay censored content
+- **Cropping** - Respects any image cropping applied in the PPTX
+
+**Storage:** Contestant data is stored in IndexedDB (not localStorage) to support large datasets with multiple contestants and high-resolution images.
+
 ## Available Scripts
 
 - `npm run dev` - Start development server
@@ -100,6 +142,7 @@ npm run format:check
 - `npm run format` - Format all files with Prettier
 - `npm run format:check` - Check formatting without changes
 - `npm run preview` - Preview production build locally
+- `npm run parse:pptx <input.pptx> <output.json> -- --category "Category Name"` - Parse PPTX file to JSON
 
 ## Project Structure
 

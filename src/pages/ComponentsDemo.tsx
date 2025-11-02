@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Container, Button, Card, Modal, Spinner } from '@components/common';
+import { ContestantCard } from '@components/contestant/ContestantCard';
+import type { Contestant } from '@types';
 import styles from './ComponentsDemo.module.css';
 
 export function ComponentsDemo() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
 
   const handleLoadingDemo = () => {
     setIsLoading(true);
@@ -12,6 +15,38 @@ export function ComponentsDemo() {
       setIsLoading(false);
     }, 2000);
   };
+
+  // Mock contestants for demo
+  const mockContestants: Contestant[] = [
+    {
+      id: 'demo-contestant-1',
+      name: 'Alice Johnson',
+      category: { name: '80s Movies', slides: [] },
+      wins: 5,
+      eliminated: false,
+    },
+    {
+      id: 'demo-contestant-2',
+      name: 'Bob Smith',
+      category: { name: 'State Capitals', slides: [] },
+      wins: 3,
+      eliminated: false,
+    },
+    {
+      id: 'demo-contestant-3',
+      name: 'Carol Davis',
+      category: { name: 'World History', slides: [] },
+      wins: 7,
+      eliminated: true,
+    },
+    {
+      id: 'demo-contestant-4',
+      name: 'David Lee',
+      category: { name: 'Science Facts', slides: [] },
+      wins: 0,
+      eliminated: false,
+    },
+  ];
 
   return (
     <Container>
@@ -125,6 +160,29 @@ export function ComponentsDemo() {
           </div>
         </section>
 
+        {/* ContestantCard Demo */}
+        <section className={styles['section']}>
+          <h2>Contestant Card</h2>
+          <div className={styles['cardGrid']}>
+            {mockContestants.map((contestant) => (
+              <ContestantCard
+                key={contestant.name}
+                contestant={contestant}
+                isSelected={selectedContestant === contestant.name}
+                onSelect={(c) => {
+                  setSelectedContestant(c.name === selectedContestant ? null : c.name);
+                }}
+              />
+            ))}
+          </div>
+          <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
+            <p>
+              <strong>Features:</strong> Click cards to select/deselect. Notice the eliminated
+              contestant (Carol) is greyed out. Win counts are displayed as badges.
+            </p>
+          </div>
+        </section>
+
         {/* Modal Demo */}
         <section className={styles['section']}>
           <h2>Modal</h2>
@@ -180,6 +238,7 @@ export function ComponentsDemo() {
               <li>All buttons have proper focus states and keyboard navigation</li>
               <li>Modal has focus trap and restores focus on close</li>
               <li>Spinner has proper ARIA roles and screen reader text</li>
+              <li>ContestantCard supports keyboard interaction (Enter/Space) and ARIA labels</li>
               <li>All components support custom className for styling</li>
               <li>Interactive elements have appropriate ARIA labels</li>
             </ul>

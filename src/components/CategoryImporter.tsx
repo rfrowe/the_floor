@@ -10,7 +10,7 @@ import type { Category } from '@types';
 import { loadCategoryJSON, JSONImportError } from '@utils/jsonImport';
 
 interface CategoryImporterProps {
-  onImport: (contestantName: string, category: Category) => void;
+  onImport: (contestantName: string, category: Category) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -104,7 +104,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
         return;
       }
 
-      onImport(finalContestantName, finalCategory);
+      void onImport(finalContestantName, finalCategory);
     } catch (err) {
       if (err instanceof JSONImportError) {
         setError(err.message);
@@ -203,6 +203,16 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                       onClick={() => {
                         toggleSlideExpanded(index);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleSlideExpanded(index);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      aria-label={`Toggle slide ${String(index + 1)} details`}
                     >
                       <img
                         src={slide.imageUrl}
@@ -229,9 +239,19 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
 
                     {isExpanded && (
                       <div
-                        style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}
+                        style={{
+                          marginTop: '1rem',
+                          paddingTop: '1rem',
+                          borderTop: '1px solid #ddd',
+                        }}
                       >
-                        <div style={{ marginBottom: '1rem', position: 'relative', display: 'inline-block' }}>
+                        <div
+                          style={{
+                            marginBottom: '1rem',
+                            position: 'relative',
+                            display: 'inline-block',
+                          }}
+                        >
                           <img
                             src={slide.imageUrl}
                             alt={`Slide ${String(index + 1)} full`}
@@ -244,23 +264,30 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                             }}
                           />
                           {/* Render censor boxes as overlays */}
-                          {slide.censorBoxes.map((box, boxIndex) => (
-                            <div
-                              key={boxIndex}
-                              style={{
-                                position: 'absolute',
-                                left: `${box.x}%`,
-                                top: `${box.y}%`,
-                                width: `${box.width}%`,
-                                height: `${box.height}%`,
-                                backgroundColor: box.color,
-                                border: '2px solid rgba(255, 255, 255, 0.5)',
-                                boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
-                                pointerEvents: 'none',
-                              }}
-                              title={`Censor Box ${boxIndex + 1}: ${box.x.toFixed(1)}%, ${box.y.toFixed(1)}%`}
-                            />
-                          ))}
+                          {slide.censorBoxes.map((box, boxIndex) => {
+                            const boxX = box.x.toString();
+                            const boxY = box.y.toString();
+                            const boxWidth = box.width.toString();
+                            const boxHeight = box.height.toString();
+                            const boxTitle = `Censor Box ${String(boxIndex + 1)}: ${box.x.toFixed(1)}%, ${box.y.toFixed(1)}%`;
+                            return (
+                              <div
+                                key={boxIndex}
+                                style={{
+                                  position: 'absolute',
+                                  left: `${boxX}%`,
+                                  top: `${boxY}%`,
+                                  width: `${boxWidth}%`,
+                                  height: `${boxHeight}%`,
+                                  backgroundColor: box.color,
+                                  border: '2px solid rgba(255, 255, 255, 0.5)',
+                                  boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
+                                  pointerEvents: 'none',
+                                }}
+                                title={boxTitle}
+                              />
+                            );
+                          })}
                         </div>
 
                         <div className="form-group">
@@ -294,8 +321,8 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                             <ul style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
                               {slide.censorBoxes.map((box, boxIndex) => (
                                 <li key={boxIndex}>
-                                  <strong>Box {boxIndex + 1}:</strong> Position: ({box.x.toFixed(1)}%,{' '}
-                                  {box.y.toFixed(1)}%), Size: ({box.width.toFixed(1)}% ×{' '}
+                                  <strong>Box {boxIndex + 1}:</strong> Position: ({box.x.toFixed(1)}
+                                  %, {box.y.toFixed(1)}%), Size: ({box.width.toFixed(1)}% ×{' '}
                                   {box.height.toFixed(1)}%), Color:{' '}
                                   <span
                                     style={{
