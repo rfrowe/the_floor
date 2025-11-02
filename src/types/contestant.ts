@@ -1,12 +1,16 @@
 /**
  * Contestant and Category type definitions
  * Based on SPEC.md section 4.1 and 4.2
+ *
+ * IMPORTANT: Keep in sync with Python types in scripts/parse_pptx.py
  */
 
 import type { Slide } from './slide';
 
 /**
  * Represents a category (topic) with a collection of slides for gameplay.
+ *
+ * SYNC WITH: scripts/parse_pptx.py - Category dataclass
  */
 export interface Category {
   name: string;
