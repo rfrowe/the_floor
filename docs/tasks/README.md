@@ -4,7 +4,9 @@ This directory contains a structured breakdown of all implementation tasks for "
 
 ## Task Organization
 
-Tasks are organized into 8 phases, with 27 total tasks:
+Tasks are organized into 9 phases:
+- **Phases 1-8:** Core implementation and testing (27 tasks)
+- **Phase 9:** Future enhancements (ongoing, post-MVP)
 
 ### Phase 1: Project Setup (3 tasks)
 Foundation: project initialization, code quality tools, and folder structure.
@@ -56,6 +58,10 @@ Comprehensive testing and final refinements.
 - `task-25-component-tests` - Add React Testing Library tests
 - `task-26-e2e-tests` - Create Playwright E2E tests
 - `task-27-polish` - Final polish and documentation
+
+### Phase 9: Future Enhancements (ongoing)
+Post-MVP features and improvements for enhanced functionality.
+- `task-30-category-manager` - Independent category management system
 
 ## How to Use These Tasks
 
@@ -122,5 +128,19 @@ Consider creating a checklist or project board to track:
 - [ ] Phase 6 (0/4 tasks complete)
 - [ ] Phase 7 (0/3 tasks complete)
 - [ ] Phase 8 (0/4 tasks complete)
+- [ ] Phase 9 (Future enhancements - ongoing)
+
+## Phase 9: Future Enhancements
+
+This phase contains post-MVP features and improvements that are not required for core gameplay but enhance the user experience and content management capabilities.
+
+**Characteristics:**
+- Not required for MVP release
+- Can be implemented in any order based on priority
+- Lower priority than bug fixes and polish
+- Should not introduce breaking changes to core functionality
+
+**Current Tasks:**
+- Task 30: Category Manager - Independent category storage and management UI
 
 Good luck! 🎮
