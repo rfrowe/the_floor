@@ -90,6 +90,31 @@ export function useDuelState(): [
     };
 
     void loadDuelState();
+
+    // Listen for storage changes from other windows (cross-window sync)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY && event.newValue !== null) {
+        try {
+          const reference = JSON.parse(event.newValue) as DuelStateReference;
+          void hydrateReference(reference).then((hydrated) => {
+            if (hydrated) {
+              setDuelState(hydrated);
+            }
+          });
+        } catch (error) {
+          console.error('Failed to sync duel state from storage event:', error);
+        }
+      } else if (event.key === STORAGE_KEY && event.newValue === null) {
+        // Duel was cleared in another window
+        setDuelState(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Setter that handles both DuelState and updater functions
