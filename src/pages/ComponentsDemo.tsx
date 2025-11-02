@@ -10,12 +10,21 @@ export function ComponentsDemo() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showSkipAnimation, setShowSkipAnimation] = useState(false);
 
   const handleLoadingDemo = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
     }, 2000);
+  };
+
+  const handleSkipAnimationDemo = () => {
+    setShowSkipAnimation(true);
+    // Animation is exactly 3 seconds, reset after completion
+    setTimeout(() => {
+      setShowSkipAnimation(false);
+    }, 3000);
   };
 
   // Mock contestants for demo
@@ -305,6 +314,70 @@ export function ComponentsDemo() {
               <li>Smooth transitions when hiding/showing boxes</li>
               <li>Loading and error states</li>
               <li>Responsive sizing to fit any container</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* Skip Animation Demo */}
+        <section className={styles['section']}>
+          <h2>Skip Animation (Audience View)</h2>
+          <p>
+            When a player skips a question, the answer is displayed in the center of the clock bar
+            for exactly 3 seconds with fade in/out transitions.
+          </p>
+          <div style={{ marginBottom: '1rem' }}>
+            <Button onClick={handleSkipAnimationDemo} disabled={showSkipAnimation}>
+              {showSkipAnimation ? 'Animation Playing...' : 'Trigger Skip Animation'}
+            </Button>
+          </div>
+          <div
+            style={{
+              position: 'relative',
+              height: '90px',
+              backgroundColor: '#1a1a1a',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 2rem',
+              gap: '2rem',
+              border: '3px solid #333',
+            }}
+          >
+            {/* Mock clock bar content */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>Alice</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4caf50' }}>25s</span>
+            </div>
+
+            <div style={{ fontSize: '1.5rem', color: '#666' }}>◀▶</div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4caf50' }}>30s</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>Bob</span>
+            </div>
+
+            <div style={{ fontSize: '1.25rem', color: '#888' }}>World Landmarks</div>
+
+            {/* Skip answer overlay */}
+            {showSkipAnimation && (
+              <div className={styles['skip-answer-overlay']}>
+                <div className={styles['skip-answer-text']}>The Eiffel Tower</div>
+              </div>
+            )}
+          </div>
+          <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
+            <p>
+              <strong>Features:</strong>
+            </p>
+            <ul>
+              <li>
+                Exactly 3 seconds total duration (200ms fade in + 2600ms hold + 200ms fade out)
+              </li>
+              <li>Bright yellow text on dark background for high visibility</li>
+              <li>Smooth scale and fade transitions</li>
+              <li>Centered overlay that doesn&apos;t interfere with other UI elements</li>
+              <li>Answer text or &quot;Skipped&quot; fallback when no answer available</li>
             </ul>
           </div>
         </section>

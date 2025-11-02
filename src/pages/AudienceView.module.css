@@ -22,6 +22,7 @@
 
 /* Clock bar at top */
 .clock-bar {
+  position: relative;
   flex-shrink: 0;
   height: 90px;
   background-color: #1a1a1a;
@@ -172,6 +173,55 @@
   }
 }
 
+/* Skip answer overlay - centered in clock bar */
+.skip-answer-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  animation: fadeInOut 3s ease-in-out;
+  pointer-events: none;
+}
+
+.skip-answer-text {
+  background: rgba(0, 0, 0, 0.95);
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffff00;
+  text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+  white-space: nowrap;
+  max-width: 50vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 2px solid rgba(255, 255, 0, 0.3);
+}
+
+/* Fade in/out animation for skip answer - exactly 3 seconds total */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  6.67% {
+    /* 200ms fade in (200ms / 3000ms = 6.67%) */
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  93.33% {
+    /* Hold visible until 2800ms (2800ms / 3000ms = 93.33%) */
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    /* 200ms fade out (93.33% to 100% = 200ms) */
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
 /* High contrast mode for better readability */
 @media (prefers-contrast: high) {
   .clock-bar {
@@ -185,5 +235,10 @@
 
   .category {
     color: #fff;
+  }
+
+  .skip-answer-text {
+    background: #000;
+    border-color: #fff;
   }
 }

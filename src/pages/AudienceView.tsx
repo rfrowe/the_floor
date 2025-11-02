@@ -74,6 +74,9 @@ function AudienceView() {
   const currentSlide: Slide | undefined =
     duelState.selectedCategory.slides[duelState.currentSlideIndex];
 
+  // Get the answer to display during skip animation
+  const skipAnswer = currentSlide?.answer ?? 'Skipped';
+
   // Build class names
   const containerClass = styles['container'] ?? '';
   const clockBarClass = styles['clock-bar'] ?? '';
@@ -83,6 +86,8 @@ function AudienceView() {
   const timerClass = styles['timer'] ?? '';
   const separatorClass = styles['separator'] ?? '';
   const categoryClass = styles['category'] ?? '';
+  const skipAnswerOverlayClass = styles['skip-answer-overlay'] ?? '';
+  const skipAnswerTextClass = styles['skip-answer-text'] ?? '';
   const slideAreaClass = styles['slide-area'] ?? '';
   const noSlideClass = styles['no-slide'] ?? '';
 
@@ -108,6 +113,13 @@ function AudienceView() {
         </div>
 
         <div className={categoryClass}>{duelState.selectedCategory.name}</div>
+
+        {/* Skip answer overlay - appears in center when skip animation is active */}
+        {duelState.isSkipAnimationActive && (
+          <div className={skipAnswerOverlayClass}>
+            <div className={skipAnswerTextClass}>{skipAnswer}</div>
+          </div>
+        )}
       </div>
 
       {/* Slide display area */}
