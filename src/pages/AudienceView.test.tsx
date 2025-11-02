@@ -552,6 +552,151 @@ describe('AudienceView', () => {
     });
   });
 
+  describe('Skip Animation', () => {
+    const mockDuelStateBase: DuelState = {
+      contestant1: {
+        id: 'alice-1',
+        name: 'Alice',
+        category: { name: 'Math', slides: [] },
+        wins: 0,
+        eliminated: false,
+      },
+      contestant2: {
+        id: 'bob-2',
+        name: 'Bob',
+        category: { name: 'Science', slides: [] },
+        wins: 0,
+        eliminated: false,
+      },
+      activePlayer: 1,
+      timeRemaining1: 30,
+      timeRemaining2: 30,
+      currentSlideIndex: 0,
+      selectedCategory: {
+        name: 'Math',
+        slides: [
+          {
+            imageUrl: '/test-slide.png',
+            answer: 'The Eiffel Tower',
+            censorBoxes: [],
+          },
+        ],
+      },
+      isSkipAnimationActive: false,
+    };
+
+    it('should not display skip answer overlay when isSkipAnimationActive is false', () => {
+      mockUseDuelState.mockReturnValue([mockDuelStateBase, vi.fn()]);
+
+      const { container } = render(<AudienceView />);
+
+      // Query for the skip answer overlay specifically, not the SlideViewer mock
+      const skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).not.toBeInTheDocument();
+    });
+
+    it('should display skip answer overlay when isSkipAnimationActive is true', () => {
+      const mockDuelStateWithSkip = {
+        ...mockDuelStateBase,
+        isSkipAnimationActive: true,
+      };
+
+      mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
+
+      const { container } = render(<AudienceView />);
+
+      // Query for the skip answer overlay specifically
+      const skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).toBeInTheDocument();
+      expect(skipOverlay).toHaveTextContent('The Eiffel Tower');
+    });
+
+    it('should display "Skipped" when no slide answer is available', () => {
+      const mockDuelStateNoSlides = {
+        ...mockDuelStateBase,
+        currentSlideIndex: 5, // Out of bounds
+        selectedCategory: {
+          name: 'Math',
+          slides: [], // No slides
+        },
+        isSkipAnimationActive: true,
+      };
+
+      mockUseDuelState.mockReturnValue([mockDuelStateNoSlides, vi.fn()]);
+
+      render(<AudienceView />);
+
+      expect(screen.getByText('Skipped')).toBeInTheDocument();
+    });
+
+    it('should synchronize with duel state changes', () => {
+      mockUseDuelState.mockReturnValue([mockDuelStateBase, vi.fn()]);
+
+      const { rerender, container } = render(<AudienceView />);
+
+      // Initially no overlay
+      let skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).not.toBeInTheDocument();
+
+      // Activate skip animation
+      const mockDuelStateActive = {
+        ...mockDuelStateBase,
+        isSkipAnimationActive: true,
+      };
+      mockUseDuelState.mockReturnValue([mockDuelStateActive, vi.fn()]);
+
+      rerender(<AudienceView />);
+
+      // Overlay should appear
+      skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).toBeInTheDocument();
+      expect(skipOverlay).toHaveTextContent('The Eiffel Tower');
+
+      // Deactivate skip animation
+      mockUseDuelState.mockReturnValue([mockDuelStateBase, vi.fn()]);
+
+      rerender(<AudienceView />);
+
+      // Overlay should disappear
+      skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).not.toBeInTheDocument();
+    });
+
+    it('should pass showAnswer=true to SlideViewer during skip animation', () => {
+      const mockDuelStateWithSkip = {
+        ...mockDuelStateBase,
+        isSkipAnimationActive: true,
+      };
+
+      mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
+
+      render(<AudienceView />);
+
+      // Check that SlideViewer receives showAnswer=true
+      expect(screen.getByTestId('show-answer')).toHaveTextContent('true');
+    });
+
+    it('should display answer in clock bar overlay element', () => {
+      const mockDuelStateWithSkip = {
+        ...mockDuelStateBase,
+        isSkipAnimationActive: true,
+      };
+
+      mockUseDuelState.mockReturnValue([mockDuelStateWithSkip, vi.fn()]);
+
+      const { container } = render(<AudienceView />);
+
+      // Find the overlay element
+      const skipOverlay = container.querySelector('[class*="skip-answer-overlay"]');
+      expect(skipOverlay).toBeInTheDocument();
+      expect(skipOverlay).toHaveTextContent('The Eiffel Tower');
+
+      // Verify it's within the clock bar structure
+      const clockBar = container.querySelector('[class*="clock-bar"]');
+      expect(clockBar).toContainElement(skipOverlay as HTMLElement);
+    });
+  });
+
   describe('Escape Key Handler', () => {
     it('should call exitFullscreen when Escape is pressed in fullscreen mode', () => {
       mockUseDuelState.mockReturnValue([null, vi.fn()]);
