@@ -51,6 +51,7 @@ const mockContestant: Contestant = {
   },
   eliminated: false,
   wins: 5,
+  controlledSquares: ['0-0'], // Add grid position to avoid showing in unpositioned list
 };
 
 const mockEliminatedContestant: Contestant = {
@@ -58,6 +59,7 @@ const mockEliminatedContestant: Contestant = {
   id: '2',
   name: 'Eliminated Contestant',
   eliminated: true,
+  controlledSquares: ['0-1'], // Add grid position
 };
 
 const mockDuelState: DuelState = {
@@ -631,6 +633,135 @@ describe('Dashboard', () => {
         expect(mockAlert).toHaveBeenCalledWith('Failed to reset application: Reset failed');
         expect(mockLocation.href).toBe('');
       });
+    });
+  });
+
+  describe('Adjacency-based contestant disabling', () => {
+    it('disables non-adjacent contestants when P1 is selected', async () => {
+      const user = userEvent.setup();
+      // Alice at 0-0, Bob at 0-1 (adjacent), Charlie at 2-2 (not adjacent)
+      const alice: Contestant = {
+        ...mockContestant,
+        id: '1',
+        name: 'Alice',
+        controlledSquares: ['0-0'],
+      };
+      const bob: Contestant = {
+        ...mockContestant,
+        id: '2',
+        name: 'Bob',
+        controlledSquares: ['0-1'],
+      };
+      const charlie: Contestant = {
+        ...mockContestant,
+        id: '3',
+        name: 'Charlie',
+        controlledSquares: ['2-2'],
+      };
+
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [alice, bob, charlie],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Click Alice to select as P1
+      const aliceCard = screen.getByText('Alice').closest('div[role="button"]');
+      expect(aliceCard).toBeInTheDocument();
+      if (aliceCard) {
+        await user.click(aliceCard);
+      }
+
+      // Charlie should now have aria-disabled attribute
+      const charlieCard = screen.getByText('Charlie').closest('div[aria-label*="Charlie"]');
+      expect(charlieCard).toHaveAttribute('aria-disabled', 'true');
+
+      // Bob should NOT be disabled (adjacent to Alice)
+      const bobCard = screen.getByText('Bob').closest('div[aria-label*="Bob"]');
+      expect(bobCard).not.toHaveAttribute('aria-disabled');
+    });
+
+    it('does not disable contestants when no P1 selected', () => {
+      const alice: Contestant = {
+        ...mockContestant,
+        id: '1',
+        name: 'Alice',
+        controlledSquares: ['0-0'],
+      };
+      const bob: Contestant = {
+        ...mockContestant,
+        id: '2',
+        name: 'Bob',
+        controlledSquares: ['2-2'],
+      };
+
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [alice, bob],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // No contestants should be disabled
+      const aliceCard = screen.getByText('Alice').closest('div[role="button"]');
+      const bobCard = screen.getByText('Bob').closest('div[role="button"]');
+
+      expect(aliceCard).not.toHaveAttribute('aria-disabled');
+      expect(bobCard).not.toHaveAttribute('aria-disabled');
+    });
+
+    it('re-enables all contestants when selection is cleared', async () => {
+      const user = userEvent.setup();
+      const alice: Contestant = {
+        ...mockContestant,
+        id: '1',
+        name: 'Alice',
+        controlledSquares: ['0-0'],
+      };
+      const charlie: Contestant = {
+        ...mockContestant,
+        id: '2',
+        name: 'Charlie',
+        controlledSquares: ['2-2'],
+      };
+
+      vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+        [alice, charlie],
+        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      ]);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Select Alice as P1
+      const aliceCard = screen.getByText('Alice').closest('div[role="button"]');
+      if (aliceCard) {
+        await user.click(aliceCard);
+      }
+
+      // Charlie should be disabled
+      let charlieCard = screen.getByText('Charlie').closest('div[aria-label*="Charlie"]');
+      expect(charlieCard).toHaveAttribute('aria-disabled', 'true');
+
+      // Clear selection (via the Clear button in DuelSetup)
+      const clearButton = screen.getByRole('button', { name: /Clear/i });
+      await user.click(clearButton);
+
+      // Charlie should no longer be disabled
+      charlieCard = screen.getByText('Charlie').closest('div[aria-label*="Charlie"]');
+      expect(charlieCard).not.toHaveAttribute('aria-disabled');
     });
   });
 });

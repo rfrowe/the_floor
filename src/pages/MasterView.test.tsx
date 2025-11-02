@@ -429,6 +429,17 @@ describe('MasterView', () => {
           ) => void,
         ]);
 
+        // Mock contestants array to include both duel participants (needed for consolidateTerritories)
+        vi.mocked(useContestants).mockReturnValue([
+          [mockDuelState.contestant1, mockDuelState.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+
         // Mock window.alert
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
 
@@ -579,6 +590,17 @@ describe('MasterView', () => {
           ) => void,
         ]);
 
+        // Mock contestants array to include both duel participants (needed for consolidateTerritories)
+        vi.mocked(useContestants).mockReturnValue([
+          [mockDuelState.contestant1, mockDuelState.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
 
         render(
@@ -653,6 +675,17 @@ describe('MasterView', () => {
           mockSetDuelState as (
             value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
           ) => void,
+        ]);
+
+        // Mock contestants array to include both duel participants (needed for consolidateTerritories)
+        vi.mocked(useContestants).mockReturnValue([
+          [thirdCategoryDuelState.contestant1, thirdCategoryDuelState.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
         ]);
 
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
@@ -731,6 +764,17 @@ describe('MasterView', () => {
           mockSetDuelState as (
             value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
           ) => void,
+        ]);
+
+        // Mock contestants array to include both duel participants (needed for consolidateTerritories)
+        vi.mocked(useContestants).mockReturnValue([
+          [contestant2CategoryDuelState.contestant1, contestant2CategoryDuelState.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
         ]);
 
         const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);

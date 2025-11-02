@@ -37,6 +37,12 @@ export interface Contestant {
 
   /** Whether this contestant has been eliminated from the game */
   eliminated: boolean;
+
+  /** Starting position on the grid (for grid view floor display) */
+  gridPosition?: { row: number; col: number };
+
+  /** Array of square IDs controlled by this contestant (for grid view floor display) */
+  controlledSquares?: string[];
 }
 
 /**

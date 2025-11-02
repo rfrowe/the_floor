@@ -8,6 +8,7 @@ export interface ContestantCardProps {
   onClick?: (contestant: Contestant) => void;
   className?: string;
   hasTopWins?: boolean;
+  disabled?: boolean;
 }
 
 export function ContestantCard({
@@ -17,14 +18,15 @@ export function ContestantCard({
   onClick,
   className = '',
   hasTopWins = false,
+  disabled = false,
 }: ContestantCardProps) {
   const isEliminated = contestant.eliminated;
-  // Eliminated contestants should not be interactive
-  const isInteractive = Boolean(onClick ?? onSelect) && !isEliminated;
+  // Eliminated or disabled contestants should not be interactive
+  const isInteractive = Boolean(onClick ?? onSelect) && !isEliminated && !disabled;
 
   const handleClick = () => {
-    // Don't handle clicks for eliminated contestants
-    if (isEliminated) {
+    // Don't handle clicks for eliminated or disabled contestants
+    if (isEliminated || disabled) {
       return;
     }
     if (onClick) {
@@ -44,18 +46,20 @@ export function ContestantCard({
 
   const cardClass = styles['card'] ?? '';
   const eliminatedClass = isEliminated ? (styles['eliminated'] ?? '') : '';
+  const disabledClass = disabled ? (styles['disabled'] ?? '') : '';
   const selectedClass = isSelected ? (styles['selected'] ?? '') : '';
   const interactiveClass = isInteractive ? (styles['interactive'] ?? '') : '';
 
   return (
     <div
-      className={`${cardClass} ${eliminatedClass} ${selectedClass} ${interactiveClass} ${className}`.trim()}
+      className={`${cardClass} ${eliminatedClass} ${disabledClass} ${selectedClass} ${interactiveClass} ${className}`.trim()}
       onClick={isInteractive ? handleClick : undefined}
       onKeyDown={isInteractive ? handleKeyDown : undefined}
       role={isInteractive ? 'button' : undefined}
       tabIndex={isInteractive ? 0 : undefined}
-      aria-label={`Contestant ${contestant.name}, ${String(contestant.wins)} wins, ${isEliminated ? 'eliminated' : 'active'}`}
+      aria-label={`Contestant ${contestant.name}, ${String(contestant.wins)} wins, ${isEliminated ? 'eliminated' : disabled ? 'not eligible' : 'active'}`}
       aria-pressed={isInteractive && isSelected ? true : undefined}
+      aria-disabled={disabled || isEliminated ? true : undefined}
     >
       <div className={styles['content']}>
         <div className={styles['header']}>
