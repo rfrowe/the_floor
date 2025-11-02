@@ -1,113 +1,110 @@
-# Task 12: Duel Setup Interface
+# Task 12: Random Selection Integration
 
 ## Objective
-Create the interface and logic for setting up a duel between two selected contestants, including category selection and starting the duel.
+Integrate the random selection hook into the Dashboard's DuelSetup component with a "Random Select" button.
+
+## Status
+**NOT STARTED**: DuelSetup component exists but lacks random selection button.
 
 ## Acceptance Criteria
-- [ ] Duel setup panel shows selected contestants
-- [ ] Dropdown to choose which category to use for the duel (2 options: one from each contestant)
-- [ ] Start Duel button (disabled until valid setup)
-- [ ] Validation: requires 2 contestants and 1 category selected
-- [ ] Starting duel initializes duel state and navigates to master view
-- [ ] Category dropdown clearly shows which contestant owns which category
-- [ ] Clear visual indication that winner gets the UNPLAYED category
-- [ ] Tests verify setup logic
+- [ ] "Random Select" button added to DuelSetup component
+- [ ] Button calls useRandomSelect hook
+- [ ] Randomly selected contestant fills first empty slot (contestant1 or contestant2)
+- [ ] Button disabled when no eligible contestants available
+- [ ] Visual feedback shows the randomly selected contestant
+- [ ] Tests verify random selection integration
 
-## Important: Single Category Model
-- **Each contestant owns exactly ONE category**
-- The GM selects which of the TWO categories to use for the duel
-- **Winner inherits the UNPLAYED category** (the one NOT used in the duel)
-- Example: Alice has "Math", Bob has "History" → GM picks "Math" → Winner gets "History"
-- This is already reflected in the `DuelResult.inheritedCategory` type
-
-## Duel Setup Panel UI
-```
-┌───────────────────────────────────────┐
-│  Duel Setup                           │
-├───────────────────────────────────────┤
-│  Contestant 1: [Name]                 │
-│  Contestant 2: [Name]                 │
-│                                       │
-│  Duel Category: [Dropdown ▼]         │
-│    - Category A (from Contestant 1)   │
-│    - Category B (from Contestant 2)   │
-│                                       │
-│  ℹ️ Winner receives the UNPLAYED      │
-│     category from the loser           │
-│                                       │
-│  [Clear] [Start Duel]                 │
-└───────────────────────────────────────┘
-```
+## Dependencies
+- Task 11: useRandomSelect hook (must be completed first)
+- Task 10: Dashboard with DuelSetup (✅ complete)
 
 ## Implementation Guidance
-1. Create `src/components/duel/DuelSetup.tsx` component
-2. Props:
-   ```typescript
-   interface DuelSetupProps {
-     contestant1: Contestant | null;
-     contestant2: Contestant | null;
-     onClear: () => void;
-     onStartDuel: (duelConfig: DuelConfig) => void;
-   }
 
-   interface DuelConfig {
-     contestant1: Contestant;
-     contestant2: Contestant;
-     selectedCategory: Category;
+1. **Update DuelSetup Component**:
+   ```typescript
+   // src/components/duel/DuelSetup.tsx
+   import { useRandomSelect } from '@hooks/useRandomSelect';
+
+   export function DuelSetup({
+     contestant1,
+     contestant2,
+     onClear,
+     onStartDuel,
+     availableContestants // NEW PROP
+   }: DuelSetupProps) {
+     const { randomSelect } = useRandomSelect();
+
+     const handleRandomSelect = () => {
+       const selected = randomSelect(availableContestants);
+       if (selected) {
+         // Call new prop: onRandomSelect(selected)
+       }
+     };
+
+     // ... rest of component
    }
    ```
-3. Category selection:
-   - **Each contestant has exactly ONE category** (Contestant.category, not categories[])
-   - Display dropdown with TWO options showing owner:
-     - "State Capitals (from Alice)"
-     - "80s Movies (from Bob)"
-   - Store selected category in local state
-   - Show info text: "Winner receives the unplayed category"
-4. Validation:
-   - Disable "Start Duel" button if:
-     - Less than 2 contestants selected
-     - No category selected
-   - Show helpful error messages
-   - Note: Every contestant has exactly 1 category, so no need to check for 0 categories
-5. Start Duel logic:
-   - Create initial DuelState:
-     - Set both contestants
-     - Set selectedCategory
-     - Initialize time remaining (from GameConfig)
-     - Set activePlayer to 1 (challenger)
-     - Set currentSlideIndex to 0
-   - Save duel state to localStorage (via context/hook)
-   - Navigate to `/master` route
-6. Handle edge cases:
-   - Only 1 contestant selected: disable start button
-   - Both contestants have same category name: distinguish by owner in dropdown
-7. Write tests:
-   - Can select category from dropdown
-   - Start button disabled when invalid
-   - Starting duel creates correct state
-   - Navigation occurs after starting
+
+2. **Add Prop Interface**:
+   ```typescript
+   export interface DuelSetupProps {
+     contestant1: Contestant | null;
+     contestant2: Contestant | null;
+     availableContestants: Contestant[]; // NEW: for random selection
+     onClear: () => void;
+     onStartDuel: (duelConfig: DuelConfig) => void;
+     onRandomSelect: (contestant: Contestant) => void; // NEW: callback
+   }
+   ```
+
+3. **Button Placement**:
+   - Add button near "Clear" button
+   - Label: "Random Select"
+   - Disable if no eligible contestants
+   - Style similar to secondary button
+
+4. **Dashboard Integration**:
+   - Pass `contestants` array to DuelSetup
+   - Implement `onRandomSelect` handler:
+     ```typescript
+     const handleRandomSelect = (contestant: Contestant) => {
+       if (!selectedContestant1) {
+         setSelectedContestant1(contestant);
+       } else if (!selectedContestant2) {
+         setSelectedContestant2(contestant);
+       }
+       // If both full, optionally replace contestant1
+     };
+     ```
+
+5. **Visual Feedback** (Optional):
+   - Brief highlight animation on selected card
+   - Toast message: "Randomly selected [Name]"
+
+6. **Testing**:
+   - Random button selects eligible contestant
+   - Button disabled with no eligible contestants
+   - Selected contestant appears in correct slot
+   - Works with 0, 1, or 2 existing selections
 
 ## Success Criteria
-- Cannot start duel with invalid setup
-- Category selection is clear and easy to use
-- Starting duel properly initializes state
-- Navigation to master view works
-- Error states are communicated clearly
-- All edge cases are handled gracefully
-- Tests verify critical paths
+- Random Select button works and feels intuitive
+- Only selects non-eliminated contestants
+- Fills first available slot (contestant1 then contestant2)
+- Disabled state is clear and correct
+- No bugs or edge case errors
+- All tests passing
 
 ## Out of Scope
-- Advanced duel settings (custom time per player)
-- Preview of slides before starting
-- Best-of-three format
-- Save duel configurations
+- Multiple random selections at once
+- Random selection for both slots
+- Animation or fancy transitions
+- "Shuffle" or "Reroll" functionality
+- Random category selection
 
 ## Notes
-- This is a critical step before gameplay begins
-- Validation prevents invalid game states
-- Make sure state is saved before navigation
-- **Critical**: The selected category is for THE DUEL. The winner gets the OTHER category (unplayed)
-- This logic is handled later in duel resolution, not in setup
-- The DuelResult type already has `inheritedCategory` field for tracking this
-- Reference SPEC.md sections 3.2, 5.2, and 4.5 for requirements
-- Coordinate with task-21 (game context) for state management
+- **This task is about integration** - the hook logic is in Task 11
+- Keep the UX simple and predictable
+- The random button is a convenience feature, not core workflow
+- Consider placement: should it be in DuelSetup or Dashboard header?
+- DuelSetup placement makes more sense contextually

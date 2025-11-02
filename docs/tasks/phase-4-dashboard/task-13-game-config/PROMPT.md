@@ -1,85 +1,32 @@
-# Task 13: Game Configuration UI
+# Task 13: Game Configuration (DEPRECATED)
 
-## Objective
-Create a configuration interface for game settings, primarily the time limit per player for duels.
+## Status
+**NOT NEEDED**: This task is deprecated. Game configuration UI is not required for MVP.
 
-## Acceptance Criteria
-- [ ] Configuration modal/panel accessible from dashboard
-- [ ] Input field for time per player (in seconds)
-- [ ] Default value of 30 seconds
-- [ ] Validation for reasonable time limits (e.g., 10-300 seconds)
-- [ ] Save button persists config to localStorage
-- [ ] Cancel button discards changes
-- [ ] Current config displayed in dashboard header
-- [ ] Changes take effect for next duel (not current)
-- [ ] Tests verify config save/load
+## Reason for Deprecation
+- `DEFAULT_GAME_CONFIG` provides sensible defaults (30 seconds per player)
+- Configuration complexity adds minimal value for initial release
+- Dashboard uses `useGameConfig()` hook which already exists (Task 05)
+- If configuration is needed later, it can be added as a simple settings page
 
-## Configuration Options
-From SPEC.md section 3.2 and 4.6:
-- **Time per player**: Default 30 seconds, configurable per game
+## What Exists
+- ✅ `GameConfig` type defined in `@types/game`
+- ✅ `DEFAULT_GAME_CONFIG` constant (30s per player, 3s skip penalty)
+- ✅ `useGameConfig()` hook in `src/hooks/useGameConfig.ts`
+- ✅ localStorage persistence for config
 
-Future options (out of scope for now, but keep extensible):
-- Skip penalty time (currently hardcoded to 3 seconds)
-- Auto-advance slides
-- Sound effects
+## If Configuration UI is Needed Later
+Consider these options:
+1. **Simple approach**: Add a text input in Dashboard header for time setting
+2. **Settings page**: Create `/settings` route with full configuration
+3. **Modal approach**: Add settings button that opens Modal with config form
 
-## Implementation Guidance
-1. Create `src/components/game/GameConfig.tsx` component
-2. **Reuse existing components**: Use Modal component from task-07 (already built)
-3. **Reuse existing hooks**: Use `useGameConfig()` hook from task-05 (already built)
-4. Form fields:
-   - Time per player (number input)
-   - Label: "Time per player (seconds)"
-   - Min: 10, Max: 300, Default: 30
-   - Step: 5 (for easier adjustment)
-5. Save logic:
-   - Update GameConfig in localStorage
-   - Close modal
-   - Show success feedback (toast or message)
-6. Add "Reset to defaults" button (use DEFAULT_GAME_CONFIG from @types)
-7. Write tests:
-   - Can open and close config modal
-   - Can change and save settings
-   - Validation prevents invalid values
-   - Saved config persists across page refresh
+For now, skip this task and use defaults.
 
-## UI Mockup
-```
-┌──────────────────────────────────────┐
-│  Game Configuration           [X]    │
-├──────────────────────────────────────┤
-│                                      │
-│  Time per player (seconds):          │
-│  [ 30 ] ←→  (slider or number)      │
-│                                      │
-│  □ Play sound effects (future)       │
-│  □ Auto-advance on timeout (future)  │
-│                                      │
-│  [Reset to Defaults]                 │
-│                                      │
-│  [Cancel]  [Save]                    │
-└──────────────────────────────────────┘
-```
+## Alternative Task: DuelSetup Component
+**Note**: The DuelSetup component functionality described in the original Task 12 has been implemented and works well. See `src/components/duel/DuelSetup.tsx`.
 
-## Success Criteria
-- Configuration modal is easy to access and use
-- Settings persist across sessions
-- Validation prevents unreasonable values
-- Changes take effect for future duels
-- Current settings are visible to game master
-- Tests ensure save/load works correctly
-
-## Out of Scope
-- Per-duel configuration (set at game level, not duel level)
-- Advanced settings (themes, sounds, etc.)
-- Configuration import/export
-- Multiple game profiles
-
-## Notes
-- Keep the UI simple - focus on the essential setting (time)
-- Make it easy to reset to defaults (use DEFAULT_GAME_CONFIG constant)
-- Consider UX: number input works well for this use case
-- Skip penalty is currently fixed at 3 seconds (display as readonly, don't make configurable yet)
-- **Reuse existing infrastructure**: Modal component and useGameConfig hook are already built
-- The GameConfig type and DEFAULT_GAME_CONFIG are defined in @types/game
-- Reference SPEC.md sections 3.2 and 4.6 for requirements
+## Next Steps
+- Skip this task entirely
+- Move to Phase 5 tasks (Master View)
+- Come back to config UI only if user feedback demands it

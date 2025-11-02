@@ -1,88 +1,86 @@
-# Task 11: Contestant List & Selection
+# Task 11: Random Contestant Selection Hook
 
 ## Objective
-Implement the interactive contestant list with selection functionality for setting up duels.
+Create a useRandomSelect hook that provides random contestant selection functionality for the Dashboard.
+
+## Status
+**NOT STARTED**: Selection logic exists inline in Dashboard, but random selection feature is missing.
 
 ## Acceptance Criteria
-- [ ] Contestants can be clicked to select them
-- [ ] Visual feedback shows selected contestants
-- [ ] Can select up to 2 contestants at a time
-- [ ] Third click deselects first selected contestant (or prevents selection)
-- [ ] Random select button chooses one non-eliminated contestant
-- [ ] Clear selection button/functionality
-- [ ] Selected contestants highlighted in duel setup panel
-- [ ] Cannot select eliminated contestants
-- [ ] State management for selections
-- [ ] Tests verify selection logic
+- [ ] Create `useRandomSelect()` hook in `src/hooks/useRandomSelect.ts`
+- [ ] Hook provides `randomSelect()` function
+- [ ] Selects one random contestant from non-eliminated pool
+- [ ] Returns selected contestant (or null if none available)
+- [ ] Hook is well-tested with edge cases
+- [ ] Integration with Dashboard is straightforward
 
-## Selection Behavior
-- Click contestant card to select
-- Can select 0, 1, or 2 contestants
-- When selecting 3rd: either deselect first or show error
-- Selected cards have distinct visual style
-- Eliminated contestants are not selectable (greyed out, no hover)
-- Clear visual indication of selection state
-
-## Random Selection
-From SPEC.md section 3.2:
-- Button labeled "Random Select" or "Randomize"
-- Selects one random contestant from non-eliminated pool
-- If 2 contestants already selected, replace one of them (or clear and select new)
-- Visual animation/highlight to show the randomly selected contestant
-- Should feel exciting (brief delay/animation optional)
+## Dependencies
+- Task 10: Dashboard Layout (⚠️ partially complete - selection logic exists)
 
 ## Implementation Guidance
-1. Add selection state management:
-   - Create custom hook `useContestantSelection()`:
-     ```typescript
-     interface ContestantSelection {
-       selected: [Contestant | null, Contestant | null];
-       select: (contestant: Contestant) => void;
-       deselect: (contestant: Contestant) => void;
-       clear: () => void;
-       randomSelect: () => void;
-     }
-     ```
-2. Update Dashboard to use selection hook
-3. **Reuse existing components**: ContestantCard from task-08 already supports `isSelected` and `onSelect` props - use these!
-3. Pass selection props to ContestantCard components:
-   - `isSelected` prop based on selection state
-   - `onClick` handler to toggle selection
-4. Implement random selection:
-   - Filter non-eliminated contestants
-   - Use `Math.random()` to pick one
-   - Add to selection (or replace if full)
-5. Add Clear Selection button in duel setup panel
-6. Prevent selecting eliminated contestants:
-   - Disable click handler
-   - Visual indication (cursor: not-allowed)
-7. Display selected contestants in duel setup panel:
-   - Show names/categories of selected contestants
-   - Preview before starting duel
-8. Write tests:
-   - Can select and deselect contestants
-   - Cannot exceed 2 selections
-   - Cannot select eliminated contestants
-   - Random select works correctly
+
+1. **Create Hook File**:
+   ```typescript
+   // src/hooks/useRandomSelect.ts
+   import type { Contestant } from '@types';
+
+   export function useRandomSelect() {
+     const randomSelect = (contestants: Contestant[]): Contestant | null => {
+       // Filter to non-eliminated contestants
+       const eligibleContestants = contestants.filter(c => !c.eliminated);
+
+       if (eligibleContestants.length === 0) {
+         return null;
+       }
+
+       // Use crypto.getRandomValues for better randomness
+       const randomIndex = Math.floor(Math.random() * eligibleContestants.length);
+       const selected = eligibleContestants[randomIndex];
+
+       return selected ?? null;
+     };
+
+     return { randomSelect };
+   }
+   ```
+
+2. **Hook Behavior**:
+   - Takes array of contestants as parameter
+   - Filters out eliminated contestants
+   - Returns random selection from eligible pool
+   - Returns null if no eligible contestants
+
+3. **Dashboard Integration** (for future task):
+   - Add "Random Select" button to DuelSetup component
+   - Call hook when button clicked
+   - Handle result (select as contestant1 or contestant2)
+
+4. **Testing**:
+   - Test with empty array → returns null
+   - Test with all eliminated → returns null
+   - Test with one eligible → returns that one
+   - Test with multiple eligible → returns random selection
+   - Test distribution over many calls (verify randomness)
 
 ## Success Criteria
-- Selection interaction feels smooth and intuitive
-- Visual feedback is clear
-- Cannot enter invalid states (3 selected, eliminated selected)
-- Random selection works and feels fair
-- State is managed cleanly without bugs
-- Tests verify all selection behaviors
+- Hook exists and exports randomSelect function
+- Returns null when no eligible contestants
+- Returns random contestant from eligible pool
+- Randomness is fair (no obvious bias)
+- All tests passing
+- Hook is easy to integrate
 
 ## Out of Scope
-- Drag-and-drop selection
-- Multi-select with Shift/Ctrl keys
-- Filtering or searching contestants
-- Undo selection changes
+- UI button or integration (Dashboard task)
+- Animation or visual effects
+- Multi-select or batch random selection
+- Weighted randomness
+- Exclusion lists (e.g., "don't pick this contestant")
 
 ## Notes
-- Selection is the primary interaction on the dashboard
-- Make it feel responsive and intuitive
-- Consider edge cases: only 1 contestant left, all eliminated, etc.
-- Random selection should be truly random (no bias)
-- **Data Model Note**: Each contestant owns ONE category. When selecting contestants for a duel, you're selecting two contestants (each with their own single category)
-- Reference SPEC.md section 3.2 and 5.2 for requirements
+- **Keep it simple** - just the random selection logic
+- Dashboard already has selection state management
+- This hook is a pure utility function
+- Consider using `crypto.getRandomValues()` for better randomness than `Math.random()`
+- The hook doesn't need React state - it's just a utility function
+- Could be a simple exported function instead of a hook, but keeping as hook for consistency

@@ -1,81 +1,99 @@
-# Task 18: Audience Slide Display
+# Task 18: ClockBar Timer Integration
 
 ## Objective
-Implement the full-screen slide display for the audience view with proper sizing, censorship boxes, and smooth transitions between slides.
+Integrate the useGameTimer hook with the ClockBar component in AudienceView to show real-time countdown.
+
+## Status
+**NOT STARTED**: ClockBar component exists but shows static time values from duelState.
 
 ## Acceptance Criteria
-- [ ] Slide fills available space while preserving aspect ratio
-- [ ] Censorship boxes rendered at correct positions
-- [ ] White background for transparent images
-- [ ] No cropping of important image areas (letterboxing OK)
-- [ ] Smooth transitions when slides change
-- [ ] High-quality image rendering (no blur or pixelation)
-- [ ] Handles various image aspect ratios correctly
-- [ ] Works at different screen resolutions
-- [ ] Performance: smooth 60fps rendering
+- [ ] ClockBar displays live countdown using useGameTimer hook
+- [ ] Time updates every 100ms smoothly
+- [ ] Active player's time counts down
+- [ ] Inactive player's time stays frozen
+- [ ] Low-time warnings display correctly (< 10s red, < 5s pulsing)
+- [ ] Time format is consistent (e.g., "28.5s")
+- [ ] No flickering or visual jank
+
+## Dependencies
+- Task 15: useGameTimer hook (⚠️ must be complete)
+- Task 19: ClockBar component (✅ complete)
+- Task 17: AudienceView layout (✅ mostly complete)
 
 ## Implementation Guidance
-1. Reuse `SlideViewer` component from task-09:
-   - Pass `fullscreen={true}` prop
-   - Ensure component scales properly for large displays
-2. Calculate available space:
-   - Total viewport height minus clock bar height
-   - Full viewport width
-   - Center content in this area
-3. Image sizing strategy:
-   - Use CSS `object-fit: contain` or custom calculation
-   - Calculate aspect ratios: image vs container
-   - Add letterboxing (black bars) if needed:
-     - Vertical bars for wide images in tall containers
-     - Horizontal bars for tall images in wide containers
-4. Censorship boxes:
-   - Position relative to the image (not the container)
-   - Calculate exact pixel positions based on percentages
-   - Ensure boxes scale with image size
-   - Test with various screen sizes
-5. Slide transitions:
-   - Fade out old slide (200-300ms)
-   - Fade in new slide (200-300ms)
-   - Optional: crossfade for smoother effect
-   - Use CSS transitions or React animation library
-6. Performance optimization:
-   - Preload next slide image
-   - Use CSS transforms for animations (GPU accelerated)
-   - Avoid layout thrashing
-   - Use React.memo to prevent unnecessary re-renders
-7. Handle edge cases:
-   - Missing image: show placeholder
-   - Image load error: show error state
-   - Very large images: ensure they don't cause lag
-   - First slide: no transition, show immediately
 
-## Slide Transition Example
-```
-Slide A displayed → Correct button clicked →
-  → Fade out Slide A (200ms) →
-  → Fade in Slide B (200ms) →
-Slide B displayed
-```
+1. **Integrate Timer in AudienceView**:
+   ```typescript
+   import { useGameTimer } from '@hooks/useGameTimer';
+
+   function AudienceView() {
+     const [duelState] = useDuelState();
+
+     const { timeRemaining1, timeRemaining2 } = useGameTimer({
+       initialTime1: duelState?.timeRemaining1 ?? 30,
+       initialTime2: duelState?.timeRemaining2 ?? 30,
+       activePlayer: duelState?.activePlayer ?? 1,
+       onTimeExpired: () => {
+         // In audience view, just display - don't handle expiration
+         // Master view handles duel end logic
+       },
+     });
+
+     return (
+       <div>
+         <ClockBar
+           contestant1={duelState.contestant1}
+           contestant2={duelState.contestant2}
+           timeRemaining1={timeRemaining1}
+           timeRemaining2={timeRemaining2}
+           activePlayer={duelState.activePlayer}
+           categoryName={duelState.selectedCategory.name}
+         />
+         {/* ... rest of view */}
+       </div>
+     );
+   }
+   ```
+
+2. **Time Format Utility**:
+   - ClockBar already has formatTime function
+   - Ensure consistency across views
+   - Format: "28.5s" for values < 60, "1:23.5" for 60+
+
+3. **Synchronization Consideration**:
+   - Timer runs independently in audience view
+   - May drift from master view slightly
+   - This is acceptable for now
+   - Phase 7 will add BroadcastChannel for tighter sync
+
+4. **Handle No Duel State**:
+   - Show waiting screen when duelState is null
+   - Don't render ClockBar without active duel
+
+5. **Testing**:
+   - Open audience view during active duel
+   - Verify time counts down smoothly
+   - Check that only active player's time decrements
+   - Confirm low-time warnings appear
+   - Test with different screen sizes
 
 ## Success Criteria
-- Images are crisp and clear on large displays
-- Censorship boxes positioned accurately (within 1-2px)
-- No cropping of important image content
-- Transitions are smooth and professional
-- No jank or performance issues
-- Works across different screen sizes and aspect ratios
-- Letterboxing is subtle and doesn't distract
+- Time countdown is smooth (no stuttering)
+- Only active player's time decrements
+- Timer stays accurate (within ~0.5s of master view)
+- Low-time warnings are visible and clear
+- No performance issues
+- Works reliably across page refreshes
 
 ## Out of Scope
-- Advanced transitions (wipe, zoom, etc.)
-- Slide thumbnails or preview
-- Image editing or filters
-- Slide notes or annotations
+- Perfect synchronization with master view (Phase 7)
+- Pause/resume from audience view
+- Manual time adjustment
+- Audio cues for low time
 
 ## Notes
-- This is what the audience sees - it needs to look professional
-- Test with actual content at actual projection resolution
-- Consider various image sizes and aspect ratios during testing
-- Images may be 16:9, 4:3, square, portrait, etc.
-- Coordinate with task-09 (SlideViewer component) for consistency
-- Reference SPEC.md sections 3.1 and 3.4 for requirements
+- Audience view timer runs independently - not directly controlled by master
+- Slight drift (<1s) is acceptable for MVP
+- BroadcastChannel in Phase 7 will improve sync
+- ClockBar already handles visual styling for low time
+- Reference SPEC.md section 3.4 for audience view requirements
