@@ -25,6 +25,11 @@
   color: #1f2937;
 }
 
+.wins-badge-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .wins-badge {
   background-color: #3b82f6;
   color: white;
@@ -34,6 +39,22 @@
   border-radius: 9999px;
   min-width: 2rem;
   text-align: center;
+}
+
+.crown {
+  position: absolute;
+  top: -2rem;
+  right: 0;
+  font-size: 2rem;
+  transform: rotate(25deg);
+  transform-origin: 50% 100%;
+  z-index: 1;
+  filter: drop-shadow(0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease-out;
+}
+
+.card:hover .crown {
+  transform: rotate(35deg) translateY(-0.25rem);
 }
 
 .category-section {
@@ -81,8 +102,7 @@
 }
 
 .interactive:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Selected state */
@@ -100,6 +120,7 @@
 .eliminated {
   opacity: 0.6;
   background-color: #f3f4f6;
+  cursor: not-allowed;
 }
 
 .eliminated .name {
@@ -114,7 +135,15 @@
   color: #9ca3af;
 }
 
-/* Eliminated + interactive hover should still provide feedback */
+/* Eliminated cards should NOT have hover effects or transform */
+.eliminated.interactive {
+  cursor: not-allowed;
+}
+
 .eliminated.interactive:hover {
-  opacity: 0.75;
+  /* Override interactive hover - no transform, no shadow change */
+  transform: none;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-color: #e5e7eb;
+  opacity: 0.6;
 }
