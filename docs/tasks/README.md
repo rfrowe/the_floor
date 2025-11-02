@@ -58,10 +58,18 @@ Comprehensive testing and final refinements.
 - `task-25-component-tests` - Add React Testing Library tests
 - `task-26-e2e-tests` - Create Playwright E2E tests
 - `task-27-polish` - Final polish and documentation
+- `task-28.1-timer-sync-fix` - Fix master-audience timer synchronization
+- `task-28.2-fix-duel-inheritance` - Fix duel category inheritance bug
+- `task-28.3-handle-slides-exhausted` - Handle slides exhausted edge case
 
 ### Phase 9: Future Enhancements (ongoing)
 Post-MVP features and improvements for enhanced functionality.
 - `task-30-category-manager` - Independent category management system
+- `task-31-reset-app` - Add functionality to reset/clear application data
+- `task-32-dark-mode` - Implement dark mode theme support
+- `task-33-sound-effects` - Add sound effects for duel actions
+- `task-34-audience-view-theming` - Theme audience view to match TV show aesthetic
+- `task-36-grid-view-floor` - Implement grid view floor display with territory consolidation
 
 ## How to Use These Tasks
 
@@ -142,5 +150,10 @@ This phase contains post-MVP features and improvements that are not required for
 
 **Current Tasks:**
 - Task 30: Category Manager - Independent category storage and management UI
+- Task 31: Reset App - Add functionality to reset/clear application data
+- Task 32: Dark Mode - Implement dark mode theme support
+- Task 33: Sound Effects - Add sound effects for correct answers and skips
+- Task 34: Audience View Theming - Theme audience view to match "The Floor" TV show aesthetic
+- Task 36: Grid View Floor - Implement grid view with territory consolidation (Dream Feature)
 
 Good luck! 🎮
