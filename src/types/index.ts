@@ -10,7 +10,7 @@ export type { Contestant, Category, ContestantInput, ContestantUpdate } from './
 export type { Slide, CensorBox } from './slide';
 
 // Duel types
-export type { DuelState, DuelResult, DuelInput } from './duel';
+export type { DuelState, DuelResult, DuelInput, DuelStateReference } from './duel';
 
 // Game configuration and state types
 export type { GameConfig, GameState } from './game';

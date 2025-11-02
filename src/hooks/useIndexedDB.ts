@@ -9,7 +9,7 @@ import {
   addContestant,
   updateContestant,
   deleteContestant,
-} from '@/storage/indexedDB';
+} from '@storage/indexedDB';
 import type { Contestant } from '@types';
 
 /**

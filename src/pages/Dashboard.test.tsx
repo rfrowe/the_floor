@@ -308,7 +308,7 @@ describe('Dashboard', () => {
     });
   });
 
-  it('displays duel panel placeholder', () => {
+  it('displays duel setup panel', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
       { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
@@ -320,9 +320,8 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    expect(
-      screen.getByText('Duel setup controls will be implemented in task-12')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Duel Setup')).toBeInTheDocument();
+    expect(screen.getByText('Select 2 contestants to set up a duel')).toBeInTheDocument();
   });
 
   it('displays correct contestant count', () => {

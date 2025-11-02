@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useContestants } from './useIndexedDB';
-import { clearAllContestants } from '@/storage/indexedDB';
+import { clearAllContestants } from '@storage/indexedDB';
 import type { Contestant } from '@types';
 
 describe('useContestants', () => {
