@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Category, Contestant } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { ContestantCard } from '@components/contestant/ContestantCard';
+import { DuelSetup, type DuelConfig } from '@components/duel/DuelSetup';
 import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
 import { Card } from '@components/common/Card';
@@ -13,6 +14,8 @@ import styles from './Dashboard.module.css';
 function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
+  const [selectedContestant1, setSelectedContestant1] = useState<Contestant | null>(null);
+  const [selectedContestant2, setSelectedContestant2] = useState<Contestant | null>(null);
   const [contestants, { add: addContestant, remove: removeContestant }] = useContestants();
 
   const handleImport = async (contestantName: string, category: Category) => {
@@ -61,6 +64,43 @@ function Dashboard() {
     window.open('/audience', '_blank', 'noopener,noreferrer');
   };
 
+  const handleContestantClick = (contestant: Contestant) => {
+    // Toggle selection logic: select contestant1, then contestant2
+    if (selectedContestant1?.id === contestant.id) {
+      // Deselect contestant1
+      setSelectedContestant1(null);
+    } else if (selectedContestant2?.id === contestant.id) {
+      // Deselect contestant2
+      setSelectedContestant2(null);
+    } else if (!selectedContestant1) {
+      // Select as contestant1
+      setSelectedContestant1(contestant);
+    } else if (!selectedContestant2) {
+      // Select as contestant2
+      setSelectedContestant2(contestant);
+    } else {
+      // Both slots full, replace contestant1 and shift contestant2 to contestant1
+      setSelectedContestant1(selectedContestant2);
+      setSelectedContestant2(contestant);
+    }
+  };
+
+  const handleClearDuelSelection = () => {
+    setSelectedContestant1(null);
+    setSelectedContestant2(null);
+  };
+
+  const handleStartDuel = (_duelConfig: DuelConfig) => {
+    // DuelSetup component handles navigation and state saving
+    // Clear selections after starting
+    setSelectedContestant1(null);
+    setSelectedContestant2(null);
+  };
+
+  const isContestantSelected = (contestant: Contestant): boolean => {
+    return selectedContestant1?.id === contestant.id || selectedContestant2?.id === contestant.id;
+  };
+
   // Sort contestants: active first, then eliminated
   const sortedContestants = [...contestants].sort((a, b) => {
     if (a.eliminated === b.eliminated) {
@@ -74,8 +114,6 @@ function Dashboard() {
   const titleClass = styles['title'] ?? '';
   const headerActionsClass = styles['header-actions'] ?? '';
   const duelPanelClass = styles['duel-panel'] ?? '';
-  const duelPanelContentClass = styles['duel-panel-content'] ?? '';
-  const placeholderTextClass = styles['placeholder-text'] ?? '';
 
   return (
     <Container className={dashboardClass}>
@@ -97,11 +135,14 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* Duel Setup Panel - Placeholder for task-12 */}
+      {/* Duel Setup Panel */}
       <Card className={duelPanelClass}>
-        <div className={duelPanelContentClass}>
-          <p className={placeholderTextClass}>Duel setup controls will be implemented in task-12</p>
-        </div>
+        <DuelSetup
+          contestant1={selectedContestant1}
+          contestant2={selectedContestant2}
+          onClear={handleClearDuelSelection}
+          onStartDuel={handleStartDuel}
+        />
       </Card>
 
       {/* Contestants Section */}
@@ -132,7 +173,11 @@ function Dashboard() {
           <div className={styles['contestants-grid'] ?? ''}>
             {sortedContestants.map((contestant) => (
               <div key={contestant.id} className={styles['contestant-card-wrapper'] ?? ''}>
-                <ContestantCard contestant={contestant} />
+                <ContestantCard
+                  contestant={contestant}
+                  isSelected={isContestantSelected(contestant)}
+                  onClick={handleContestantClick}
+                />
                 <Button
                   variant="danger"
                   size="small"

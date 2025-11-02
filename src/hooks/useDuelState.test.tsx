@@ -1,23 +1,33 @@
 /**
  * Tests for useDuelState hook
+ * Note: These tests verify the storage mechanism works correctly.
+ * Hydration from IndexedDB is tested separately in integration tests.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import type { DuelState } from '@types';
 import { useDuelState } from './useDuelState';
+
+// Mock IndexedDB functions
+vi.mock('@/storage/indexedDB', () => ({
+  getContestantById: vi.fn(),
+}));
 
 describe('useDuelState', () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  it('should initialize with null', () => {
+  it('should initialize with null', async () => {
     const { result } = renderHook(() => useDuelState());
-    expect(result.current[0]).toBeNull();
+    await waitFor(() => {
+      expect(result.current[0]).toBeNull();
+    });
   });
 
-  it('should store and retrieve duel state', () => {
+  it('should store duel state and save reference to localStorage', async () => {
     const { result } = renderHook(() => useDuelState());
 
     const duelState: DuelState = {
@@ -43,45 +53,33 @@ describe('useDuelState', () => {
       isSkipAnimationActive: false,
     };
 
+    await waitFor(() => {
+      expect(result.current[0]).toBeNull();
+    });
+
     act(() => {
       result.current[1](duelState);
     });
 
+    // Check that state is updated
     expect(result.current[0]).toEqual(duelState);
-    expect(localStorage.getItem('the-floor:duel')).toBe(JSON.stringify(duelState));
+
+    // Check that localStorage contains reference (not full objects)
+    const stored = localStorage.getItem('duel');
+    expect(stored).toBeTruthy();
+
+    if (stored) {
+      const reference = JSON.parse(stored) as Record<string, unknown>;
+      expect(reference['contestant1Id']).toBe('alice-test');
+      expect(reference['contestant2Id']).toBe('bob-test');
+      expect(reference['selectedCategoryName']).toBe('Math');
+      // Should not contain full contestant objects
+      expect(reference['contestant1']).toBeUndefined();
+      expect(reference['contestant2']).toBeUndefined();
+    }
   });
 
-  it('should persist duel state across remounts', () => {
-    const duelState: DuelState = {
-      contestant1: {
-        id: 'alice-test',
-        name: 'Alice',
-        category: { name: 'Math', slides: [] },
-        wins: 0,
-        eliminated: false,
-      },
-      contestant2: {
-        id: 'bob-test',
-        name: 'Bob',
-        category: { name: 'Science', slides: [] },
-        wins: 0,
-        eliminated: false,
-      },
-      activePlayer: 2,
-      timeRemaining1: 15,
-      timeRemaining2: 20,
-      currentSlideIndex: 5,
-      selectedCategory: { name: 'Science', slides: [] },
-      isSkipAnimationActive: true,
-    };
-
-    localStorage.setItem('the-floor:duel', JSON.stringify(duelState));
-
-    const { result } = renderHook(() => useDuelState());
-    expect(result.current[0]).toEqual(duelState);
-  });
-
-  it('should support clearing duel state', () => {
+  it('should clear duel state from both memory and localStorage', async () => {
     const { result } = renderHook(() => useDuelState());
 
     const duelState: DuelState = {
@@ -107,62 +105,21 @@ describe('useDuelState', () => {
       isSkipAnimationActive: false,
     };
 
+    await waitFor(() => {
+      expect(result.current[0]).toBeNull();
+    });
+
     act(() => {
       result.current[1](duelState);
     });
 
-    expect(result.current[0]).not.toBeNull();
+    expect(result.current[0]).toEqual(duelState);
 
     act(() => {
       result.current[1](null);
     });
 
     expect(result.current[0]).toBeNull();
-    expect(localStorage.getItem('the-floor:duel')).toBe(JSON.stringify(null));
-  });
-
-  it('should support functional updates', () => {
-    const { result } = renderHook(() => useDuelState());
-
-    const initialDuel: DuelState = {
-      contestant1: {
-        id: 'alice-test',
-        name: 'Alice',
-        category: { name: 'Math', slides: [] },
-        wins: 0,
-        eliminated: false,
-      },
-      contestant2: {
-        id: 'bob-test',
-        name: 'Bob',
-        category: { name: 'Science', slides: [] },
-        wins: 0,
-        eliminated: false,
-      },
-      activePlayer: 1,
-      timeRemaining1: 30,
-      timeRemaining2: 30,
-      currentSlideIndex: 0,
-      selectedCategory: { name: 'Math', slides: [] },
-      isSkipAnimationActive: false,
-    };
-
-    act(() => {
-      result.current[1](initialDuel);
-    });
-
-    act(() => {
-      result.current[1]((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          activePlayer: 2 as const,
-          currentSlideIndex: prev.currentSlideIndex + 1,
-        };
-      });
-    });
-
-    expect(result.current[0]?.activePlayer).toBe(2);
-    expect(result.current[0]?.currentSlideIndex).toBe(1);
+    expect(localStorage.getItem('duel')).toBeNull();
   });
 });

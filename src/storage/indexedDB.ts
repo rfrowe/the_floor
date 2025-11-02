@@ -64,6 +64,31 @@ export async function getAllContestants<T>(): Promise<T[]> {
 }
 
 /**
+ * Get a single contestant by ID from IndexedDB
+ */
+export async function getContestantById<T>(id: string): Promise<T | null> {
+  try {
+    const db = await initDB();
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction([CONTESTANT_STORE], 'readonly');
+      const store = transaction.objectStore(CONTESTANT_STORE);
+      const request = store.get(id);
+
+      request.onsuccess = () => {
+        resolve((request.result as T) || null);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to get contestant from IndexedDB'));
+      };
+    });
+  } catch (error) {
+    console.error('Error getting contestant from IndexedDB:', error);
+    return null;
+  }
+}
+
+/**
  * Add a new contestant to IndexedDB
  */
 export async function addContestant<T extends { id: string }>(contestant: T): Promise<void> {
