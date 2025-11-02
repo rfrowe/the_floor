@@ -1,0 +1,118 @@
+.duel-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.header {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contestant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contestant-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.contestant-label {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  min-width: 120px;
+}
+
+.contestant-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.category-select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.category-select:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.category-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-background-secondary);
+}
+
+.category-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.info-box {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--color-info-bg, #eff6ff);
+  border: 1px solid var(--color-info-border, #3b82f6);
+  border-radius: 4px;
+  color: var(--color-info-text, #1e40af);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.info-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.validation-message {
+  padding: 0.75rem;
+  background-color: var(--color-warning-bg, #fef3c7);
+  border: 1px solid var(--color-warning-border, #f59e0b);
+  border-radius: 4px;
+  color: var(--color-warning-text, #92400e);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+/* Dark mode support (if CSS variables are configured) */
+@media (prefers-color-scheme: dark) {
+  .info-box {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+  }
+
+  .validation-message {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+  }
+}

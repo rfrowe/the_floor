@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getItem, setItem } from '@/storage/localStorage';
+import { getItem, setItem } from '@storage/localStorage';
 
 /**
  * Custom hook for managing state with localStorage persistence

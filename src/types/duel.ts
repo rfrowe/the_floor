@@ -55,3 +55,34 @@ export interface DuelResult {
  * Helper type for creating a new duel
  */
 export type DuelInput = Pick<DuelState, 'contestant1' | 'contestant2' | 'selectedCategory'>;
+
+/**
+ * Lightweight reference to a duel state for localStorage storage.
+ * Stores only IDs instead of full contestant/category objects to avoid quota issues.
+ * Full objects are rehydrated from IndexedDB when reading.
+ */
+export interface DuelStateReference {
+  /** ID of first contestant (to look up in IndexedDB) */
+  contestant1Id: string;
+
+  /** ID of second contestant (to look up in IndexedDB) */
+  contestant2Id: string;
+
+  /** Name of the category being used in this duel */
+  selectedCategoryName: string;
+
+  /** Which player currently has control (1 or 2) */
+  activePlayer: 1 | 2;
+
+  /** Time remaining for contestant 1 (in seconds) */
+  timeRemaining1: number;
+
+  /** Time remaining for contestant 2 (in seconds) */
+  timeRemaining2: number;
+
+  /** Index of the current slide being displayed */
+  currentSlideIndex: number;
+
+  /** Whether the skip answer animation is currently playing */
+  isSkipAnimationActive: boolean;
+}

@@ -17,6 +17,7 @@ export default defineConfig({
       '@contexts': path.resolve(__dirname, './src/contexts'),
       '@pages': path.resolve(__dirname, './src/pages'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@storage': path.resolve(__dirname, './src/storage'),
     },
   },
   // @ts-expect-error - Vitest config added via plugin
