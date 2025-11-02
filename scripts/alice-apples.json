@@ -1,0 +1,49 @@
+{
+  "category": {
+    "name": "Apples",
+    "slides": [
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhkYyIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjMwMCIgcj0iMTUwIiBmaWxsPSIjZmYzMzMzIi8+PHBhdGggZD0iTSA0MDAgMTUwIFEgNDIwIDEyMCA0NDAgMTMwIiBzdHJva2U9IiM0YTkwMWQiIHN0cm9rZS13aWR0aD0iOCIgZmlsbD0ibm9uZSIvPjxlbGxpcHNlIGN4PSI0MzAiIGN5PSIxNDAiIHJ4PSIzMCIgcnk9IjE1IiBmaWxsPSIjNmFiZDJkIi8+PHRleHQgeD0iNDAwIiB5PSI1MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0OCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+UmVkIERlbGljaW91czwvdGV4dD48L3N2Zz4=",
+        "answer": "Red Delicious",
+        "censorBoxes": [
+          {
+            "x": 25,
+            "y": 75,
+            "width": 50,
+            "height": 12,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZmRlNyIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjMwMCIgcj0iMTUwIiBmaWxsPSIjZmZkNzAwIi8+PHBhdGggZD0iTSA0MDAgMTUwIFEgNDIwIDEyMCA0NDAgMTMwIiBzdHJva2U9IiM0YTkwMWQiIHN0cm9rZS13aWR0aD0iOCIgZmlsbD0ibm9uZSIvPjxlbGxpcHNlIGN4PSI0MzAiIGN5PSIxNDAiIHJ4PSIzMCIgcnk9IjE1IiBmaWxsPSIjNmFiZDJkIi8+PHRleHQgeD0iNDAwIiB5PSI1MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0OCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R29sZGVuIERlbGljaW91czwvdGV4dD48L3N2Zz4=",
+        "answer": "Golden Delicious",
+        "censorBoxes": [
+          {
+            "x": 20,
+            "y": 75,
+            "width": 60,
+            "height": 12,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZTRlMSIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjMwMCIgcj0iMTUwIiBmaWxsPSIjZmY2YjZiIi8+PHBhdGggZD0iTSA0MDAgMTUwIFEgNDIwIDEyMCA0NDAgMTMwIiBzdHJva2U9IiM0YTkwMWQiIHN0cm9rZS13aWR0aD0iOCIgZmlsbD0ibm9uZSIvPjxlbGxpcHNlIGN4PSI0MzAiIGN5PSIxNDAiIHJ4PSIzMCIgcnk9IjE1IiBmaWxsPSIjNmFiZDJkIi8+PHRleHQgeD0iNDAwIiB5PSI1MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0OCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+UGluayBMYWR5PC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Pink Lady",
+        "censorBoxes": [
+          {
+            "x": 35,
+            "y": 75,
+            "width": 30,
+            "height": 12,
+            "color": "#000000"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "contestantName": "Alice"
+  }
+}
