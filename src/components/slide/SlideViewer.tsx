@@ -15,22 +15,57 @@ export interface SlideViewerProps {
 export function SlideViewer({ slide, showAnswer = false, className = '' }: SlideViewerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageBounds, setImageBounds] = useState<{ width: number; height: number; left: number; top: number } | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Reset state when slide changes
   useEffect(() => {
     setImageLoaded(false);
     setImageError(false);
+    setImageBounds(null);
 
-    // Check if image is already loaded (cached)
-    if (imageRef.current && imageRef.current.complete && imageRef.current.naturalHeight !== 0) {
-      setImageLoaded(true);
-    }
+    // Use requestAnimationFrame to wait for next frame before checking cached images
+    const rafId = requestAnimationFrame(() => {
+      // Check if image is already loaded (cached)
+      if (imageRef.current && imageRef.current.complete && imageRef.current.naturalHeight !== 0) {
+        // For cached images, calculate bounds and set imageLoaded together
+        if (imageContainerRef.current) {
+          const imgRect = imageRef.current.getBoundingClientRect();
+          const containerRect = imageContainerRef.current.getBoundingClientRect();
+
+          const bounds = {
+            width: Math.round(imgRect.width),
+            height: Math.round(imgRect.height),
+            left: Math.round(imgRect.left - containerRect.left),
+            top: Math.round(imgRect.top - containerRect.top),
+          };
+          setImageBounds(bounds);
+          setImageLoaded(true);
+        }
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
   }, [slide.imageUrl]);
 
   const handleImageLoad = () => {
     setImageLoaded(true);
+    // Calculate bounds immediately when image loads
+    if (imageRef.current && imageContainerRef.current) {
+      const imgRect = imageRef.current.getBoundingClientRect();
+      const containerRect = imageContainerRef.current.getBoundingClientRect();
+
+      setImageBounds({
+        width: Math.round(imgRect.width),
+        height: Math.round(imgRect.height),
+        left: Math.round(imgRect.left - containerRect.left),
+        top: Math.round(imgRect.top - containerRect.top),
+      });
+    }
   };
 
   const handleImageError = () => {
@@ -38,56 +73,6 @@ export function SlideViewer({ slide, showAnswer = false, className = '' }: Slide
     setImageLoaded(false);
   };
 
-  // Calculate the actual rendered size and position of the image within the container
-  const getImageBounds = () => {
-    if (!imageRef.current || !containerRef.current) {
-      return null;
-    }
-
-    const container = containerRef.current.getBoundingClientRect();
-    const img = imageRef.current;
-
-    // Get natural image dimensions
-    const naturalWidth = img.naturalWidth;
-    const naturalHeight = img.naturalHeight;
-
-    if (naturalWidth === 0 || naturalHeight === 0) {
-      return null;
-    }
-
-    // Calculate aspect ratios
-    const imageAspect = naturalWidth / naturalHeight;
-    const containerAspect = container.width / container.height;
-
-    let renderedWidth: number;
-    let renderedHeight: number;
-    let offsetX: number;
-    let offsetY: number;
-
-    // object-fit: contain logic - image fits within container maintaining aspect ratio
-    if (imageAspect > containerAspect) {
-      // Image is wider - constrained by width
-      renderedWidth = container.width;
-      renderedHeight = container.width / imageAspect;
-      offsetX = 0;
-      offsetY = (container.height - renderedHeight) / 2;
-    } else {
-      // Image is taller - constrained by height
-      renderedHeight = container.height;
-      renderedWidth = container.height * imageAspect;
-      offsetX = (container.width - renderedWidth) / 2;
-      offsetY = 0;
-    }
-
-    return {
-      width: renderedWidth,
-      height: renderedHeight,
-      left: offsetX,
-      top: offsetY,
-    };
-  };
-
-  const imageBounds = imageLoaded ? getImageBounds() : null;
 
   // Build class names
   const containerClass = styles['container'] ?? '';
@@ -106,7 +91,7 @@ export function SlideViewer({ slide, showAnswer = false, className = '' }: Slide
   return (
     <div className={combinedContainerClass} ref={containerRef}>
       {/* White background layer */}
-      <div className={imageContainerClass}>
+      <div className={imageContainerClass} ref={imageContainerRef}>
         {/* Show placeholder while loading */}
         {!imageLoaded && !imageError && <div className={placeholderClass}>Loading slide...</div>}
 
@@ -133,10 +118,10 @@ export function SlideViewer({ slide, showAnswer = false, className = '' }: Slide
           <div
             className={overlayContainerClass}
             style={{
-              width: `${String(imageBounds.width)}px`,
-              height: `${String(imageBounds.height)}px`,
-              left: `${String(imageBounds.left)}px`,
-              top: `${String(imageBounds.top)}px`,
+              width: `${String(Math.round(imageBounds.width))}px`,
+              height: `${String(Math.round(imageBounds.height))}px`,
+              left: `${String(Math.round(imageBounds.left))}px`,
+              top: `${String(Math.round(imageBounds.top))}px`,
             }}
           >
             {slide.censorBoxes.map((box, index) => (

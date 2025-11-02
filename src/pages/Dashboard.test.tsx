@@ -16,10 +16,13 @@ window.open = mockWindowOpen;
 const mockAlert = vi.fn();
 window.alert = mockAlert;
 
-// Mock window.location.reload
-const mockReload = vi.fn();
+// Mock window.location
+const mockLocation = {
+  href: '',
+  reload: vi.fn(),
+};
 Object.defineProperty(window, 'location', {
-  value: { reload: mockReload },
+  value: mockLocation,
   writable: true,
 });
 
@@ -77,6 +80,8 @@ describe('Dashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mockLocation.href
+    mockLocation.href = '';
     // Default: no active duel
     vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([null, mockSetDuelState]);
   });
@@ -218,7 +223,7 @@ describe('Dashboard', () => {
     const audienceButton = screen.getByRole('button', { name: 'Open Audience View' });
     await user.click(audienceButton);
 
-    expect(mockWindowOpen).toHaveBeenCalledWith('/audience', '_blank', 'noopener,noreferrer');
+    expect(mockWindowOpen).toHaveBeenCalledWith('/the_floor/audience', '_blank', 'noopener,noreferrer');
   });
 
   it('shows delete confirmation modal when Delete button clicked', async () => {
@@ -585,7 +590,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(resetSpy).toHaveBeenCalledOnce();
-        expect(mockReload).toHaveBeenCalledOnce();
+        expect(mockLocation.href).toBe('/the_floor/');
       });
     });
 
@@ -620,7 +625,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(resetSpy).toHaveBeenCalledOnce();
         expect(mockAlert).toHaveBeenCalledWith('Failed to reset application: Reset failed');
-        expect(mockReload).not.toHaveBeenCalled();
+        expect(mockLocation.href).toBe('');
       });
     });
   });

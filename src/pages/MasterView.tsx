@@ -191,10 +191,7 @@ function MasterView() {
     // Disable controls during animation
     setControlsDisabled(true);
 
-    // Pause timer during skip animation
-    timer.pause();
-
-    // Set skip animation flag
+    // Set skip animation flag (timer continues running)
     setDuelState({
       ...duelState,
       isSkipAnimationActive: true,
@@ -202,23 +199,18 @@ function MasterView() {
       timeRemaining2: timer.timeRemaining2,
     });
 
-    // Start 3-second countdown
+    // After 3-second animation (during which timer continues counting down)
     skipTimeoutRef.current = setTimeout(() => {
-      // Deduct 3 seconds from current player
+      // Check if time expired during the animation
       const currentTime =
         duelState.activePlayer === 1 ? timer.timeRemaining1 : timer.timeRemaining2;
-      const newTime = currentTime - 3;
 
-      // Check if time expired due to penalty
-      if (newTime <= 0) {
+      if (currentTime <= 0) {
         const loser = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
         const winner = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
         void handleDuelEnd(winner, loser);
         return;
       }
-
-      // Update time via timer hook
-      timer.updateTime(duelState.activePlayer, newTime);
 
       // Advance slide and switch player
       const nextIndex = duelState.currentSlideIndex + 1;
@@ -231,19 +223,18 @@ function MasterView() {
         return;
       }
 
-      // Update duel state
+      // Update duel state with current timer values
       setDuelState({
         ...duelState,
         currentSlideIndex: nextIndex,
         activePlayer: duelState.activePlayer === 1 ? 2 : 1,
         isSkipAnimationActive: false,
-        timeRemaining1: duelState.activePlayer === 1 ? newTime : timer.timeRemaining1,
-        timeRemaining2: duelState.activePlayer === 2 ? newTime : timer.timeRemaining2,
+        timeRemaining1: timer.timeRemaining1,
+        timeRemaining2: timer.timeRemaining2,
       });
 
-      // Re-enable controls and resume timer
+      // Re-enable controls
       setControlsDisabled(false);
-      timer.resume();
     }, 3000);
   }, [duelState, controlsDisabled, timer, handleDuelEnd, setDuelState]);
 

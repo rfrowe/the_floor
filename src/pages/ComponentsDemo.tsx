@@ -118,6 +118,138 @@ export function ComponentsDemo() {
     ],
   };
 
+  // Sample slides with quadrant censor boxes for testing positioning
+  const quadrantTestSlides: Slide[] = [
+    {
+      imageUrl:
+        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23ffffff"/%3E%3Crect x="0" y="0" width="400" height="300" fill="%23ffeeee" stroke="%23999" stroke-width="2"/%3E%3Crect x="400" y="0" width="400" height="300" fill="%23eeffee" stroke="%23999" stroke-width="2"/%3E%3Crect x="0" y="300" width="400" height="300" fill="%23eeeeff" stroke="%23999" stroke-width="2"/%3E%3Crect x="400" y="300" width="400" height="300" fill="%23ffffee" stroke="%23999" stroke-width="2"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ETop Left%3C/text%3E%3Ctext x="600" y="150" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ETop Right%3C/text%3E%3Ctext x="200" y="450" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3EBottom Left%3C/text%3E%3Ctext x="600" y="450" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3EBottom Right%3C/text%3E%3C/svg%3E',
+      answer: 'Quadrant Test',
+      censorBoxes: [
+        // Top-left quadrant box
+        {
+          x: 5,
+          y: 5,
+          width: 40,
+          height: 40,
+          color: 'rgba(255, 0, 0, 0.5)',
+        },
+        // Top-right quadrant box
+        {
+          x: 55,
+          y: 5,
+          width: 40,
+          height: 40,
+          color: 'rgba(0, 255, 0, 0.5)',
+        },
+        // Bottom-left quadrant box
+        {
+          x: 5,
+          y: 55,
+          width: 40,
+          height: 40,
+          color: 'rgba(0, 0, 255, 0.5)',
+        },
+        // Bottom-right quadrant box
+        {
+          x: 55,
+          y: 55,
+          width: 40,
+          height: 40,
+          color: 'rgba(255, 255, 0, 0.5)',
+        },
+      ],
+    },
+    {
+      imageUrl:
+        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23f0f0f0"/%3E%3Cline x1="400" y1="0" x2="400" y2="600" stroke="%23333" stroke-width="2" stroke-dasharray="5,5"/%3E%3Cline x1="0" y1="300" x2="800" y2="300" stroke="%23333" stroke-width="2" stroke-dasharray="5,5"/%3E%3Ctext x="400" y="50" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ECorner Boxes Test%3C/text%3E%3Ctext x="100" y="100" font-family="Arial" font-size="18" fill="%23000"%3ETL Corner%3C/text%3E%3Ctext x="700" y="100" font-family="Arial" font-size="18" fill="%23000" text-anchor="end"%3ETR Corner%3C/text%3E%3Ctext x="100" y="500" font-family="Arial" font-size="18" fill="%23000"%3EBL Corner%3C/text%3E%3Ctext x="700" y="500" font-family="Arial" font-size="18" fill="%23000" text-anchor="end"%3EBR Corner%3C/text%3E%3Ctext x="400" y="300" font-family="Arial" font-size="18" fill="%23000" text-anchor="middle"%3ECenter%3C/text%3E%3C/svg%3E',
+      answer: 'Corner Boxes',
+      censorBoxes: [
+        // Top-left corner
+        {
+          x: 2,
+          y: 10,
+          width: 20,
+          height: 10,
+          color: '#ff0000',
+        },
+        // Top-right corner
+        {
+          x: 78,
+          y: 10,
+          width: 20,
+          height: 10,
+          color: '#00ff00',
+        },
+        // Bottom-left corner
+        {
+          x: 2,
+          y: 78,
+          width: 20,
+          height: 10,
+          color: '#0000ff',
+        },
+        // Bottom-right corner
+        {
+          x: 78,
+          y: 78,
+          width: 20,
+          height: 10,
+          color: '#ff00ff',
+        },
+        // Center
+        {
+          x: 40,
+          y: 45,
+          width: 20,
+          height: 10,
+          color: '#000000',
+        },
+      ],
+    },
+    {
+      imageUrl:
+        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23e0f0ff"/%3E%3Ctext x="400" y="100" font-family="Arial" font-size="36" fill="%23000" text-anchor="middle"%3EEdge Cases Test%3C/text%3E%3Ctext x="50" y="300" font-family="Arial" font-size="20" fill="%23000"%3ELeft%3C/text%3E%3Ctext x="750" y="300" font-family="Arial" font-size="20" fill="%23000" text-anchor="end"%3ERight%3C/text%3E%3Ctext x="400" y="50" font-family="Arial" font-size="20" fill="%23000" text-anchor="middle"%3ETop%3C/text%3E%3Ctext x="400" y="580" font-family="Arial" font-size="20" fill="%23000" text-anchor="middle"%3EBottom%3C/text%3E%3C/svg%3E',
+      answer: 'Edge Cases',
+      censorBoxes: [
+        // Full width top
+        {
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 10,
+          color: 'rgba(128, 0, 0, 0.3)',
+        },
+        // Full width bottom
+        {
+          x: 0,
+          y: 90,
+          width: 100,
+          height: 10,
+          color: 'rgba(0, 128, 0, 0.3)',
+        },
+        // Left edge
+        {
+          x: 0,
+          y: 45,
+          width: 10,
+          height: 10,
+          color: 'rgba(0, 0, 128, 0.5)',
+        },
+        // Right edge
+        {
+          x: 90,
+          y: 45,
+          width: 10,
+          height: 10,
+          color: 'rgba(128, 128, 0, 0.5)',
+        },
+      ],
+    },
+  ];
+
+  const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null);
+  const currentTestSlide = selectedSlideIndex !== null ? quadrantTestSlides[selectedSlideIndex] : null;
+
   return (
     <Container>
       <div className={styles['demo']}>
@@ -398,6 +530,93 @@ export function ComponentsDemo() {
               <li>Loading and error states</li>
               <li>Responsive sizing to fit any container</li>
             </ul>
+          </div>
+
+          {/* Quadrant Censor Box Testing */}
+          <div style={{ marginTop: '3rem', padding: '2rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
+            <h3>Censor Box Positioning Test</h3>
+            <p style={{ marginBottom: '1rem' }}>
+              Test slides with quadrant and edge case censor boxes to verify proper positioning:
+            </p>
+            <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {quadrantTestSlides.map((testSlide, index) => (
+                <Button
+                  key={index}
+                  variant={selectedSlideIndex === index ? 'primary' : 'secondary'}
+                  size="small"
+                  onClick={() => {
+                    setSelectedSlideIndex(index);
+                  }}
+                >
+                  {testSlide.answer}
+                </Button>
+              ))}
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '1rem',
+              marginTop: '1rem'
+            }}>
+              <div>
+                <h4 style={{ marginBottom: '0.5rem' }}>SlideViewer (like Audience View)</h4>
+                <div style={{ height: '450px', border: '2px solid var(--border-default)', backgroundColor: '#1e3a5f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {currentTestSlide ? (
+                    <SlideViewer slide={currentTestSlide} showAnswer={showAnswer} />
+                  ) : (
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>Select a test slide above</p>
+                  )}
+                </div>
+                {currentTestSlide && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Button
+                      onClick={() => {
+                        setShowAnswer(!showAnswer);
+                      }}
+                      size="small"
+                    >
+                      {showAnswer ? 'Show Boxes' : 'Hide Boxes'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 style={{ marginBottom: '0.5rem' }}>Expected Box Positions</h4>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '2px solid var(--border-default)',
+                  borderRadius: '4px',
+                  minHeight: '150px'
+                }}>
+                  {currentTestSlide ? (
+                    <>
+                      <p><strong>{currentTestSlide.answer}</strong></p>
+                      <ul style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                        {currentTestSlide.censorBoxes.map((box, i) => (
+                          <li key={i}>
+                            Box {i + 1}:
+                            <span style={{
+                              display: 'inline-block',
+                              width: '20px',
+                              height: '12px',
+                              backgroundColor: box.color,
+                              marginLeft: '0.5rem',
+                              marginRight: '0.5rem',
+                              verticalAlign: 'middle',
+                              border: '1px solid #333'
+                            }}></span>
+                            Position: ({box.x}%, {box.y}%) | Size: {box.width}% × {box.height}%
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p style={{ color: 'var(--text-secondary)' }}>Select a test slide to see box details</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

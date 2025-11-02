@@ -93,7 +93,7 @@ function Dashboard() {
   };
 
   const handleOpenAudienceView = () => {
-    window.open('/audience', '_blank', 'noopener,noreferrer');
+    window.open('/the_floor/audience', '_blank', 'noopener,noreferrer');
   };
 
   const handleResumeDuel = () => {
@@ -122,8 +122,8 @@ function Dashboard() {
     try {
       await resetAppState();
       setShowResetConfirm(false);
-      // Force refresh to reload empty state
-      window.location.reload();
+      // Navigate to the app root with proper base path
+      window.location.href = '/the_floor/';
     } catch (error) {
       console.error('Failed to reset app:', error);
       alert(

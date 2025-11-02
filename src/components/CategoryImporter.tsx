@@ -235,7 +235,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
 
           <div className="slides-summary">
             <h4>Slides: {currentContestant.category.slides.length}</h4>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               Click on any slide to expand and edit its answer. Censor boxes are displayed for
               reference.
             </p>
@@ -247,11 +247,11 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                     key={index}
                     className="slide-item"
                     style={{
-                      border: '1px solid #ddd',
+                      border: '1px solid var(--border-default)',
                       borderRadius: '4px',
                       padding: '1rem',
                       marginBottom: '0.5rem',
-                      backgroundColor: isExpanded ? '#f9f9f9' : 'white',
+                      backgroundColor: isExpanded ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                     }}
                   >
                     <div
@@ -290,7 +290,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                         <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
                           {slide.answer || '(no answer)'}
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                           {slide.censorBoxes.length} censor box
                           {slide.censorBoxes.length !== 1 ? 'es' : ''}
                         </p>
@@ -303,7 +303,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                         style={{
                           marginTop: '1rem',
                           paddingTop: '1rem',
-                          borderTop: '1px solid #ddd',
+                          borderTop: '1px solid var(--border-default)',
                         }}
                       >
                         <div
@@ -320,7 +320,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                               maxWidth: '100%',
                               height: 'auto',
                               borderRadius: '4px',
-                              border: '1px solid #ccc',
+                              border: '1px solid var(--border-default)',
                               display: 'block',
                             }}
                           />
@@ -367,7 +367,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                               width: '100%',
                               padding: '0.5rem',
                               fontSize: '1rem',
-                              border: '1px solid #ccc',
+                              border: '1px solid var(--border-default)',
                               borderRadius: '4px',
                             }}
                             onClick={(e) => {
@@ -391,7 +391,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                                       width: '16px',
                                       height: '16px',
                                       backgroundColor: box.color,
-                                      border: '1px solid #000',
+                                      border: '1px solid var(--text-primary)',
                                       verticalAlign: 'middle',
                                       marginLeft: '4px',
                                     }}
@@ -419,7 +419,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
               onClick={onCancel}
               className="cancel-button"
               style={{
-                backgroundColor: '#f44336',
+                backgroundColor: 'var(--status-danger)',
                 color: 'white',
                 border: 'none',
                 padding: '0.75rem 1.5rem',
@@ -439,7 +439,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                 }
                 className="import-button"
                 style={{
-                  backgroundColor: '#2196F3',
+                  backgroundColor: 'var(--primary)',
                   color: 'white',
                   border: 'none',
                   padding: '0.75rem 1.5rem',
@@ -468,7 +468,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                 }
                 className="import-button"
                 style={{
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: 'var(--status-success)',
                   color: 'white',
                   border: 'none',
                   padding: '0.75rem 1.5rem',
@@ -504,7 +504,7 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
             onClick={onCancel}
             className="cancel-button"
             style={{
-              backgroundColor: '#f44336',
+              backgroundColor: 'var(--status-danger)',
               color: 'white',
               border: 'none',
               padding: '0.75rem 1.5rem',

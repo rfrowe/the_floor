@@ -13,7 +13,7 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #000;
+  background-color: #1e3a5f; /* PowerPoint blue */
   display: flex;
   flex-direction: column;
   color: #fff;
@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
-  background-color: #000;
+  background-color: #1e3a5f; /* PowerPoint blue */
   opacity: 1;
   transition: opacity 0.25s ease-in-out;
 }

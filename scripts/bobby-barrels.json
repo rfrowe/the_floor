@@ -40,6 +40,84 @@
             "color": "#000000"
           }
         ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhlMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxODUiIHJ4PSIxMTUiIHJ5PSIzMCIgZmlsbD0iIzk5NzA1MCIvPjxyZWN0IHg9IjI4NSIgeT0iMTg1IiB3aWR0aD0iMjMwIiBoZWlnaHQ9IjIzMCIgZmlsbD0iI2JiOTA3MCIgcng9IjQyIi8+PGVsbGlwc2UgY3g9IjQwMCIgY3k9IjQxNSIgcng9IjExNSIgcnk9IjMwIiBmaWxsPSIjOTk3MDUwIi8+PGxpbmUgeDE9IjI4NSIgeTE9IjIzMCIgeDI9IjUxNSIgeTI9IjIzMCIgc3Ryb2tlPSIjNzc1NTM1IiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iMjg1IiB5MT0iMjkwIiB4Mj0iNTE1IiB5Mj0iMjkwIiBzdHJva2U9IiM3NzU1MzUiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIyODUiIHkxPSIzNTAiIHgyPSI1MTUiIHkyPSIzNTAiIHN0cm9rZT0iIzc3NTUzNSIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjI4NSIgeTE9IjM3MCIgeDI9IjUxNSIgeTI9IjM3MCIgc3Ryb2tlPSIjNzc1NTM1IiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CZWVyIEJhcnJlbDwvdGV4dD48L3N2Zz4=",
+        "answer": "Beer Barrel",
+        "censorBoxes": [
+          {
+            "x": 38,
+            "y": 80,
+            "width": 24,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhmZiIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxODAiIHJ4PSIxMjAiIHJ5PSIzMCIgZmlsbD0iI2FhNzc1NSIvPjxyZWN0IHg9IjI4MCIgeT0iMTgwIiB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2NjOTk2NiIgcng9IjQ1Ii8+PGVsbGlwc2UgY3g9IjQwMCIgY3k9IjQyMCIgcng9IjEyMCIgcnk9IjMwIiBmaWxsPSIjYWE3NzU1Ii8+PGxpbmUgeDE9IjI4MCIgeTE9IjIyNSIgeDI9IjUyMCIgeTI9IjIyNSIgc3Ryb2tlPSIjODg1NTMzIiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iMjgwIiB5MT0iMjg1IiB4Mj0iNTIwIiB5Mj0iMjg1IiBzdHJva2U9IiM4ODU1MzMiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIyODAiIHkxPSIzNDUiIHgyPSI1MjAiIHkyPSIzNDUiIHN0cm9rZT0iIzg4NTUzMyIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjI4MCIgeTE9IjM4NSIgeDI9IjUyMCIgeTI9IjM4NSIgc3Ryb2tlPSIjODg1NTMzIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CcmFuZHkgQmFycmVsPC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Brandy Barrel",
+        "censorBoxes": [
+          {
+            "x": 28,
+            "y": 80,
+            "width": 44,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2VlZjVmZiIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxNzUiIHJ4PSIxMjUiIHJ5PSIzMiIgZmlsbD0iIzU1NzciLz48cmVjdCB4PSIyNzUiIHk9IjE3NSIgd2lkdGg9IjI1MCIgaGVpZ2h0PSIyNTAiIGZpbGw9IiM2Njg4YWEiIHJ4PSI0OCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSI0MjUiIHJ4PSIxMjUiIHJ5PSIzMiIgZmlsbD0iIzU1NzciLz48cmVjdCB4PSIzNjAiIHk9IjIwMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzQ0NjY4OCIvPjxyZWN0IHg9IjMwMCIgeT0iMjAwIiB3aWR0aD0iNDAiIGhlaWdodD0iMTgwIiBmaWxsPSIjNDQ2Njg4Ii8+PHJlY3QgeD0iNDYwIiB5PSIyMDAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxODAiIGZpbGw9IiM0NDY2ODgiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdGVlbCBEcnVtPC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Steel Drum",
+        "censorBoxes": [
+          {
+            "x": 35,
+            "y": 80,
+            "width": 30,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjVlYSIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxODgiIHJ4PSIxMTgiIHJ5PSIyOSIgZmlsbD0iIzhjNjMzOSIvPjxyZWN0IHg9IjI4MiIgeT0iMTg4IiB3aWR0aD0iMjM2IiBoZWlnaHQ9IjIzNiIgZmlsbD0iI2FhN2M1MiIgcng9IjM4Ii8+PGVsbGlwc2UgY3g9IjQwMCIgY3k9IjQyNCIgcng9IjExOCIgcnk9IjI5IiBmaWxsPSIjOGM2MzM5Ii8+PGxpbmUgeDE9IjI4MiIgeTE9IjIzMCIgeDI9IjUxOCIgeTI9IjIzMCIgc3Ryb2tlPSIjNmQ0YzI4IiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iMjgyIiB5MT0iMjg1IiB4Mj0iNTE4IiB5Mj0iMjg1IiBzdHJva2U9IiM2ZDRjMjgiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIyODIiIHkxPSIzNDAiIHgyPSI1MTgiIHkyPSIzNDAiIHN0cm9rZT0iIzZkNGMyOCIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjI4MiIgeTE9IjM4MCIgeDI9IjUxOCIgeTI9IjM4MCIgc3Ryb2tlPSIjNmQ0YzI4IiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5SdW0gQmFycmVsPC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Rum Barrel",
+        "censorBoxes": [
+          {
+            "x": 38,
+            "y": 80,
+            "width": 24,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2ZmZjhlOCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxODIiIHJ4PSIxMTIiIHJ5PSIyNyIgZmlsbD0iI2E4ODI2MCIvPjxyZWN0IHg9IjI4OCIgeT0iMTgyIiB3aWR0aD0iMjI0IiBoZWlnaHQ9IjIyNCIgZmlsbD0iI2NhYTY4MCIgcng9IjM3Ii8+PGVsbGlwc2UgY3g9IjQwMCIgY3k9IjQwNiIgcng9IjExMiIgcnk9IjI3IiBmaWxsPSIjYTg4MjYwIi8+PGxpbmUgeDE9IjI4OCIgeTE9IjIyNSIgeDI9IjUxMiIgeTI9IjIyNSIgc3Ryb2tlPSIjODg2NjQ0IiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iMjg4IiB5MT0iMjgwIiB4Mj0iNTEyIiB5Mj0iMjgwIiBzdHJva2U9IiM4ODY2NDQiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIyODgiIHkxPSIzMzUiIHgyPSI1MTIiIHkyPSIzMzUiIHN0cm9rZT0iIzg4NjY0NCIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjI4OCIgeTE9IjM3MCIgeDI9IjUxMiIgeTI9IjM3MCIgc3Ryb2tlPSIjODg2NjQ0IiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Qb3JrIEJhcnJlbDwvdGV4dD48L3N2Zz4=",
+        "answer": "Pork Barrel",
+        "censorBoxes": [
+          {
+            "x": 38,
+            "y": 80,
+            "width": 24,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
+      },
+      {
+        "imageUrl": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZTBlMCIvPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSIxNzgiIHJ4PSIxMjIiIHJ5PSIzMSIgZmlsbD0iIzk5NzA1MCIvPjxyZWN0IHg9IjI3OCIgeT0iMTc4IiB3aWR0aD0iMjQ0IiBoZWlnaHQ9IjI0NCIgZmlsbD0iI2JiOTA3MCIgcng9IjQzIi8+PGVsbGlwc2UgY3g9IjQwMCIgY3k9IjQyMiIgcng9IjEyMiIgcnk9IjMxIiBmaWxsPSIjOTk3MDUwIi8+PGxpbmUgeDE9IjI3OCIgeTE9IjIyMCIgeDI9IjUyMiIgeTI9IjIyMCIgc3Ryb2tlPSIjNzc1NTM1IiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iMjc4IiB5MT0iMjgwIiB4Mj0iNTIyIiB5Mj0iMjgwIiBzdHJva2U9IiM3NzU1MzUiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIyNzgiIHkxPSIzNDAiIHgyPSI1MjIiIHkyPSIzNDAiIHN0cm9rZT0iIzc3NTUzNSIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjI3OCIgeTE9IjM4MiIgeDI9IjUyMiIgeTI9IjM4MiIgc3Ryb2tlPSIjNzc1NTM1IiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI0MDAiIHk9IjUyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQ4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HdW5wb3dkZXIgQmFycmVsPC90ZXh0Pjwvc3ZnPg==",
+        "answer": "Gunpowder Barrel",
+        "censorBoxes": [
+          {
+            "x": 20,
+            "y": 80,
+            "width": 60,
+            "height": 10,
+            "color": "#000000"
+          }
+        ]
       }
     ]
   },
