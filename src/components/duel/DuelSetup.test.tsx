@@ -16,6 +16,14 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock useAudienceConnection
+vi.mock('@hooks/useAudienceConnection', () => ({
+  useAudienceConnection: () => ({
+    isConnected: true,
+    waitForAudience: vi.fn().mockResolvedValue(true),
+  }),
+}));
+
 describe('DuelSetup', () => {
   const mockSetDuelState = vi.fn();
 

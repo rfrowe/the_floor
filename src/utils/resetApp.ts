@@ -11,6 +11,7 @@ import { clearTimerState } from '@/storage/timerState';
  * Reset all application state
  * - Clears all contestants from IndexedDB
  * - Clears all app data from localStorage (duel state, game config, etc.)
+ * - Preserves user preferences like theme/dark mode
  *
  * @returns Promise that resolves when all storage is cleared
  * @throws Error if reset fails
@@ -20,11 +21,16 @@ export async function resetAppState(): Promise<void> {
     // Clear IndexedDB (contestants with images)
     await clearAllContestants();
 
-    // Clear localStorage (duel state, game config, etc.)
+    // Clear duel state (stored directly in localStorage without prefix)
+    localStorage.removeItem('duel');
+
+    // Clear localStorage with prefix (game config, etc.)
     clearLocalStorage();
 
     // Clear timer state
     clearTimerState();
+
+    // Note: 'theme' key is preserved (not prefixed, not explicitly removed)
   } catch (error) {
     console.error('Error resetting app state:', error);
     throw new Error(

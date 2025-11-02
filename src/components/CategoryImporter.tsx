@@ -290,7 +290,9 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
                         <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
                           {slide.answer || '(no answer)'}
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        <p
+                          style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                        >
                           {slide.censorBoxes.length} censor box
                           {slide.censorBoxes.length !== 1 ? 'es' : ''}
                         </p>

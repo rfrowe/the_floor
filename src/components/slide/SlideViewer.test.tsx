@@ -290,9 +290,11 @@ describe('SlideViewer', () => {
       expect(img).toHaveStyle({ display: 'block' });
     });
 
-    // Overlay container should be rendered
-    const overlayContainer = container.querySelector('[style*="width"]');
-    expect(overlayContainer).toBeInTheDocument();
+    // Overlay container should be rendered (wait for double requestAnimationFrame)
+    await waitFor(() => {
+      const overlayContainer = container.querySelector('[style*="width"]');
+      expect(overlayContainer).toBeInTheDocument();
+    });
   });
 
   it('calculates image bounds correctly for tall images', async () => {
@@ -319,9 +321,11 @@ describe('SlideViewer', () => {
       expect(img).toHaveStyle({ display: 'block' });
     });
 
-    // Overlay container should be rendered
-    const overlayContainer = container.querySelector('[style*="width"]');
-    expect(overlayContainer).toBeInTheDocument();
+    // Overlay container should be rendered (wait for double requestAnimationFrame)
+    await waitFor(() => {
+      const overlayContainer = container.querySelector('[style*="width"]');
+      expect(overlayContainer).toBeInTheDocument();
+    });
   });
 
   it('rounds pixel values to avoid sub-pixel rendering issues', async () => {
@@ -335,7 +339,10 @@ describe('SlideViewer', () => {
       right: 805.9,
       x: 5.2,
       y: 10.9,
-      toJSON: () => {},
+      toJSON: () => {
+        // Mock implementation for testing
+        return {};
+      },
     }));
 
     HTMLElement.prototype.getBoundingClientRect = mockFractionalRect;
@@ -353,8 +360,10 @@ describe('SlideViewer', () => {
 
     // Check that overlay container uses rounded values
     await waitFor(() => {
-      const overlayContainer = container.querySelector('[style*="width"]') as HTMLElement;
-      if (overlayContainer) {
+      const overlayContainer = container.querySelector('[style*="width"]');
+      // Assert that overlayContainer exists before checking style
+      expect(overlayContainer).not.toBeNull();
+      if (overlayContainer !== null) {
         const style = overlayContainer.getAttribute('style');
         // Should have rounded width (801px) and height (600px)
         expect(style).toContain('width: 801px');
@@ -386,9 +395,12 @@ describe('SlideViewer', () => {
     rerender(<SlideViewer slide={newSlide} />);
 
     // Should quickly render without delay
-    await waitFor(() => {
-      const censorBoxes = container.querySelectorAll('[aria-hidden="true"]');
-      expect(censorBoxes.length).toBeGreaterThanOrEqual(1);
-    }, { timeout: 100 }); // Should happen very quickly, within 100ms
+    await waitFor(
+      () => {
+        const censorBoxes = container.querySelectorAll('[aria-hidden="true"]');
+        expect(censorBoxes.length).toBeGreaterThanOrEqual(1);
+      },
+      { timeout: 100 }
+    ); // Should happen very quickly, within 100ms
   });
 });
