@@ -1,40 +1,109 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useDuelState } from '@hooks/useDuelState';
+import { SlideViewer } from '@components/slide/SlideViewer';
+import type { Slide } from '@types';
+import styles from './AudienceView.module.css';
 
+/**
+ * Full-screen audience display view for projection/display to audience and players.
+ * Shows clock bar with player info and current slide with censor boxes.
+ * Updates in real-time as master view makes changes via localStorage polling.
+ */
 function AudienceView() {
+  const [duelState] = useDuelState();
+  const [, setPollingTick] = useState(0);
+
+  // Poll localStorage every 200ms for real-time updates
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      // Force re-read from localStorage by triggering a state update
+      setPollingTick((tick) => tick + 1);
+    }, 200);
+
+    return () => {
+      clearInterval(pollInterval);
+    };
+  }, []);
+
+  // Handle Escape key to exit fullscreen (browser fullscreen API support)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen().catch((err: unknown) => {
+          console.error('Error exiting fullscreen:', err);
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // If no active duel, show waiting screen
+  if (!duelState) {
+    return (
+      <div className={styles['container'] ?? ''}>
+        <div className={styles['waiting-screen'] ?? ''}>
+          <h1 className={styles['waiting-title'] ?? ''}>The Floor</h1>
+          <p className={styles['waiting-message'] ?? ''}>Waiting for next duel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get current slide
+  const currentSlide: Slide | undefined =
+    duelState.selectedCategory.slides[duelState.currentSlideIndex];
+
+  // Build class names
+  const containerClass = styles['container'] ?? '';
+  const clockBarClass = styles['clock-bar'] ?? '';
+  const playerInfoClass = styles['player-info'] ?? '';
+  const playerNameClass = styles['player-name'] ?? '';
+  const activeClass = styles['active'] ?? '';
+  const timerClass = styles['timer'] ?? '';
+  const separatorClass = styles['separator'] ?? '';
+  const categoryClass = styles['category'] ?? '';
+  const slideAreaClass = styles['slide-area'] ?? '';
+  const noSlideClass = styles['no-slide'] ?? '';
+
+  const player1NameClasses =
+    duelState.activePlayer === 1 ? `${playerNameClass} ${activeClass}`.trim() : playerNameClass;
+  const player2NameClasses =
+    duelState.activePlayer === 2 ? `${playerNameClass} ${activeClass}`.trim() : playerNameClass;
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Audience View - Display Screen</h1>
-      <p>
-        This is the audience-facing display view designed for projector/screen output. It shows the
-        current game state, active duels, and results in a visually engaging format.
-      </p>
+    <div className={containerClass}>
+      {/* Clock bar with player info and timers */}
+      <div className={clockBarClass}>
+        <div className={playerInfoClass}>
+          <span className={player1NameClasses}>{duelState.contestant1.name}</span>
+          <span className={timerClass}>{Math.ceil(duelState.timeRemaining1)}s</span>
+        </div>
 
-      <nav style={{ marginTop: '2rem' }}>
-        <h2>Navigation</h2>
-        <ul>
-          <li>
-            <Link to="/">Back to Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/master">Go to Master View</Link>
-          </li>
-        </ul>
-      </nav>
+        <div className={separatorClass}>◀▶</div>
 
-      <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f0f0f0' }}>
-        <h3>Planned Features (Future Tasks)</h3>
-        <ul>
-          <li>Full-screen territory grid visualization</li>
-          <li>Animated category reveals</li>
-          <li>Live duel display with timer</li>
-          <li>Answer reveals and scoring animations</li>
-          <li>Winner celebrations</li>
-        </ul>
+        <div className={playerInfoClass}>
+          <span className={timerClass}>{Math.ceil(duelState.timeRemaining2)}s</span>
+          <span className={player2NameClasses}>{duelState.contestant2.name}</span>
+        </div>
+
+        <div className={categoryClass}>{duelState.selectedCategory.name}</div>
       </div>
 
-      <div style={{ marginTop: '1rem', padding: '1rem', border: '2px solid #ff9800' }}>
-        <strong>Note:</strong> In production, this view should be opened in full-screen mode on a
-        separate display/projector.
+      {/* Slide display area */}
+      <div className={slideAreaClass}>
+        {currentSlide ? (
+          <SlideViewer
+            slide={currentSlide}
+            fullscreen={true}
+            showAnswer={duelState.isSkipAnimationActive}
+          />
+        ) : (
+          <div className={noSlideClass}>No slide available</div>
+        )}
       </div>
     </div>
   );
