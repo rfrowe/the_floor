@@ -25,27 +25,19 @@ Future options (out of scope for now, but keep extensible):
 
 ## Implementation Guidance
 1. Create `src/components/game/GameConfig.tsx` component
-2. Use Modal component from task-07
-3. Form fields:
+2. **Reuse existing components**: Use Modal component from task-07 (already built)
+3. **Reuse existing hooks**: Use `useGameConfig()` hook from task-05 (already built)
+4. Form fields:
    - Time per player (number input)
    - Label: "Time per player (seconds)"
    - Min: 10, Max: 300, Default: 30
    - Step: 5 (for easier adjustment)
-4. Load current config from localStorage using `useGameConfig()` hook
-5. Form handling:
-   - Local state for form values
-   - Validate on change
-   - Show error messages for invalid input
-   - Enable Save button only when valid
-6. Save logic:
+5. Save logic:
    - Update GameConfig in localStorage
    - Close modal
    - Show success feedback (toast or message)
-7. Display current config in dashboard:
-   - Small text in header: "Timer: 30s"
-   - Or icon with tooltip
-8. Add "Reset to defaults" button
-9. Write tests:
+6. Add "Reset to defaults" button (use DEFAULT_GAME_CONFIG from @types)
+7. Write tests:
    - Can open and close config modal
    - Can change and save settings
    - Validation prevents invalid values
@@ -85,7 +77,9 @@ Future options (out of scope for now, but keep extensible):
 
 ## Notes
 - Keep the UI simple - focus on the essential setting (time)
-- Make it easy to reset to defaults
-- Consider UX: slider vs number input vs preset buttons (30s, 45s, 60s)
+- Make it easy to reset to defaults (use DEFAULT_GAME_CONFIG constant)
+- Consider UX: number input works well for this use case
+- Skip penalty is currently fixed at 3 seconds (display as readonly, don't make configurable yet)
+- **Reuse existing infrastructure**: Modal component and useGameConfig hook are already built
+- The GameConfig type and DEFAULT_GAME_CONFIG are defined in @types/game
 - Reference SPEC.md sections 3.2 and 4.6 for requirements
-- Coordinate with task-05 for localStorage integration

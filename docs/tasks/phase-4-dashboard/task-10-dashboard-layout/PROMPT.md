@@ -1,18 +1,20 @@
-# Task 10: Dashboard Layout
+# Task 10: Dashboard Layout (Refactor)
 
 ## Objective
-Create the main game master dashboard page that displays all contestants and provides controls for managing the game.
+Refactor the existing Dashboard page to use common components, add contestant management features, and create an intuitive layout prioritizing game master workflow.
 
 ## Acceptance Criteria
-- [ ] Dashboard page displays all contestants in a grid or list
+- [ ] Dashboard uses common components (Container, Button, Card) instead of inline styles
+- [ ] Contestant grid displays all contestants using ContestantCard component
+- [ ] Delete button for each contestant (with confirmation)
 - [ ] Header with game title and controls
 - [ ] Area for game configuration (time settings)
 - [ ] Section for duel setup controls
 - [ ] Responsive layout works on different screen sizes
 - [ ] Clean, scannable interface for game master
 - [ ] Navigation link to open audience view in new window
-- [ ] TypeScript types for dashboard state
-- [ ] Page renders from localStorage data
+- [ ] Empty state guides user to import data
+- [ ] Page uses IndexedDB via useContestants() hook
 
 ## Layout Structure
 ```
@@ -33,9 +35,10 @@ Create the main game master dashboard page that displays all contestants and pro
 ```
 
 ## Implementation Guidance
-1. Create `src/pages/Dashboard.tsx`
-2. Use Container component from task-07
-3. Header section:
+1. **Refactor existing** `src/pages/Dashboard.tsx` (already exists with basic import functionality)
+2. Replace inline styles with common components (Container, Button, Card)
+3. Use IndexedDB integration via `useContestants()` hook (already in place)
+4. Header section:
    - Application title
    - Button to open audience view in new window
    - Button to access game configuration
@@ -50,7 +53,11 @@ Create the main game master dashboard page that displays all contestants and pro
    - Grid layout (CSS Grid or Flexbox)
    - Responsive: 4 columns on desktop, 2 on tablet, 1 on mobile
    - Sort contestants (active first, then eliminated)
-6. Load contestant data from localStorage using hooks from task-05
+6. Keep existing IndexedDB integration using `useContestants()` hook
+7. Add delete functionality:
+   - Delete button on each ContestantCard
+   - Confirmation dialog before deleting
+   - Use `remove()` method from useContestants hook
 7. Handle empty state (no contestants yet):
    - Show message prompting to import PPTX files
    - Display import button prominently
@@ -75,8 +82,9 @@ Create the main game master dashboard page that displays all contestants and pro
 - Statistics or analytics
 
 ## Notes
-- This is the main control center for the game master
-- Prioritize usability - the GM needs to work quickly during live gameplay
-- Keep the interface uncluttered
-- Consider the flow: import → configure → select → start duel
+- Dashboard.tsx already exists with basic functionality - this is a **refactoring task**
+- Current implementation uses IndexedDB (not localStorage) - keep this
+- Prioritize usability over matching the exact mockup layout
+- Focus on game master workflow: import → manage contestants → configure → select → start duel
+- Add contestant management (delete) as this is essential for GM control
 - Reference SPEC.md section 3.2 for requirements
