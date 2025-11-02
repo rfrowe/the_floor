@@ -178,6 +178,41 @@ the-floor/
 - `/master` - Master View (duel control interface)
 - `/audience` - Audience View (display for projector/screen)
 
+## Deployment
+
+### Live Demo
+
+The application is deployed and accessible at:
+**https://rfrowe.github.io/the_floor/**
+
+### GitHub Pages Deployment
+
+This project is configured for automatic deployment to GitHub Pages using GitHub Actions.
+
+**How it works:**
+1. Push to the `main` branch triggers the deployment workflow
+2. The workflow runs tests and builds the application
+3. If all checks pass, the build artifacts are deployed to GitHub Pages
+4. The site is available at `https://<username>.github.io/the_floor/`
+
+**Configuration:**
+- **Vite base path**: Configured to `/the_floor/` for GitHub Pages subdirectory
+- **React Router basename**: Set to `/the_floor` to handle routing correctly
+- **SPA routing support**: Uses 404.html redirect trick for client-side routing
+- **Workflow**: `.github/workflows/deploy.yml` automates build, test, and deployment
+
+**Manual Deployment:**
+You can also trigger deployment manually from the GitHub Actions tab using the "workflow_dispatch" option.
+
+**Local Preview:**
+To test the production build locally with the correct base path:
+```bash
+npm run build
+npm run preview
+```
+
+**Note:** LocalStorage and IndexedDB data is domain-specific, so data saved locally won't transfer to the GitHub Pages deployment.
+
 ## Tech Stack
 
 - **React 19.1+** - UI library

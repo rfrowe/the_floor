@@ -8,7 +8,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/the_floor">
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/master" element={<MasterView />} />
