@@ -11,7 +11,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "parse:pptx": "cd scripts && poetry run python parse_pptx.py"
   },
   "dependencies": {
     "react": "^19.1.1",

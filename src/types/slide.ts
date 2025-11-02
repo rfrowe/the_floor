@@ -1,11 +1,15 @@
 /**
  * Slide and CensorBox type definitions
  * Based on SPEC.md section 4.3 and 4.4
+ *
+ * IMPORTANT: Keep in sync with Python types in scripts/parse_pptx.py
  */
 
 /**
  * Represents a censorship box overlay on a slide image.
  * Position and size are specified as percentages (0-100) relative to the image dimensions.
+ *
+ * SYNC WITH: scripts/parse_pptx.py - CensorBox dataclass
  */
 export interface CensorBox {
   /** X position as percentage (0-100) from left edge */
@@ -27,6 +31,8 @@ export interface CensorBox {
 /**
  * Represents a single slide in a category, containing an image,
  * the correct answer, and optional censorship boxes.
+ *
+ * SYNC WITH: scripts/parse_pptx.py - Slide dataclass
  */
 export interface Slide {
   /** Image data as base64 or blob URL */
