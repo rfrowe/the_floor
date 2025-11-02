@@ -9,6 +9,7 @@
 - `npm test` - Run Vitest test suite
 - `npm test -- --run` - Single test run (use before commits)
 - `npm run lint` - Run ESLint
+- `npm run parse:pptx <input.pptx> <output.json> -- --category "Category Name"` - Parse PPTX file to JSON (see PPTX Parsing section)
 
 ## Task-Driven Development
 **IMPORTANT:** All work follows task definitions in `docs/tasks/`.

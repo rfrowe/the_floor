@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "the-floor-pptx-parser"
+version = "0.1.0"
+description = "PPTX parser for The Floor game show application"
+authors = ["The Floor Team"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-pptx = "^0.6.21"
+Pillow = "^10.0.0"
+
+[tool.poetry.scripts]
+parse-pptx = "parse_pptx:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
