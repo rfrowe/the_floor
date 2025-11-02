@@ -1,19 +1,28 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Category, Contestant } from '@types';
+import type { Category } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { createContestantFromCategory } from '@utils/jsonImport';
-import { useLocalStorage } from '@hooks/useLocalStorage';
+import { useContestants } from '@hooks/useIndexedDB';
 
 function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
-  const [contestants, setContestants] = useLocalStorage<Contestant[]>('contestants', []);
+  const [contestants, { add: addContestant }] = useContestants();
 
-  const handleImport = (contestantName: string, category: Category) => {
+  const handleImport = async (contestantName: string, category: Category) => {
     const newContestant = createContestantFromCategory(category, contestantName);
-    setContestants((prev) => [...prev, newContestant]);
-    setShowImporter(false);
-    alert(`Successfully imported contestant "${contestantName}" with ${category.slides.length} slides!`);
+    try {
+      await addContestant(newContestant);
+      setShowImporter(false);
+      alert(
+        `Successfully imported contestant "${contestantName}" with ${String(category.slides.length)} slides!`
+      );
+    } catch (error) {
+      console.error('Failed to import contestant:', error);
+      alert(
+        `Failed to import contestant: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   };
 
   const handleCancel = () => {

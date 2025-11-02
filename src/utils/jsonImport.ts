@@ -133,6 +133,14 @@ export async function loadCategoryJSON(file: File): Promise<Category> {
 }
 
 /**
+ * Generate a unique ID for a contestant
+ */
+function generateContestantId(): string {
+  const timestamp = String(Date.now());
+  return `contestant-${timestamp}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+/**
  * Create a Contestant from a Category and contestant name
  */
 export function createContestantFromCategory(
@@ -144,6 +152,7 @@ export function createContestantFromCategory(
   }
 
   return {
+    id: generateContestantId(),
     name: contestantName,
     category,
     wins: 0,

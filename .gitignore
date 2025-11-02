@@ -25,3 +25,7 @@ dist-ssr
 
 # Code reviews
 .reviews/
+
+# Sample/test data files (parsed PPTX output and source files)
+scripts/*.json
+scripts/*.pptx
