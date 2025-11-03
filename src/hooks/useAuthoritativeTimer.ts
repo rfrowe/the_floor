@@ -144,18 +144,16 @@ export function useAuthoritativeTimer(
       setSkipAnswer(null);
       handleTimeout(currentActivePlayer);
     } else {
-      // Switch to other player
-      const nextPlayer = currentActivePlayer === 1 ? 2 : 1;
-
+      // Keep control with the same player who skipped
       setIsSkipActive(false);
       setSkipAnswer(null);
-      setActivePlayer(nextPlayer);
+      // activePlayer stays the same - don't switch!
 
-      // Broadcast skip end
-      timerSyncService.broadcastSkipEnd(nextPlayer);
+      // Broadcast skip end with CURRENT player (not switched)
+      timerSyncService.broadcastSkipEnd(currentActivePlayer);
 
-      // Notify callback
-      onSkipEndRef.current(nextPlayer);
+      // Notify callback with CURRENT player
+      onSkipEndRef.current(currentActivePlayer);
     }
   }, [time1, time2, activePlayer, handleTimeout]);
 

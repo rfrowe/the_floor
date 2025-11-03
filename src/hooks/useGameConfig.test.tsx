@@ -55,7 +55,7 @@ describe('useGameConfig', () => {
       }));
     });
 
-    expect(result.current[0].timePerPlayer).toBe(40);
+    expect(result.current[0].timePerPlayer).toBe(55);
     expect(result.current[0].skipPenaltySeconds).toBe(DEFAULT_GAME_CONFIG.skipPenaltySeconds);
   });
 });

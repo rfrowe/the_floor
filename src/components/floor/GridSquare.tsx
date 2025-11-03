@@ -72,11 +72,12 @@ export const GridSquare = memo(
         role="gridcell"
         aria-label={`Square ${String(row)}-${String(col)} owned by ${owner?.name ?? 'empty'}${isSelected ? ' - selected for duel' : ''}`}
       >
-        {/* Show sword icon and name together on centroid square only */}
+        {/* Show sword icon, name, and category on centroid square only */}
         {displayName && (
           <div className={labelClass}>
             {isSelected && <span className={styles['duel-icon'] ?? ''}>⚔️</span>}
-            {owner.name}
+            <span>{owner.name}</span>
+            <span style={{ fontSize: '0.8em', opacity: 0.9 }}>{owner.category.name}</span>
           </div>
         )}
       </div>
