@@ -10,7 +10,7 @@ import type { DuelState } from './duel';
  * Configuration settings for the game.
  */
 export interface GameConfig {
-  /** Time limit per player in seconds (default: 30) */
+  /** Time limit per player in seconds (default: 45) */
   timePerPlayer: number;
 
   /** Time penalty in seconds when a player skips (default: 3) */
@@ -35,6 +35,6 @@ export interface GameState {
  * Default game configuration values
  */
 export const DEFAULT_GAME_CONFIG: GameConfig = {
-  timePerPlayer: 30,
+  timePerPlayer: 45,
   skipPenaltySeconds: 3,
 };

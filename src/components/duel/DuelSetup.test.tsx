@@ -291,8 +291,8 @@ describe('DuelSetup', () => {
         contestant2: mockContestant2,
         selectedCategory: mockContestant1.category,
         activePlayer: 1,
-        timeRemaining1: 30,
-        timeRemaining2: 30,
+        timeRemaining1: 45,
+        timeRemaining2: 45,
         currentSlideIndex: 0,
         isSkipAnimationActive: false,
       });
