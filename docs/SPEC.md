@@ -38,14 +38,14 @@ A React + TypeScript web application implementing "The Floor" game show format f
   - **Random select button**: Randomly selects one non-eliminated player
   - Select two contestants for a duel
   - Choose which contestant's category/slides to use
-  - Configure time limit per game (default 30 seconds per player)
+  - Configure time limit per game (default 45 seconds per player)
   - Start duel button
 
 ### 3.3 Duel Interface - Master View (Control Window)
 - Display current slide's correct answer (from speaker notes)
 - Two primary controls:
   - **"Correct" button**: Transfers control to opponent, stops current player's clock
-  - **"Skip" button**: Shows answer on audience view for 3 seconds (counted against skipping player), then transfers control
+  - **"Skip" button**: Shows answer on audience view for 3 seconds (counted against skipping player), then skipping player continues with next slide
 - Visual indicators:
   - Which player's turn is active
   - Real-time countdown of both players' remaining time
@@ -134,7 +134,7 @@ interface DuelState {
 ### 4.6 GameConfig
 ```typescript
 interface GameConfig {
-  timePerPlayer: number; // seconds, default 30
+  timePerPlayer: number; // seconds, default 45
 }
 ```
 
@@ -155,7 +155,7 @@ interface GameConfig {
 6. First challenger begins (their clock runs)
 7. GM observes player's verbal answer and clicks "Correct" or "Skip"
 8. On correct: Control transfers to opponent immediately
-9. On skip: Answer shows on audience view for 3 seconds, then control transfers
+9. On skip: Answer shows on audience view for 3 seconds, then skipping player continues with next slide (no control transfer)
 10. Continue until one player's time reaches 0
 11. Winner gains opponent's territory (wins++)
 12. **Winner inherits the losing player's category (the one NOT played in the duel)**
@@ -212,4 +212,3 @@ interface GameConfig {
 - Statistical analysis and reporting
 - Mobile-responsive design for audience view
 - Real-time multiplayer over network
-- Territory visualization (grid display)

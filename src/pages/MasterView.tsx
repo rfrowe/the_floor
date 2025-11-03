@@ -133,28 +133,28 @@ function MasterView() {
 
   // Handle skip end callback (from Audience View)
   const handleSkipEndCallback = useCallback(
-    (switchToPlayer: 1 | 2) => {
+    (_switchToPlayer: 1 | 2) => {
       if (!duelState) return;
 
       // Advance slide
       const nextIndex = duelState.currentSlideIndex + 1;
 
-      // Check if last slide - switched player continues
+      // Check if last slide - skipping player continues (NOT the switched player)
       if (nextIndex >= duelState.selectedCategory.slides.length) {
-        // All slides completed - current active player wins
-        const winner = switchToPlayer === 1 ? duelState.contestant1 : duelState.contestant2;
-        const loser = switchToPlayer === 1 ? duelState.contestant2 : duelState.contestant1;
+        // All slides completed - skipping player (current active player) wins
+        const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
+        const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
         void handleDuelEnd(winner, loser);
         return;
       }
 
-      // Update duel state
+      // Update duel state - keep control with the player who skipped (duelState.activePlayer)
       const currentCommands = timerCommandsRef.current;
       if (currentCommands) {
         setDuelState({
           ...duelState,
           currentSlideIndex: nextIndex,
-          activePlayer: switchToPlayer,
+          activePlayer: duelState.activePlayer, // Keep control with skipping player
           isSkipAnimationActive: false,
           timeRemaining1: currentCommands.currentTime1,
           timeRemaining2: currentCommands.currentTime2,
