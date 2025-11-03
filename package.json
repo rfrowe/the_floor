@@ -14,7 +14,9 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
-    "parse:pptx": "cd scripts && poetry run python parse_pptx.py"
+    "parse:pptx": "cd scripts && poetry run python parse_pptx.py",
+    "parse:pptx:batch": "cd scripts && poetry run python batch_convert.py",
+    "parse:pptx:downscale": "cd scripts && poetry run python downscale_pptx_images.py"
   },
   "dependencies": {
     "react": "^19.1.1",
