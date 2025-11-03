@@ -258,37 +258,60 @@ def extract_censor_boxes(slide, presentation) -> list[CensorBox]:
                 width = shape.width
                 height = shape.height
 
-                # Calculate shape area as percentage of slide
-                shape_area = width * height
-                area_percentage = (shape_area / slide_area) * 100
-
-                # Skip background rectangles (>50% of slide area)
-                if area_percentage > 50:
-                    print(f"  Skipping large shape (background): {area_percentage:.1f}% of slide", file=sys.stderr)
-                    continue
-
-                # Check if rectangle is within visible (cropped) image bounds
+                # Check if rectangle overlaps with visible (cropped) image bounds
+                # Allow boxes that are at least 50% within bounds to handle edge cases
                 rect_right = left + width
                 rect_bottom = top + height
 
-                within_bounds = (left >= visible_left and
-                               rect_right <= visible_right and
-                               top >= visible_top and
-                               rect_bottom <= visible_bottom)
+                # Calculate overlap region
+                overlap_left = max(left, visible_left)
+                overlap_top = max(top, visible_top)
+                overlap_right = min(rect_right, visible_right)
+                overlap_bottom = min(rect_bottom, visible_bottom)
 
-                if not within_bounds:
-                    print(f"  Skipping rectangle outside visible image bounds", file=sys.stderr)
+                # Check if there's any overlap
+                has_overlap = (overlap_right > overlap_left and overlap_bottom > overlap_top)
+
+                if not has_overlap:
+                    print(f"  Skipping rectangle with no overlap with visible image", file=sys.stderr)
                     continue
 
-                # Calculate position RELATIVE TO VISIBLE (CROPPED) IMAGE
-                rel_left = left - visible_left
-                rel_top = top - visible_top
+                # Calculate overlap ratio
+                overlap_area = (overlap_right - overlap_left) * (overlap_bottom - overlap_top)
+                box_area = width * height
+                overlap_ratio = overlap_area / box_area
+
+                # Require at least 50% overlap to avoid including unrelated shapes
+                overlap_threshold = 0.5
+                if overlap_ratio < overlap_threshold:
+                    print(f"  Skipping rectangle with insufficient overlap ({overlap_ratio*100:.1f}% < {overlap_threshold*100:.0f}%)", file=sys.stderr)
+                    continue
+
+                # For boxes that extend beyond visible bounds, clip to visible area
+                # This ensures the censor box aligns with what's actually in the exported image
+                clipped_left = max(left, visible_left)
+                clipped_top = max(top, visible_top)
+                clipped_right = min(rect_right, visible_right)
+                clipped_bottom = min(rect_bottom, visible_bottom)
+                clipped_width = clipped_right - clipped_left
+                clipped_height = clipped_bottom - clipped_top
+
+                # Calculate position RELATIVE TO VISIBLE (CROPPED) IMAGE using clipped coordinates
+                rel_left = clipped_left - visible_left
+                rel_top = clipped_top - visible_top
 
                 # Convert to percentages of VISIBLE IMAGE dimensions
                 x_percent = (rel_left / visible_width) * 100
                 y_percent = (rel_top / visible_height) * 100
-                width_percent = (width / visible_width) * 100
-                height_percent = (height / visible_height) * 100
+                width_percent = (clipped_width / visible_width) * 100
+                height_percent = (clipped_height / visible_height) * 100
+
+                # Skip boxes that cover nearly the entire visible image
+                # These are likely background fills for slides with transparent backgrounds
+                image_coverage_percent = width_percent * height_percent / 100  # Convert to percentage
+                if image_coverage_percent > 85:  # >85% of visible image area
+                    print(f"  Skipping near-full-image box (likely background): {image_coverage_percent:.1f}% of visible image", file=sys.stderr)
+                    continue
 
                 # Extract fill color
                 try:
