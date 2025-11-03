@@ -1,9 +1,9 @@
 # The Floor - Mid-Session Progress Report
 
 **Report Generated:** November 1, 2025, 22:42 PST
-**Session Duration:** T+0:00 → T+8:13 (8h 13m)
+**Session Duration:** 8h 13m (T+0:00 → T+8:13)
 **Session Start:** November 1, 2025, 14:29 PST
-**Status:** ⚠️ **In Progress** - Task 16 Remaining for MVP
+**Status:** ⚠️ **IN PROGRESS** - Task 16 Remaining for MVP
 
 ---
 
@@ -29,20 +29,65 @@ Exceptional progress: **19 of 27 tasks completed (70.4%)** in a single developme
 
 ---
 
-## Key Milestones (T+ Format)
+## High-Resolution Timeline
 
-| T+ Time | Clock Time | Milestone | Status |
-|---------|------------|-----------|--------|
+### Development Timeline (T+ Format)
+
+All times shown as T+HH:MM (hours:minutes since 14:29 start on Nov 1)
+
+```mermaid
+gantt
+    title The Floor - Mid-Session Development Timeline
+    dateFormat YYYY-MM-DD HH:mm
+    axisFormat %H:%M
+
+    section Phase 1: Setup
+    Project Init (Task 1)           :done, t1, 2025-11-01 14:29, 8m
+    Path Aliases (Task 2)           :done, t2, 2025-11-01 14:37, 3m
+    ESLint + Prettier (Task 3)      :done, t3, 2025-11-01 14:40, 8m
+
+    section Phase 2: Foundation
+    Data Models (Task 4)            :done, t4, 2025-11-01 15:22, 27m
+    Storage Layer (Task 5)          :done, t5, 2025-11-01 15:59, 37m
+    PPTX Parser (Task 6)            :done, t6, 2025-11-01 17:08, 69m
+
+    section Phase 3: Components
+    Layout Components (Task 7-8)    :done, lay, 2025-11-01 18:10, 53m
+    SlideViewer (Task 9)            :done, t9, 2025-11-01 19:08, 69m
+
+    section Phase 4: Dashboard
+    Random Select (Task 11)         :done, t11, 2025-11-01 21:08, 21m
+    Duel Setup (Task 12)            :done, t12, 2025-11-01 21:40, 32m
+    Dashboard Polish (Task 10)      :done, t10, 2025-11-01 22:08, 28m
+
+    section Phase 5: Master View
+    Game Timer (Task 15)            :done, t15, 2025-11-01 22:21, 9m
+    Master Layout (Task 14)         :active, t14, 2025-11-01 22:42, 21m
+
+    section Phase 6: Audience View
+    Audience Layout (Task 17)       :done, t17, 2025-11-01 20:21, 6m
+    Slide Display (Task 18)         :done, t18, 2025-11-01 20:26, 5m
+    Skip Animation (Task 20)        :done, t20, 2025-11-01 20:48, 22m
+    ClockBar (Task 19)              :done, t19, 2025-11-01 21:29, 41m
+
+    section Critical Docs
+    Task Restructuring              :crit, doc, 2025-11-01 22:12, 21m
+```
+
+### Key Milestones (T+ Format)
+
+| T+ Time | Clock Time | Milestone | Significance |
+|---------|------------|-----------|--------------|
 | **T+0:00** | 14:29 | Session Start | Project initialization |
 | **T+1:31** | 16:00 | Foundation Complete | Data models, storage layer |
 | **T+4:01** | 18:30 | Import System | PPTX parser + IndexedDB working |
 | **T+6:21** | 20:50 | Audience View Complete | Full-screen display ready |
 | **T+7:43** | 22:12 | **Task Restructuring** | Clarified scope, marked Phase 7 optional |
-| **T+8:13** | 22:42 | **Report Generated** | 19/27 tasks, MVP imminent |
+| **T+8:13** | 22:42 | **Current Report** | 19/27 tasks, MVP imminent |
 
 ---
 
-## Task Completion Status
+## Task Completion Analysis
 
 ### Phase-by-Phase Breakdown
 
@@ -105,187 +150,47 @@ Exceptional progress: **19 of 27 tasks completed (70.4%)** in a single developme
 
 ---
 
-## What's Implemented
+## Quality Metrics
 
-### ✅ Complete Dashboard View
-- Contestant management (add, delete, select)
-- PPTX import with CategoryImporter component
-- Random contestant selection with `useRandomSelect()` hook
-- Duel setup interface with category dropdown
-- Keyboard shortcuts (Space to start, Escape to clear)
-- Responsive grid layout (4→2→1 columns)
-- IndexedDB persistence for slides
-- localStorage persistence for game state
-
-### ✅ Master View (Layout Only)
-- Player status display with active player indicator
-- Timer display with visual warnings:
-  - Yellow text when ≤10 seconds
-  - Red pulsing animation when ≤5 seconds
-- Answer display (large, readable for game master)
-- Slide progress indicator
-- Keyboard shortcuts defined (Space/Correct, S/Skip, Escape/Exit)
-- **Missing:** Actual button functionality (Task 16)
-
-### ✅ Complete Audience View
-- Full-screen slide display with aspect ratio preservation
-- ClockBar component showing:
-  - Player names
-  - Dual countdown timers
-  - Category name
-  - Active player highlighting
-- Skip animation with 3-second countdown overlay
-- Smooth transitions and animations
-- Real-time state synchronization via localStorage polling
-- Responsive design for projector displays
-
-### ✅ Core Infrastructure
-- **7 custom hooks:**
-  - `useContestants` (IndexedDB CRUD)
-  - `useDuelState` (localStorage game state)
-  - `useGameConfig` (game settings)
-  - `useGameTimer` (countdown logic)
-  - `useIndexedDB` (generic DB operations)
-  - `useLocalStorage` (generic storage)
-  - `useRandomSelect` (contestant selection algorithm)
-- **8 component groups:**
-  - Common: Button, Card, Modal, Container, Header, Footer
-  - Contestant: ContestantCard
-  - Duel: DuelSetup, ClockBar
-  - Slide: SlideViewer, CensorBox
-- **Storage layers:**
-  - IndexedDB for slide images (large data)
-  - localStorage for game state (fast access)
-- **PPTX Parser:**
-  - Python script with `python-pptx` library
-  - Extracts slides, notes, censor boxes
-  - JSON validation and export
-- **TypeScript:**
-  - Strict mode throughout
-  - Zero `any` types
-  - Comprehensive interfaces
-
----
-
-## What's Remaining for MVP
-
-### 🔴 Critical: Task 16 Only
-
-**Task 16: Duel Control Logic** (30-45 min estimated)
-
-This is the **ONLY** task blocking a fully playable game.
-
-**Requirements:**
-- Implement Correct button handler
-  - Advance to next slide
-  - Switch active player if last slide in set
-  - Check for duel end conditions
-- Implement Skip button handler
-  - Trigger 3-second skip animation
-  - Apply -3 second penalty to active player's timer
-  - Advance to next slide after animation
-  - Disable controls during animation
-- Duel end logic
-  - Determine winner (most time remaining)
-  - Handle category inheritance (winner gets loser's UNPLAYED category)
-  - Update contestant records (increment wins, mark loser eliminated)
-  - Navigate back to dashboard
-- Edge cases
-  - Time expiration during play
-  - Time expiration during skip animation
-  - Last slide completion
-  - Tie-breaker logic
-
-**Current blockers:** None - all dependencies complete
-**Estimated completion:** T+9:00 (~45 minutes from now)
-
----
-
-## Development Timeline (T+ Format)
-
-### Phase 1: Foundation (T+0:00 to T+1:31) [1h 31m]
+### Test Coverage
 
 ```
-T+0:00  Project initialization (Vite + React + TypeScript)
-T+0:08  Path aliases configured (@/, @components/, etc.)
-T+0:11  ESLint + Prettier setup
-T+0:19  Project structure and routing (React Router v7)
-T+0:53  Data models and TypeScript interfaces
-T+1:30  localStorage abstraction layer
+Test Metrics:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Total Tests:      324 passing
+✅ Test Files:       25 files
+✅ Pass Rate:        100% (0 failures)
+✅ Coverage:         Comprehensive
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Achievements:**
-- Solid foundation with strict TypeScript
-- Clean architecture with path aliases
-- Code quality tools configured
-- 3 commits, 3 tasks complete
+**Test Distribution:**
+- Storage layer: 100+ tests
+- Components: 150+ tests
+- Hooks: 50+ tests
+- Utilities: 24+ tests
 
-### Phase 2: Import System (T+1:31 to T+4:01) [2h 30m]
-
-```
-T+1:38  Add /review-task slash command
-T+2:39  PPTX parser (Python) with JSON validation
-T+2:41  CategoryImporter component with persistence
-T+3:41  Layout components (Button, Card, Modal)
-T+3:48  IndexedDB storage layer + comprehensive tests
-T+3:49  CSS Modules and accessibility patterns documented
-T+3:50  Worktree workflow documented
-```
-
-**Achievements:**
-- Complete PPTX import pipeline
-- IndexedDB + localStorage dual persistence
-- Reusable UI component library
-- 100+ tests for storage layer
-
-### Phase 3: Components & Views (T+4:01 to T+6:21) [2h 20m]
+### Build Health
 
 ```
-T+4:39  SlideViewer with censorship box overlays
-T+5:16  Crown indicator for top-scoring contestant
-T+5:46  Dashboard refactor with common components
-T+5:52  Audience View layout (full-screen)
-T+5:57  Audience View slide display with preloading
-T+6:19  Skip animation (3-second countdown overlay)
+Build Status:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ npm run build:    PASSING
+✅ npm test:         ALL PASSING (324/324)
+✅ npm run lint:     NO ERRORS
+✅ TypeScript:       STRICT MODE, 0 ERRORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Achievements:**
-- Complete SlideViewer with censor boxes
-- Full Audience View implementation
-- Skip animation system
-- Dashboard foundation
+### Codebase Stats
 
-### Phase 4: Dashboard & Setup (T+6:21 to T+7:43) [1h 22m]
-
-```
-T+6:39  Contestant selection functionality (Task 11)
-T+7:00  ClockBar polish (sleek design)
-T+7:11  Duel setup interface (Task 12)
-T+7:39  Dashboard keyboard shortcuts (Task 10)
-T+7:40  Task 27.5 prompt added (shortcuts modal)
-T+7:43  📊 Task restructuring (clarified dependencies)
-```
-
-**Achievements:**
-- Complete dashboard with all features
-- Random contestant selection
-- Duel setup interface
-- Keyboard shortcuts
-- **Critical documentation restructuring** that enabled velocity boost
-
-### Phase 5: Master View (T+7:43 to T+8:13) [30m]
-
-```
-T+7:52  useGameTimer hook (accurate countdown)
-T+8:00  Contestant selection system
-T+8:08  Polish Audience View transitions
-T+8:13  Master View layout (Task 14) ✅
-```
-
-**Achievements:**
-- Master View UI complete
-- Game timer hook operational
-- All dependencies for Task 16 satisfied
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Lines of Code** | 9,933 | Production TypeScript |
+| **Commits** | 29 | Clean, atomic commits |
+| **Commit Rate** | 3.5/hour | Consistent progress |
+| **Type Safety** | 100% | Zero `any` types |
+| **Test Coverage** | High | 324 passing tests |
 
 ---
 
@@ -365,53 +270,105 @@ Peak: 3.0 tasks/hr (after restructuring)
 
 ---
 
-## Code Quality Metrics
+## What's Implemented
 
-### Test Coverage
+### Complete Dashboard View ✅
+- Contestant management (add, delete, select)
+- PPTX import with CategoryImporter component
+- Random contestant selection with `useRandomSelect()` hook
+- Duel setup interface with category dropdown
+- Keyboard shortcuts (Space to start, Escape to clear)
+- Responsive grid layout (4→2→1 columns)
+- IndexedDB persistence for slides
+- localStorage persistence for game state
 
-```
-Test Metrics:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Total Tests:      324 passing
-✅ Test Files:       25 files
-✅ Pass Rate:        100% (0 failures)
-✅ Coverage:         Comprehensive
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+### Master View (Layout Only) ✅
+- Player status display with active player indicator
+- Timer display with visual warnings:
+  - Yellow text when ≤10 seconds
+  - Red pulsing animation when ≤5 seconds
+- Answer display (large, readable for game master)
+- Slide progress indicator
+- Keyboard shortcuts defined (Space/Correct, S/Skip, Escape/Exit)
+- **Missing:** Actual button functionality (Task 16)
 
-**Test Distribution:**
-- Storage layer: 100+ tests
-- Components: 150+ tests
-- Hooks: 50+ tests
-- Utilities: 24+ tests
+### Complete Audience View ✅
+- Full-screen slide display with aspect ratio preservation
+- ClockBar component showing:
+  - Player names
+  - Dual countdown timers
+  - Category name
+  - Active player highlighting
+- Skip animation with 3-second countdown overlay
+- Smooth transitions and animations
+- Real-time state synchronization via localStorage polling
+- Responsive design for projector displays
 
-### Build Health
+### Core Infrastructure ✅
+- **7 custom hooks:**
+  - `useContestants` (IndexedDB CRUD)
+  - `useDuelState` (localStorage game state)
+  - `useGameConfig` (game settings)
+  - `useGameTimer` (countdown logic)
+  - `useIndexedDB` (generic DB operations)
+  - `useLocalStorage` (generic storage)
+  - `useRandomSelect` (contestant selection algorithm)
+- **8 component groups:**
+  - Common: Button, Card, Modal, Container, Header, Footer
+  - Contestant: ContestantCard
+  - Duel: DuelSetup, ClockBar
+  - Slide: SlideViewer, CensorBox
+- **Storage layers:**
+  - IndexedDB for slide images (large data)
+  - localStorage for game state (fast access)
+- **PPTX Parser:**
+  - Python script with `python-pptx` library
+  - Extracts slides, notes, censor boxes
+  - JSON validation and export
+- **TypeScript:**
+  - Strict mode throughout
+  - Zero `any` types
+  - Comprehensive interfaces
 
-```
-Build Status:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ npm run build:    PASSING
-✅ npm test:         ALL PASSING (324/324)
-✅ npm run lint:     NO ERRORS
-✅ TypeScript:       STRICT MODE, 0 ERRORS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+---
 
-### Codebase Stats
+## What's Remaining for MVP
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **Lines of Code** | 9,933 | Production TypeScript |
-| **Commits** | 29 | Clean, atomic commits |
-| **Commit Rate** | 3.5/hour | Consistent progress |
-| **Type Safety** | 100% | Zero `any` types |
-| **Test Coverage** | High | 324 passing tests |
+### Critical: Task 16 Only 🔴
+
+**Task 16: Duel Control Logic** (30-45 min estimated)
+
+This is the **ONLY** task blocking a fully playable game.
+
+**Requirements:**
+- Implement Correct button handler
+  - Advance to next slide
+  - Switch active player if last slide in set
+  - Check for duel end conditions
+- Implement Skip button handler
+  - Trigger 3-second skip animation
+  - Apply -3 second penalty to active player's timer
+  - Advance to next slide after animation
+  - Disable controls during animation
+- Duel end logic
+  - Determine winner (most time remaining)
+  - Handle category inheritance (winner gets loser's UNPLAYED category)
+  - Update contestant records (increment wins, mark loser eliminated)
+  - Navigate back to dashboard
+- Edge cases
+  - Time expiration during play
+  - Time expiration during skip animation
+  - Last slide completion
+  - Tie-breaker logic
+
+**Current blockers:** None - all dependencies complete
+**Estimated completion:** T+9:00 (~45 minutes from now)
 
 ---
 
 ## Risk Assessment
 
-### ✅ Low Risk (Well-Covered)
+### Low Risk (Well-Covered) ✅
 
 - **Data persistence:** Robust IndexedDB + localStorage
 - **UI components:** Tested, reusable, accessible
@@ -419,7 +376,7 @@ Build Status:
 - **Type safety:** Strict TypeScript catching all issues
 - **Test infrastructure:** 100% pass rate
 
-### ⚠️ Medium Risk (Manageable)
+### Medium Risk (Manageable) ⚠️
 
 **Task 16 Complexity**
 - Winner determination has edge cases
@@ -433,7 +390,7 @@ Build Status:
 - **Current status:** Acceptable for MVP
 - **Future improvement:** BroadcastChannel (Task 23, marked optional)
 
-### ❌ Minimal Risk
+### Minimal Risk ❌
 
 - No deployment concerns (static site)
 - No authentication/security issues
@@ -473,30 +430,6 @@ Build Status:
 - E2E tests for full game flow
 - Component integration tests
 - Edge case coverage
-
----
-
-## Execution Strategies
-
-### Solo Developer (Recommended)
-
-**Sequential approach:**
-1. Task 16 (30-45 min) → MVP ✅
-2. Integration test (10 min)
-3. Task 27 Polish (1 hour)
-4. Tasks 24-26 Testing (2-3 hours, optional)
-
-**Total to MVP:** ~1 hour
-**Total to polished release:** ~4-5 hours
-
-### Team Development (If Available)
-
-**Parallel workstreams:**
-- **Dev 1:** Task 16 (core logic) - 45 min
-- **Dev 2:** Task 27 (polish/docs) - 1 hour
-- **Dev 3:** Tasks 24-26 (testing) - 2 hours
-
-**Total calendar time:** ~1-2 hours
 
 ---
 
