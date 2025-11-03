@@ -4,9 +4,13 @@ This directory contains a structured breakdown of all implementation tasks for "
 
 ## Task Organization
 
-Tasks are organized into 9 phases:
-- **Phases 1-8:** Core implementation and testing (27 tasks)
+Tasks are organized into 13 phases:
+- **Phases 1-8:** Core implementation and testing (MVP - COMPLETE)
 - **Phase 9:** Future enhancements (ongoing, post-MVP)
+- **Phase 10:** Post-demo bug fixes (HIGH priority)
+- **Phase 11:** Philips Hue integration (PROPOSED)
+- **Phase 12:** LLM Studio for content generation (PROPOSED)
+- **Phase 13:** Process improvements and documentation
 
 ### Phase 1: Project Setup (3 tasks)
 Foundation: project initialization, code quality tools, and folder structure.
@@ -70,6 +74,34 @@ Post-MVP features and improvements for enhanced functionality.
 - `task-33-sound-effects` - Add sound effects for duel actions
 - `task-34-audience-view-theming` - Theme audience view to match TV show aesthetic
 - `task-36-grid-view-floor` - Implement grid view floor display with territory consolidation
+- `task-42-grid-color-improvements` - Improve territory color selection for adjacent distinction
+- `task-43-slide-vertical-fill` - Maximize slide image vertical space usage
+- `task-44-winning-animation` - Enhanced winning animation with confetti
+- `task-45-single-combat-mode` - Exhibition duels that don't affect game state
+- `task-46-finale-best-of-three` - Finale best-of-three format with tie-breaker
+- `task-47-taint-button` - Skip tainted questions without penalty
+
+### Phase 10: Post-Demo Bug Fixes (HIGH PRIORITY)
+Critical bugs discovered during first live demo that affect gameplay fairness and rules compliance.
+- `task-37-duel-timeout-answer-reveal` - Show correct answer for 3s when duel times out
+- `task-38-randomizer-smallest-territory` - Random selection only picks contestants with smallest territory
+- `task-39-fix-territory-name-display` - Fix multiple names appearing on multi-square territories
+- `task-40-instant-fail-late-pass` - Instant fail if passing with <3 seconds remaining
+- `task-41-resurrection-category-logic` - Correct category assignment for resurrected contestants
+
+### Phase 11: Philips Hue Integration (PROPOSED)
+Smart lighting integration for "The Randomizer" effect.
+- See `phase-11-hue-integration/PHASE_PROPOSAL.md` for detailed breakdown
+- Tasks 48-52 (Bridge discovery, API client, lighting effects, integration)
+
+### Phase 12: LLM Studio (PROPOSED)
+AI-powered content creation for generating and editing game categories.
+- See `phase-12-llm-studio/PHASE_PROPOSAL.md` for detailed breakdown
+- Tasks 53-60 (Studio UI, LLM integration, image search, editing, export)
+
+### Phase 13: Process Improvements
+Meta-analysis and documentation improvements based on development experience.
+- `task-61-development-process-analysis` - Analyze development process and propose improvements
 
 ## How to Use These Tasks
 
@@ -127,16 +159,20 @@ A task is complete when:
 
 ## Progress Tracking
 
-Consider creating a checklist or project board to track:
-- [ ] Phase 1 (3/3 tasks complete)
-- [ ] Phase 2 (0/3 tasks complete)
-- [ ] Phase 3 (0/3 tasks complete)
-- [ ] Phase 4 (0/4 tasks complete)
-- [ ] Phase 5 (0/3 tasks complete)
-- [ ] Phase 6 (0/4 tasks complete)
-- [ ] Phase 7 (0/3 tasks complete)
-- [ ] Phase 8 (0/4 tasks complete)
-- [ ] Phase 9 (Future enhancements - ongoing)
+Current status (as of first live demo):
+- [x] Phase 1: Project Setup (COMPLETE)
+- [x] Phase 2: Data Layer (COMPLETE)
+- [x] Phase 3: Core Components (COMPLETE)
+- [x] Phase 4: Game Master Dashboard (COMPLETE)
+- [x] Phase 5: Master Control View (COMPLETE)
+- [x] Phase 6: Audience Display View (COMPLETE)
+- [x] Phase 7: State Management (COMPLETE)
+- [x] Phase 8: Testing & Polish (COMPLETE - MVP ACHIEVED)
+- [ ] Phase 9: Future Enhancements (ONGOING - 12 tasks defined)
+- [ ] Phase 10: Post-Demo Fixes (NEW - 5 HIGH PRIORITY tasks)
+- [ ] Phase 11: Hue Integration (PROPOSED - see phase proposal)
+- [ ] Phase 12: LLM Studio (PROPOSED - see phase proposal)
+- [ ] Phase 13: Process Improvements (NEW - 1 task)
 
 ## Phase 9: Future Enhancements
 

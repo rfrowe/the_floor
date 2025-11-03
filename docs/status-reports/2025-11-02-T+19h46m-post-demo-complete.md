@@ -18,12 +18,13 @@ This report documents the complete development session for "The Floor" game show
 │                  FINAL SESSION METRICS                          │
 ├────────────────────────────────────────────────────────────────┤
 │  Duration:        19h 46m (T+0:00 → T+19:46)                  │
-│  Tasks:           27/29 completed (93.1%)                      │
+│  MVP Tasks:       27/29 completed (93.1%)                      │
+│  Total Tasks:     61 (27 complete, 34 documented)              │
 │  Code:            13,200+ LOC (7,800 prod + 5,400+ tests)     │
 │  Tests:           405 passing @ 100% rate                      │
 │  Commits:         71 total (3.6 per hour)                      │
-│  Demo Status:     RAVE SUCCESS at T+15:01 (16:30)            │
-│  Post-Demo:       Critical hotfixes applied                    │
+│  Demo Status:     RAVE SUCCESS at T+26:01 (16:30)            │
+│  Post-Demo:       Hotfixes + 25 new tasks documented           │
 │  Quality:         Zero runtime errors, strict TypeScript       │
 └────────────────────────────────────────────────────────────────┘
 ```
@@ -400,9 +401,218 @@ T+30   ████        Hotfixes
 - T32: Grid Floor Display (T+25:02, 82m) **MAJOR FEATURE**
 - T35: Demo Hotfixes (T+30:43, 3m)
 
-**Phase 9: Future (0/2)** 📋 Backlog
-- T29: Schema-driven types (documented)
+**Phase 9: Future Enhancements (6/12)** 🚧 Ongoing
 - T30: Category Manager (documented)
+- T36: Grid Floor Display (T+25:02, 82m) ✅ **COMPLETE**
+- T42: Grid Color Improvements (documented)
+- T43: Slide Vertical Fill (documented)
+- T44: Winning Animation (documented)
+- T45: Single-Combat Mode (documented)
+- T46: Finale Best-of-Three (documented)
+- T47: Taint Button (documented)
+
+**Phase 10: Post-Demo Bug Fixes (0/5)** 📋 **HIGH PRIORITY**
+- T37: Duel Timeout Answer Reveal (documented)
+- T38: Randomizer Smallest Territory (documented)
+- T39: Fix Territory Name Display (documented)
+- T40: Instant Fail Late Pass (documented)
+- T41: Resurrection Category Logic (documented)
+
+**Phase 11: Philips Hue Integration (0/5)** 📋 Proposed
+- T48-52: Bridge discovery, API client, lighting effects (proposal documented)
+
+**Phase 12: LLM Studio (0/8)** 📋 Proposed
+- T53-60: AI-powered category generation system (proposal documented)
+
+**Phase 13: Process Improvements (0/1)** 📋 Meta-Analysis
+- T61: Development Process Analysis (documented)
+
+---
+
+## Post-Demo Task Planning (Post-Session)
+
+### Comprehensive Documentation Created
+
+Following the live demo and initial hotfixes, a comprehensive task planning effort was undertaken to document all discovered issues, enhancement ideas, and future features. This work resulted in **25 new tasks** across **4 new phases**.
+
+#### Phase 10: Post-Demo Bug Fixes (5 Tasks) - HIGH PRIORITY
+
+Critical bugs affecting gameplay fairness and rules compliance:
+
+**Task 37: Duel Timeout Answer Reveal**
+- **Issue**: When timer expires, duel ends immediately without showing answer
+- **Impact**: Audience doesn't see correct answer, feels incomplete
+- **Solution**: Show answer for 3 seconds (matching skip behavior) before ending duel
+- **Priority**: HIGH
+
+**Task 38: Randomizer Smallest Territory**
+- **Issue**: Random selection considers all contestants equally
+- **Rules Violation**: Per The Floor rules, only contestants tied for smallest territory should be eligible
+- **Solution**: Filter to minimum territory size before random selection
+- **Priority**: HIGH
+
+**Task 39: Fix Territory Name Display**
+- **Issue**: Multi-square territories show contestant name multiple times
+- **Cause**: Centroid calculation falls between squares for even-sized territories
+- **Solution**: Improved centroid calculation with deterministic tie-breaking
+- **Priority**: HIGH
+
+**Task 40: Instant Fail Late Pass**
+- **Issue**: Passing with <3s creates exploit (negative time after penalty)
+- **Fairness Impact**: Players can unfairly avoid loss
+- **Solution**: Instant fail if attempting to pass with insufficient time
+- **Priority**: HIGH
+
+**Task 41: Resurrection Category Logic**
+- **Issue**: Unclear what category resurrected contestant receives
+- **Solution**: Track duel history, assign elimination category minus shown slides
+- **Priority**: MEDIUM
+
+**Timeline**: 7-11 days for all fixes
+
+#### Phase 9: Future Enhancements (6 New Tasks) - MEDIUM Priority
+
+UX improvements and new features discovered during demo:
+
+**Task 42: Grid Color Improvements**
+- Adjacent territories have similar colors causing confusion
+- Implement graph coloring algorithm for better distinction
+- **Effort**: 2-3 days
+
+**Task 43: Slide Vertical Fill**
+- Slides don't use full available vertical space
+- Scale images to maximize vertical display
+- **Effort**: 1 day
+
+**Task 44: Winning Animation**
+- Winning feels anticlimactic
+- Add confetti, modal, celebratory effects
+- **Effort**: 1-2 days
+
+**Task 45: Single-Combat Mode**
+- Exhibition duels that don't affect game state
+- No eliminations, no category changes, wins still count
+- **Effort**: 3-4 days
+
+**Task 46: Finale Best-of-Three**
+- Authentic The Floor finale format
+- Best-of-3 series with tie-breaker category
+- **Effort**: 3-4 days
+
+**Task 47: Taint Button**
+- Skip compromised questions without penalty
+- Handle accidental answer reveals gracefully
+- **Effort**: 1 day
+
+**Timeline**: 10-15 days total
+
+#### Phase 11: Philips Hue Integration (Proposed)
+
+Smart lighting integration for "The Randomizer" effect:
+- Task 48: Hue Configuration System
+- Task 49: Bridge Discovery
+- Task 50: Hue API Client
+- Task 51: Randomizer Lighting Effect
+- Task 52: Integration with Random Selection
+
+**Timeline**: 7-11 days
+**Status**: Proposal documented, awaiting user validation
+
+#### Phase 12: LLM Studio (Proposed)
+
+AI-powered content creation system:
+- Task 53: Studio UI Foundation
+- Task 54: Credentials Management
+- Task 55: LLM Integration (OpenAI GPT-4)
+- Task 56: Image Search Integration
+- Task 57: Slide Editing Interface
+- Task 58: Export and Import
+- Task 59: Cost Tracking
+- Task 60: Prompt Templates
+
+**Timeline**: 17-23 days (3-4 weeks)
+**Status**: Proposal documented, could be separate product
+
+#### Phase 13: Process Improvements
+
+**Task 61: Development Process Analysis**
+- Comprehensive analysis of development session
+- CLAUDE.md improvement proposals
+- Task template enhancements
+- Workflow recommendations
+
+**Timeline**: 4-8 hours
+**Timing**: Execute after Phase 10 complete
+
+### Issue Mapping: Demo → Tasks
+
+All 14 issues/ideas from demo mapped to structured tasks:
+
+1. Show answer on timeout → **Task 37**
+2. Randomizer smallest territory → **Task 38**
+3. Multiple territory names → **Task 39**
+4. Single-combat mode → **Task 45**
+5. Instant fail late pass → **Task 40**
+6. Grid colors confusing → **Task 42**
+7. Fix finale format → **Task 46**
+8. Taint button → **Task 47**
+9. Slide vertical fill → **Task 43**
+10. Philips Hue support → **Phase 11 (Tasks 48-52)**
+11. LLM slide generation → **Phase 12 (Tasks 53-60)**
+12. Process improvements → **Task 61**
+13. Winning animation → **Task 44**
+14. Resurrection category → **Task 41**
+
+### Documentation Quality
+
+All 25 task prompts include:
+- ✅ Clear objective and background
+- ✅ Priority and status indicators
+- ✅ Comprehensive acceptance criteria
+- ✅ Detailed implementation guidance with code examples
+- ✅ Testing strategy (unit, integration, manual)
+- ✅ Edge case analysis
+- ✅ Success criteria
+- ✅ Out of scope section
+- ✅ Timeline estimates
+
+### Recommended Implementation Order
+
+**Immediate (Next 1-2 weeks)**:
+1. Phase 10 all tasks (critical bugs)
+   - Start with T37, T40 (most impactful)
+   - Then T38 (rules compliance)
+   - Finally T39, T41
+
+**Short Term (Next month)**:
+2. Phase 9 quick wins (T43, T44, T47)
+   - Low effort, high impact
+
+**Medium Term (2-3 months)**:
+3. Phase 9 features (T42, T45, T46)
+   - More complex but valuable
+
+**Long Term (Future)**:
+4. Phase 11 (Hue Integration) - if hardware available
+5. Phase 12 (LLM Studio) - major feature, separate product potential
+6. Phase 13 (Process Analysis) - after Phase 10 complete
+
+### Project Roadmap Update
+
+**Total Tasks Created**: 61 (original 36 + 25 new)
+
+**Status Distribution**:
+- ✅ Complete: 27 tasks (Phases 1-8 MVP)
+- 🚧 In Progress: 6 tasks (Phase 9 enhancements)
+- 🔴 High Priority: 5 tasks (Phase 10 bugs)
+- 📋 Backlog: 23 tasks (Phases 9, 11, 12, 13)
+
+**Estimated Future Work**:
+- Phase 10: 7-11 days (critical)
+- Phase 9 remaining: 10-15 days
+- Phase 11: 7-11 days (optional)
+- Phase 12: 17-23 days (optional, major)
+- Phase 13: 0.5-1 day
 
 ---
 
@@ -676,11 +886,13 @@ T+26:01 - Demo MVP        Features ✅  Timer ✅  Fairness ✅  Grid ✅  Demo 
 │  Duration:          19h 46m (15h 4m working time)         │
 │  Demo Downtime:     4h 42m (excluded from work time)      │
 │  Parallel Speedup:  2-8x on appropriate work              │
-│  Tasks:             27/29 (93.1%)                         │
+│  MVP Tasks:         27/29 (93.1%)                         │
+│  Total Tasks:       61 (27 complete, 34 roadmap)          │
 │  Quality:           0 runtime errors, 405 tests passing   │
 │  Demo:              Rave success, zero crashes            │
+│  Post-Demo:         25 new tasks documented (4 phases)    │
 │  Innovation:        3-solution meta-strategy              │
-│  Result:            Production-ready on GitHub Pages      │
+│  Result:            Production-ready + comprehensive roadmap │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -699,8 +911,9 @@ This session demonstrates:
 ---
 
 **Report Generated:** November 2, 2025, 21:15 PST
-**Session Complete:** T+30:46
-**Demo Status:** RAVE SUCCESS
+**Session Complete:** T+30:46 (working time: 15h 4m)
+**Demo Status:** RAVE SUCCESS at T+26:01 (16:30)
 **Production Status:** Deployed with zero runtime errors
+**Post-Demo:** 25 new tasks documented across 4 phases (Phases 10-13)
 
-*This report documents not just what was built, but how it was built and how it performed under live demo conditions - providing a replicable playbook for high-velocity AI-assisted development.*
+*This report documents not just what was built, but how it was built, how it performed under live demo conditions, and the comprehensive future roadmap created from demo feedback - providing a replicable playbook for high-velocity AI-assisted development from conception through production and beyond.*
