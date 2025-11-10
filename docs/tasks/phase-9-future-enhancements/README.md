@@ -36,6 +36,7 @@ Additional gameplay modes and controls:
 - **Task 45: Single-Combat Mode** - Exhibition duels that don't affect game state
 - **Task 46: Finale Best-of-Three** - Best-of-3 format with tie-breaker category
 - **Task 47: Taint Button** - Skip compromised questions without penalty
+- **Task 48: Reset Game** - Reset gameplay state while preserving contestant roster
 
 ## Task Summaries
 
@@ -76,6 +77,12 @@ Additional gameplay modes and controls:
 **Use Cases**: Audience shouts answer, technical glitch, disruption
 **Complexity**: Low - similar to skip but no penalty
 
+#### Task 48: Reset Game
+**Purpose**: Start new game with same contestants
+**Key Feature**: Resets wins/eliminations/territories but preserves contestant roster
+**Use Cases**: Multiple games with same players, tournaments, events
+**Complexity**: Medium - requires data migration and state management
+
 ## Implementation Priority
 
 ### High Value, Low Effort (Do First)
@@ -84,18 +91,19 @@ Additional gameplay modes and controls:
 3. **Task 44: Winning Animation** - Library-based, enhances feel
 
 ### High Value, Medium Effort (Do Next)
-4. **Task 45: Single-Combat Mode** - Useful feature, reuses duel logic
-5. **Task 33: Sound Effects** - Already planned, enhances experience
-6. **Task 42: Grid Color Improvements** - Solves real problem
+4. **Task 48: Reset Game** - Enables multiple games, great for events
+5. **Task 45: Single-Combat Mode** - Useful feature, reuses duel logic
+6. **Task 33: Sound Effects** - Already planned, enhances experience
+7. **Task 42: Grid Color Improvements** - Solves real problem
 
 ### Medium Value, Medium Effort (Do Later)
-7. **Task 46: Finale Best-of-Three** - Specific use case, needs state management
-8. **Task 30: Category Manager** - Nice to have, not urgent
-9. **Task 32: Dark Mode** - Aesthetic preference
+8. **Task 46: Finale Best-of-Three** - Specific use case, needs state management
+9. **Task 30: Category Manager** - Nice to have, not urgent
+10. **Task 32: Dark Mode** - Aesthetic preference
 
 ### Low Priority (Future)
-10. **Task 31: Reset App** - Rare use case
-11. **Task 34: Audience View Theming** - Polish, not critical
+11. **Task 31: Reset App** - Rare use case (already complete)
+12. **Task 34: Audience View Theming** - Polish, not critical
 
 ## Dependencies
 
