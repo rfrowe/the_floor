@@ -80,6 +80,7 @@ Post-MVP features and improvements for enhanced functionality.
 - `task-45-single-combat-mode` - Exhibition duels that don't affect game state
 - `task-46-finale-best-of-three` - Finale best-of-three format with tie-breaker
 - `task-47-taint-button` - Skip tainted questions without penalty
+- `task-48-reset-game` - Reset gameplay state while keeping contestant roster
 
 ### Phase 10: Post-Demo Bug Fixes (HIGH PRIORITY)
 Critical bugs discovered during first live demo that affect gameplay fairness and rules compliance.
