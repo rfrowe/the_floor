@@ -1,7 +1,7 @@
 # The Floor
 
-[![Deploy to GitHub Pages](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml/badge.svg)](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml)
-[![GitHub Pages](https://img.shields.io/badge/demo-live-success?logo=github)](https://rfrowe.github.io/the_floor/)
+[![Deploy to Production](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml/badge.svg)](https://github.com/rfrowe/the_floor/actions/workflows/deploy.yml)
+[![Cloudflare Pages](https://img.shields.io/badge/demo-live-orange?logo=cloudflare)](https://the-floor.pages.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19+-61DAFB?logo=react)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7+-646CFF?logo=vite)](https://vite.dev/)
@@ -79,7 +79,7 @@ This wasn't about AI writing code blindly. It was about:
 
 ## Live Demo
 
-**Try it yourself:** [https://rfrowe.github.io/the_floor/](https://rfrowe.github.io/the_floor/)
+**Try it yourself:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
 
 **How to play:**
 1. Open the Dashboard
@@ -468,22 +468,23 @@ npm run test:coverage
 
 ## Deployment
 
-### GitHub Pages (Automated)
+### Cloudflare Pages (Automated)
 
 Every push to `main` triggers:
 1. Test suite (must pass)
 2. Production build (must succeed)
-3. Deployment to GitHub Pages
+3. Deployment to Cloudflare Pages
 4. Automatic release tagging
 
-**Live site:** [https://rfrowe.github.io/the_floor/](https://rfrowe.github.io/the_floor/)
+**Production:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
+**PR Previews:** Automatic preview deployments for every pull request
 
 ### Manual Testing
 
 ```bash
 npm run build
 npm run preview
-# Test at http://localhost:4173/the_floor/
+# Test at http://localhost:4173/
 ```
 
 ## What's Next?
