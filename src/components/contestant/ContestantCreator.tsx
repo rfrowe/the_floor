@@ -7,12 +7,18 @@
  * 3. Optionally importing a new category
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { StoredCategory, Category } from '@types';
 import { Modal } from '@components/common/Modal';
 import { Button } from '@components/common/Button';
 import { CategoryImporter } from '@components/CategoryImporter';
+import {
+  getSampleCategories,
+  fetchSampleCategory,
+  type SampleCategoryMeta,
+} from '@utils/sampleCategories';
 import styles from './ContestantCreator.module.css';
+import modalStyles from '@components/common/Modal.module.css';
 
 type ViewMode = 'create' | 'import';
 
@@ -34,6 +40,17 @@ export function ContestantCreator({
   const [isCreating, setIsCreating] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('create');
   const [isOpen, setIsOpen] = useState(true);
+  const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
+
+  // Load sample categories on mount
+  useEffect(() => {
+    try {
+      const samples = getSampleCategories();
+      setSampleCategories(samples);
+    } catch (error) {
+      console.error('Failed to load sample categories:', error);
+    }
+  }, []);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -50,8 +67,19 @@ export function ContestantCreator({
 
     setIsCreating(true);
     try {
-      await onCreate(contestantName.trim(), selectedCategoryId);
-      handleClose();
+      // Check if this is a sample category (starts with "sample:")
+      if (selectedCategoryId.startsWith('sample:')) {
+        const filename = selectedCategoryId.substring(7); // Remove "sample:" prefix
+        const category = await fetchSampleCategory(filename);
+
+        // Import the sample category along with the contestant
+        await onImport([{ name: contestantName.trim(), category }]);
+        handleClose();
+      } else {
+        // Regular category from IndexedDB
+        await onCreate(contestantName.trim(), selectedCategoryId);
+        handleClose();
+      }
     } catch (error) {
       console.error('Failed to create contestant:', error);
       alert(
@@ -110,11 +138,24 @@ export function ContestantCreator({
                 className={styles['select']}
               >
                 <option value="">Select a category...</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name} ({cat.slides.length} slides)
-                  </option>
-                ))}
+                {categories.length > 0 && (
+                  <optgroup label="Your Categories">
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name} ({cat.slides.length} slides)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {sampleCategories.length > 0 && (
+                  <optgroup label="Sample Categories (Demo Data)">
+                    {sampleCategories.map((sample) => (
+                      <option key={`sample-${sample.filename}`} value={`sample:${sample.filename}`}>
+                        {sample.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
               <Button
                 variant="secondary"
@@ -156,6 +197,7 @@ export function ContestantCreator({
       isOpen={isOpen}
       onClose={handleClose}
       title={currentTitle}
+      className={viewMode === 'import' ? (modalStyles['modal-wide'] ?? '') : ''}
       {...(viewMode === 'import' ? { onBack: handleBackToCreate } : {})}
     >
       {currentContent}

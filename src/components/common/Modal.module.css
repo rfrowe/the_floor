@@ -56,6 +56,11 @@
   }
 }
 
+/* Wide variant for content-heavy modals like import views */
+.modal-wide {
+  max-width: 50rem;
+}
+
 @keyframes popIn {
   from {
     opacity: 0;

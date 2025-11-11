@@ -6,18 +6,24 @@
  * Supports importing multiple contestants - shows one at a time with Next button.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Category } from '@types';
 import { loadCategoryJSON, JSONImportError } from '@utils/jsonImport';
 import { SlidePreview } from '@components/slide/SlidePreview';
+import {
+  getSampleCategories,
+  fetchSampleCategory,
+  type SampleCategoryMeta,
+} from '@utils/sampleCategories';
 import styles from './CategoryImporter.module.css';
 
 interface ContestantData {
-  file: File;
+  file: File | null; // null for sample categories
   category: Category;
   contestantName: string;
   categoryName: string;
   error: string | null;
+  isSample?: boolean; // Track if this is from sample categories
 }
 
 interface CategoryImporterProps {
@@ -38,6 +44,19 @@ export function CategoryImporter({
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
+  const [showSampleCategories, setShowSampleCategories] = useState(false);
+  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(new Set());
+
+  // Load sample categories on mount
+  useEffect(() => {
+    try {
+      const samples = getSampleCategories();
+      setSampleCategories(samples);
+    } catch (error) {
+      console.error('Failed to load sample categories:', error);
+    }
+  }, []);
 
   const currentContestant = allContestants[currentIndex];
   const isLastContestant = currentIndex === allContestants.length - 1;
@@ -113,6 +132,59 @@ export function CategoryImporter({
 
   const handleDragLeave = () => {
     setIsDragging(false);
+  };
+
+  const toggleSampleSelection = (filename: string) => {
+    setSelectedSamples((prev) => {
+      const next = new Set(prev);
+      if (next.has(filename)) {
+        next.delete(filename);
+      } else {
+        next.add(filename);
+      }
+      return next;
+    });
+  };
+
+  const handleLoadSelectedSamples = async () => {
+    if (selectedSamples.size === 0) {
+      return;
+    }
+
+    setIsLoading(true);
+    setShowSampleCategories(false);
+    setCurrentIndex(0);
+    setExpandedSlideIndex(null);
+
+    const contestants: ContestantData[] = [];
+
+    for (const filename of selectedSamples) {
+      try {
+        const category = await fetchSampleCategory(filename);
+
+        contestants.push({
+          file: null, // No file for sample categories
+          category,
+          contestantName: initialContestantName ?? '',
+          categoryName: category.name,
+          error: null,
+          isSample: true,
+        });
+      } catch (error) {
+        contestants.push({
+          file: null,
+          category: { name: '', slides: [] },
+          contestantName: '',
+          categoryName: '',
+          error: error instanceof Error ? error.message : 'Failed to load sample category',
+          isSample: true,
+        });
+      }
+    }
+
+    setAllContestants(contestants);
+    setSelectedSamples(new Set()); // Clear selection
+    setIsLoading(false);
   };
 
   const updateCurrentContestantName = (name: string) => {
@@ -204,66 +276,133 @@ export function CategoryImporter({
   return (
     <div className={categoryImporterClass}>
       {allContestants.length === 0 ? (
-        <div
-          className={`${dropZoneClass} ${draggingClass}`.trim()}
-          onDrop={(e) => {
-            void handleDrop(e);
-          }}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-        >
-          <input
-            id="json-file-input"
-            type="file"
-            accept=".json,application/json"
-            onChange={(e) => {
-              void handleFileChange(e);
+        <>
+          {/* File upload drop zone */}
+          <div
+            className={`${dropZoneClass} ${draggingClass}`.trim()}
+            onDrop={(e) => {
+              void handleDrop(e);
             }}
-            disabled={isLoading}
-            multiple
-            style={{ display: 'none' }}
-          />
-          <label htmlFor="json-file-input" className={dropZoneContentClass}>
-            {isLoading ? (
-              <p className={loadingClass}>Loading and validating...</p>
-            ) : (
-              <>
-                <div className={dropIconClass}>📁</div>
-                <div className={dropTextPrimaryClass}>Drag & drop category files here</div>
-                <div className={dropTextSecondaryClass}>or click to browse</div>
-                <div className={dropSupportedTypesClass}>Supported: .json</div>
-              </>
-            )}
-          </label>
-        </div>
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <input
+              id="json-file-input"
+              type="file"
+              accept=".json,application/json"
+              onChange={(e) => {
+                void handleFileChange(e);
+              }}
+              disabled={isLoading}
+              multiple
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="json-file-input" className={dropZoneContentClass}>
+              {isLoading ? (
+                <p className={loadingClass}>Loading and validating...</p>
+              ) : (
+                <>
+                  <div className={dropIconClass}>📁</div>
+                  <div className={dropTextPrimaryClass}>Drag & drop category files here</div>
+                  <div className={dropTextSecondaryClass}>or click to browse</div>
+                  <div className={dropSupportedTypesClass}>Supported: .json</div>
+                </>
+              )}
+            </label>
+          </div>
+
+          {/* Sample categories section - outside drop zone */}
+          {!isLoading && sampleCategories.length > 0 && (
+            <div className={styles['sample-categories-section'] ?? ''}>
+              <div className={styles['section-divider'] ?? ''}>
+                <span>OR</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (showSampleCategories && selectedSamples.size > 0) {
+                    void handleLoadSelectedSamples();
+                  } else {
+                    setShowSampleCategories(!showSampleCategories);
+                  }
+                }}
+                className={`${styles['browse-samples-button'] ?? ''} ${
+                  selectedSamples.size > 0 ? (styles['load-active'] ?? '') : ''
+                }`.trim()}
+              >
+                {showSampleCategories && selectedSamples.size > 0
+                  ? `Load ${selectedSamples.size} Sample ${selectedSamples.size === 1 ? 'Category' : 'Categories'}`
+                  : showSampleCategories
+                    ? '← Back'
+                    : '📦 Browse Sample Categories'}
+              </button>
+
+              {showSampleCategories && (
+                <div className={styles['sample-categories-list'] ?? ''}>
+                  <h4>Available Sample Categories ({sampleCategories.length})</h4>
+                  <div className={styles['sample-grid'] ?? ''}>
+                    {sampleCategories.map((sample) => {
+                      const isSelected = selectedSamples.has(sample.filename);
+                      return (
+                        <button
+                          key={sample.filename}
+                          type="button"
+                          onClick={() => {
+                            toggleSampleSelection(sample.filename);
+                          }}
+                          className={`${styles['sample-category-button'] ?? ''} ${
+                            isSelected ? (styles['selected'] ?? '') : ''
+                          }`.trim()}
+                          aria-pressed={isSelected}
+                        >
+                          {isSelected && <span className={styles['checkmark'] ?? ''}>✓</span>}
+                          {sample.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <div className={fileInfoClass}>
           <div>
             {currentContestant ? (
               <div className={fileNameClass}>
-                📄 {currentContestant.file.name}
-                <span className={styles['file-size'] ?? ''}>
-                  {(() => {
-                    const sizeInMB = currentContestant.file.size / (1024 * 1024);
-                    const isLarge = sizeInMB > fileSizeWarningThresholdMB;
-                    const sizeText =
-                      sizeInMB < 1
-                        ? `${(currentContestant.file.size / 1024).toFixed(1)} KB`
-                        : `${sizeInMB.toFixed(1)} MB`;
-                    return (
-                      <span className={isLarge ? (styles['file-size-warning'] ?? '') : ''}>
-                        {sizeText}
-                        {isLarge && ' ⚠️ Large file - may be slow'}
+                {currentContestant.isSample ? (
+                  <>
+                    📦 Sample: {currentContestant.categoryName}
+                    <span className={styles['sample-badge'] ?? ''}>Demo Category</span>
+                  </>
+                ) : currentContestant.file ? (
+                  <>
+                    📄 {currentContestant.file.name}
+                    <span className={styles['file-size'] ?? ''}>
+                      {(() => {
+                        const sizeInMB = currentContestant.file.size / (1024 * 1024);
+                        const isLarge = sizeInMB > fileSizeWarningThresholdMB;
+                        const sizeText =
+                          sizeInMB < 1
+                            ? `${(currentContestant.file.size / 1024).toFixed(1)} KB`
+                            : `${sizeInMB.toFixed(1)} MB`;
+                        return (
+                          <span className={isLarge ? (styles['file-size-warning'] ?? '') : ''}>
+                            {sizeText}
+                            {isLarge && ' ⚠️ Large file - may be slow'}
+                          </span>
+                        );
+                      })()}
+                    </span>
+                    {allContestants.length > 1 && (
+                      <span className={styles['file-counter'] ?? ''}>
+                        {' '}
+                        (File {currentIndex + 1} of {allContestants.length})
                       </span>
-                    );
-                  })()}
-                </span>
-                {allContestants.length > 1 && (
-                  <span className={styles['file-counter'] ?? ''}>
-                    {' '}
-                    (File {currentIndex + 1} of {allContestants.length})
-                  </span>
-                )}
+                    )}
+                  </>
+                ) : null}
               </div>
             ) : null}
           </div>
