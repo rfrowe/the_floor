@@ -342,15 +342,17 @@ describe('useContestantSelection', () => {
       });
       expect(result.current.selected[0]).toBe(alice);
 
-      // Random select will now exclude Alice and pick from [Bob, Charlie]
-      // With Math.random returning 0, it will pick Bob (first in eligible list)
+      // Task 38: Random select now only picks P1 (challenger with smallest territory)
+      // All contestants have 1 square (minimum), so it picks from [Bob, Charlie] (excluding Alice)
+      // With Math.random returning 0, it will pick Bob as NEW P1
+      // P2 is cleared since we're selecting a new challenger
       act(() => {
         result.current.randomSelect();
       });
 
-      // Alice should still be in slot 1, Bob should be in slot 2
-      expect(result.current.selected[0]).toBe(alice);
-      expect(result.current.selected[1]).toBe(bob);
+      // Bob should now be P1, P2 should be null
+      expect(result.current.selected[0]).toBe(bob);
+      expect(result.current.selected[1]).toBeNull();
 
       Math.random = originalRandom;
     });
@@ -368,7 +370,7 @@ describe('useContestantSelection', () => {
     });
 
     it('handles only one contestant available', () => {
-      const singleContestant = [createContestant('1', 'Alice', false)];
+      const singleContestant = [createContestant('1', 'Alice', false, ['0-0'])];
       const { result } = renderHook(() => useContestantSelection(singleContestant));
       const alice = singleContestant[0];
       if (!alice) throw new Error('Alice not found');

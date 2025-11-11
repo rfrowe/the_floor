@@ -9,6 +9,8 @@
 import { useState } from 'react';
 import type { Category } from '@types';
 import { loadCategoryJSON, JSONImportError } from '@utils/jsonImport';
+import { SlidePreview } from '@components/slide/SlidePreview';
+import styles from './CategoryImporter.module.css';
 
 interface ContestantData {
   file: File;
@@ -21,41 +23,51 @@ interface ContestantData {
 interface CategoryImporterProps {
   onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void>;
   onCancel: () => void;
+  initialContestantName?: string;
+  fileSizeWarningThresholdMB?: number;
 }
 
-export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) {
+export function CategoryImporter({
+  onImport,
+  onCancel: _onCancel,
+  initialContestantName,
+  fileSizeWarningThresholdMB = 30,
+}: CategoryImporterProps) {
   const [allContestants, setAllContestants] = useState<ContestantData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [expandedSlides, setExpandedSlides] = useState<Set<number>>(new Set());
+  const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const currentContestant = allContestants[currentIndex];
   const isLastContestant = currentIndex === allContestants.length - 1;
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = event.target.files;
-
-    if (!selectedFiles || selectedFiles.length === 0) {
+  const processFiles = async (files: FileList) => {
+    if (files.length === 0) {
       return;
     }
 
     setIsLoading(true);
     setCurrentIndex(0);
-    setExpandedSlides(new Set());
+    setExpandedSlideIndex(null);
 
     const contestants: ContestantData[] = [];
 
     // Process all selected files
-    for (const file of selectedFiles) {
+    for (const file of files) {
       try {
         const loadedCategory = await loadCategoryJSON(file);
 
-        // Try to extract contestant name from filename (e.g., "john-movies.json" -> "John")
-        const fileNameWithoutExt = file.name.replace(/\.json$/i, '');
-        const parts = fileNameWithoutExt.split('-');
-        let name = '';
-        if (parts.length > 0 && parts[0]) {
-          name = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        // Use initialContestantName if provided, otherwise extract from filename
+        let name = initialContestantName ?? '';
+
+        if (!name) {
+          // Try to extract contestant name from filename (e.g., "john-movies.json" -> "John")
+          const fileNameWithoutExt = file.name.replace(/\.json$/i, '');
+          const parts = fileNameWithoutExt.split('-');
+          if (parts.length > 0 && parts[0]) {
+            name = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+          }
         }
 
         contestants.push({
@@ -78,6 +90,29 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
 
     setAllContestants(contestants);
     setIsLoading(false);
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files !== null) {
+      await processFiles(files);
+    }
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = event.dataTransfer.files;
+    await processFiles(files);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   const updateCurrentContestantName = (name: string) => {
@@ -115,40 +150,32 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
   };
 
   const toggleSlideExpanded = (slideIndex: number) => {
-    setExpandedSlides((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(slideIndex)) {
-        newSet.delete(slideIndex);
-      } else {
-        newSet.add(slideIndex);
-      }
-      return newSet;
-    });
+    setExpandedSlideIndex((prev) => (prev === slideIndex ? null : slideIndex));
   };
 
   const handleNext = () => {
-    if (!currentContestant || currentContestant.error || !currentContestant.contestantName.trim()) {
+    if (!currentContestant || currentContestant.error) {
       return;
     }
 
     // Move to next contestant
     if (!isLastContestant) {
       setCurrentIndex((prev) => prev + 1);
-      setExpandedSlides(new Set());
+      setExpandedSlideIndex(null);
     }
   };
 
   const handleImportAll = () => {
     // Validate current contestant
-    if (currentContestant?.error || !currentContestant?.contestantName.trim()) {
+    if (currentContestant?.error) {
       return;
     }
 
-    // Prepare all valid contestants for import (including current)
+    // Prepare all valid imports (contestants and/or categories)
     const contestantsToImport = allContestants
-      .filter((c) => !c.error && c.contestantName.trim())
+      .filter((c) => !c.error)
       .map((c) => ({
-        name: c.contestantName.trim(),
+        name: c.contestantName.trim() || '', // Empty string if no contestant name
         category: {
           ...c.category,
           name: c.categoryName.trim() || c.category.name,
@@ -162,51 +189,142 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
     void onImport(contestantsToImport);
   };
 
+  const categoryImporterClass = styles['category-importer'] ?? '';
+  const dropZoneClass = styles['drop-zone'] ?? '';
+  const draggingClass = isDragging ? (styles['dragging'] ?? '') : '';
+  const dropZoneContentClass = styles['drop-zone-content'] ?? '';
+  const dropIconClass = styles['drop-icon'] ?? '';
+  const dropTextPrimaryClass = styles['drop-text-primary'] ?? '';
+  const dropTextSecondaryClass = styles['drop-text-secondary'] ?? '';
+  const dropSupportedTypesClass = styles['drop-supported-types'] ?? '';
+  const loadingClass = styles['loading'] ?? '';
+  const fileInfoClass = styles['file-info'] ?? '';
+  const fileNameClass = styles['file-name'] ?? '';
+
   return (
-    <div className="category-importer">
-      <h2>Import Category from JSON</h2>
-
-      <div className="file-upload-section">
-        <label htmlFor="json-file-input">Select JSON file(s):</label>
-        <input
-          id="json-file-input"
-          type="file"
-          accept=".json,application/json"
-          onChange={(e) => {
-            void handleFileChange(e);
+    <div className={categoryImporterClass}>
+      {allContestants.length === 0 ? (
+        <div
+          className={`${dropZoneClass} ${draggingClass}`.trim()}
+          onDrop={(e) => {
+            void handleDrop(e);
           }}
-          disabled={isLoading}
-          multiple
-        />
-        {allContestants.length > 1 && (
-          <p className="file-name">
-            Reviewing contestant {currentIndex + 1} of {allContestants.length}
-          </p>
-        )}
-        {allContestants.length === 1 && currentContestant && (
-          <p className="file-name">Selected: {currentContestant.file.name}</p>
-        )}
-      </div>
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <input
+            id="json-file-input"
+            type="file"
+            accept=".json,application/json"
+            onChange={(e) => {
+              void handleFileChange(e);
+            }}
+            disabled={isLoading}
+            multiple
+            style={{ display: 'none' }}
+          />
+          <label htmlFor="json-file-input" className={dropZoneContentClass}>
+            {isLoading ? (
+              <p className={loadingClass}>Loading and validating...</p>
+            ) : (
+              <>
+                <div className={dropIconClass}>📁</div>
+                <div className={dropTextPrimaryClass}>Drag & drop category files here</div>
+                <div className={dropTextSecondaryClass}>or click to browse</div>
+                <div className={dropSupportedTypesClass}>Supported: .json</div>
+              </>
+            )}
+          </label>
+        </div>
+      ) : (
+        <div className={fileInfoClass}>
+          <div>
+            {currentContestant ? (
+              <div className={fileNameClass}>
+                📄 {currentContestant.file.name}
+                <span className={styles['file-size'] ?? ''}>
+                  {(() => {
+                    const sizeInMB = currentContestant.file.size / (1024 * 1024);
+                    const isLarge = sizeInMB > fileSizeWarningThresholdMB;
+                    const sizeText =
+                      sizeInMB < 1
+                        ? `${(currentContestant.file.size / 1024).toFixed(1)} KB`
+                        : `${sizeInMB.toFixed(1)} MB`;
+                    return (
+                      <span className={isLarge ? (styles['file-size-warning'] ?? '') : ''}>
+                        {sizeText}
+                        {isLarge && ' ⚠️ Large file - may be slow'}
+                      </span>
+                    );
+                  })()}
+                </span>
+                {allContestants.length > 1 && (
+                  <span className={styles['file-counter'] ?? ''}>
+                    {' '}
+                    (File {currentIndex + 1} of {allContestants.length})
+                  </span>
+                )}
+              </div>
+            ) : null}
+          </div>
+          {currentContestant &&
+            (!isLastContestant ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!currentContestant.categoryName.trim()}
+                className={styles['next-button'] ?? ''}
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleImportAll}
+                disabled={!currentContestant.categoryName.trim()}
+                className={styles['import-button-inline'] ?? ''}
+              >
+                {(() => {
+                  const contestantCount = allContestants.filter(
+                    (c) => !c.error && c.contestantName.trim()
+                  ).length;
+                  const categoryCount = allContestants.filter((c) => !c.error).length;
 
-      {isLoading && <p className="loading">Loading and validating...</p>}
+                  if (contestantCount > 0) {
+                    if (contestantCount === 1) {
+                      return 'Import Contestant';
+                    }
+                    return `Import ${String(contestantCount)} Contestants`;
+                  } else {
+                    if (categoryCount === 1) {
+                      return 'Import Category';
+                    }
+                    return `Import ${String(categoryCount)} Categories`;
+                  }
+                })()}
+              </button>
+            ))}
+        </div>
+      )}
 
       {currentContestant?.error && (
-        <div className="error-message" role="alert">
+        <div className={styles['error-message'] ?? ''} role="alert">
           <strong>Error:</strong> {currentContestant.error}
-          <div style={{ marginTop: '1rem' }}>
-            <button type="button" onClick={onCancel} className="cancel-button">
-              Cancel
-            </button>
-          </div>
         </div>
       )}
 
       {currentContestant && !currentContestant.error && !isLoading && (
-        <div className="preview-section">
+        <div className={styles['preview-section'] ?? ''}>
           <h3>Preview</h3>
 
-          <div className="form-group">
-            <label htmlFor="contestant-name-input">Contestant Name:</label>
+          <div className={styles['form-group'] ?? ''}>
+            <label htmlFor="contestant-name-input">
+              Contestant Name{' '}
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal' }}>
+                (optional)
+              </span>
+              :
+            </label>
             <input
               id="contestant-name-input"
               type="text"
@@ -214,12 +332,21 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
               onChange={(e) => {
                 updateCurrentContestantName(e.target.value);
               }}
-              placeholder="Enter contestant name"
-              required
+              placeholder="Leave empty to import category only"
             />
+            <p
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)',
+                margin: '0.25rem 0 0 0',
+              }}
+            >
+              If provided, a contestant will be created with this category. Otherwise, only the
+              category will be imported.
+            </p>
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group'] ?? ''}>
             <label htmlFor="category-name-input">Category Name:</label>
             <input
               id="category-name-input"
@@ -233,290 +360,30 @@ export function CategoryImporter({ onImport, onCancel }: CategoryImporterProps) 
             />
           </div>
 
-          <div className="slides-summary">
+          <div className={styles['slides-summary'] ?? ''}>
             <h4>Slides: {currentContestant.category.slides.length}</h4>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Click on any slide to expand and edit its answer. Censor boxes are displayed for
-              reference.
+              Click on any slide to expand and edit its answer. Answers are censored by default to
+              prevent spoilers.
             </p>
-            <div className="slides-list">
-              {currentContestant.category.slides.map((slide, index) => {
-                const isExpanded = expandedSlides.has(index);
-                return (
-                  <div
-                    key={index}
-                    className="slide-item"
-                    style={{
-                      border: '1px solid var(--border-default)',
-                      borderRadius: '4px',
-                      padding: '1rem',
-                      marginBottom: '0.5rem',
-                      backgroundColor: isExpanded ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => {
-                        toggleSlideExpanded(index);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          toggleSlideExpanded(index);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-expanded={isExpanded}
-                      aria-label={`Toggle slide ${String(index + 1)} details`}
-                    >
-                      <img
-                        src={slide.imageUrl}
-                        alt={`Slide ${String(index + 1)}`}
-                        style={{
-                          width: '100px',
-                          height: '75px',
-                          objectFit: 'cover',
-                          borderRadius: '2px',
-                        }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <strong>Slide {index + 1}</strong>
-                        <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
-                          {slide.answer || '(no answer)'}
-                        </p>
-                        <p
-                          style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}
-                        >
-                          {slide.censorBoxes.length} censor box
-                          {slide.censorBoxes.length !== 1 ? 'es' : ''}
-                        </p>
-                      </div>
-                      <span style={{ fontSize: '1.2rem' }}>{isExpanded ? '▼' : '▶'}</span>
-                    </div>
-
-                    {isExpanded && (
-                      <div
-                        style={{
-                          marginTop: '1rem',
-                          paddingTop: '1rem',
-                          borderTop: '1px solid var(--border-default)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            marginBottom: '1rem',
-                            position: 'relative',
-                            display: 'inline-block',
-                          }}
-                        >
-                          <img
-                            src={slide.imageUrl}
-                            alt={`Slide ${String(index + 1)} full`}
-                            style={{
-                              maxWidth: '100%',
-                              height: 'auto',
-                              borderRadius: '4px',
-                              border: '1px solid var(--border-default)',
-                              display: 'block',
-                            }}
-                          />
-                          {/* Render censor boxes as overlays */}
-                          {slide.censorBoxes.map((box, boxIndex) => {
-                            const boxX = box.x.toString();
-                            const boxY = box.y.toString();
-                            const boxWidth = box.width.toString();
-                            const boxHeight = box.height.toString();
-                            const boxTitle = `Censor Box ${String(boxIndex + 1)}: ${box.x.toFixed(1)}%, ${box.y.toFixed(1)}%`;
-                            return (
-                              <div
-                                key={boxIndex}
-                                style={{
-                                  position: 'absolute',
-                                  left: `${boxX}%`,
-                                  top: `${boxY}%`,
-                                  width: `${boxWidth}%`,
-                                  height: `${boxHeight}%`,
-                                  backgroundColor: box.color,
-                                  border: '2px solid rgba(255, 255, 255, 0.5)',
-                                  boxShadow: '0 0 4px rgba(0, 0, 0, 0.3)',
-                                  pointerEvents: 'none',
-                                }}
-                                title={boxTitle}
-                              />
-                            );
-                          })}
-                        </div>
-
-                        <div className="form-group">
-                          <label htmlFor={`slide-answer-${String(index)}`}>
-                            <strong>Answer:</strong>
-                          </label>
-                          <input
-                            id={`slide-answer-${String(index)}`}
-                            type="text"
-                            value={slide.answer}
-                            onChange={(e) => {
-                              handleSlideAnswerChange(index, e.target.value);
-                            }}
-                            placeholder="Enter answer for this slide"
-                            style={{
-                              width: '100%',
-                              padding: '0.5rem',
-                              fontSize: '1rem',
-                              border: '1px solid var(--border-default)',
-                              borderRadius: '4px',
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                          />
-                        </div>
-
-                        {slide.censorBoxes.length > 0 && (
-                          <div style={{ marginTop: '1rem' }}>
-                            <strong>Censor Boxes ({slide.censorBoxes.length}):</strong>
-                            <ul style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                              {slide.censorBoxes.map((box, boxIndex) => (
-                                <li key={boxIndex}>
-                                  <strong>Box {boxIndex + 1}:</strong> Position: ({box.x.toFixed(1)}
-                                  %, {box.y.toFixed(1)}%), Size: ({box.width.toFixed(1)}% ×{' '}
-                                  {box.height.toFixed(1)}%), Color:{' '}
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      width: '16px',
-                                      height: '16px',
-                                      backgroundColor: box.color,
-                                      border: '1px solid var(--text-primary)',
-                                      verticalAlign: 'middle',
-                                      marginLeft: '4px',
-                                    }}
-                                  ></span>{' '}
-                                  {box.color}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className={styles['slides-list'] ?? ''}>
+              {currentContestant.category.slides.map((slide, index) => (
+                <SlidePreview
+                  key={index}
+                  slide={slide}
+                  slideNumber={index + 1}
+                  mode="edit"
+                  isExpanded={expandedSlideIndex === index}
+                  onToggleExpand={() => {
+                    toggleSlideExpanded(index);
+                  }}
+                  onAnswerChange={(newAnswer) => {
+                    handleSlideAnswerChange(index, newAnswer);
+                  }}
+                />
+              ))}
             </div>
           </div>
-
-          <div
-            className="actions"
-            style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between' }}
-          >
-            <button
-              type="button"
-              onClick={onCancel}
-              className="cancel-button"
-              style={{
-                backgroundColor: 'var(--status-danger)',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-              }}
-            >
-              Cancel
-            </button>
-            {!isLastContestant ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={
-                  !currentContestant.contestantName.trim() || !currentContestant.categoryName.trim()
-                }
-                className="import-button"
-                style={{
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '4px',
-                  cursor:
-                    !currentContestant.contestantName.trim() ||
-                    !currentContestant.categoryName.trim()
-                      ? 'not-allowed'
-                      : 'pointer',
-                  fontSize: '1rem',
-                  opacity:
-                    !currentContestant.contestantName.trim() ||
-                    !currentContestant.categoryName.trim()
-                      ? 0.5
-                      : 1,
-                }}
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleImportAll}
-                disabled={
-                  !currentContestant.contestantName.trim() || !currentContestant.categoryName.trim()
-                }
-                className="import-button"
-                style={{
-                  backgroundColor: 'var(--status-success)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '4px',
-                  cursor:
-                    !currentContestant.contestantName.trim() ||
-                    !currentContestant.categoryName.trim()
-                      ? 'not-allowed'
-                      : 'pointer',
-                  fontSize: '1rem',
-                  opacity:
-                    !currentContestant.contestantName.trim() ||
-                    !currentContestant.categoryName.trim()
-                      ? 0.5
-                      : 1,
-                }}
-              >
-                Import {allContestants.filter((c) => !c.error && c.contestantName.trim()).length}{' '}
-                Contestant
-                {allContestants.filter((c) => !c.error && c.contestantName.trim()).length !== 1
-                  ? 's'
-                  : ''}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {allContestants.length === 0 && !isLoading && (
-        <div className="actions">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="cancel-button"
-            style={{
-              backgroundColor: 'var(--status-danger)',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Cancel
-          </button>
         </div>
       )}
     </div>

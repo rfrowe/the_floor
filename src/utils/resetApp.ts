@@ -4,7 +4,7 @@
  * Broadcasts reset event to all windows/tabs
  */
 
-import { clearAllContestants } from '@/storage/indexedDB';
+import { clearAllContestants, clearAllCategories } from '@/storage/indexedDB';
 import { clear as clearLocalStorage } from '@/storage/localStorage';
 import { clearTimerState } from '@/storage/timerState';
 import { resetColorAssignments } from '@/utils/colorUtils';
@@ -14,6 +14,7 @@ const RESET_CHANNEL_NAME = 'the_floor_app_reset';
 /**
  * Reset all application state
  * - Clears all contestants from IndexedDB
+ * - Clears all categories from IndexedDB
  * - Clears all app data from localStorage (duel state, game config, etc.)
  * - Resets color assignments for contestants
  * - Broadcasts reset to all windows (triggers reload/redirect)
@@ -26,6 +27,9 @@ export async function resetAppState(): Promise<void> {
   try {
     // Clear IndexedDB (contestants with images)
     await clearAllContestants();
+
+    // Clear IndexedDB (categories with slides)
+    await clearAllCategories();
 
     // Clear duel state (stored directly in localStorage without prefix)
     localStorage.removeItem('duel');

@@ -37,6 +37,7 @@ Additional gameplay modes and controls:
 - **Task 46: Finale Best-of-Three** - Best-of-3 format with tie-breaker category
 - **Task 47: Taint Button** - Skip compromised questions without penalty
 - **Task 48: Reset Game** - Reset gameplay state while preserving contestant roster
+- **Task 49: Slide Preview Improvements** - Unified component with accordion and answer censoring (COMPLETE)
 
 ## Task Summaries
 
@@ -82,6 +83,13 @@ Additional gameplay modes and controls:
 **Key Feature**: Resets wins/eliminations/territories but preserves contestant roster
 **Use Cases**: Multiple games with same players, tournaments, events
 **Complexity**: Medium - requires data migration and state management
+
+#### Task 49: Slide Preview Improvements (COMPLETE)
+**Purpose**: Improve UX for reviewing/editing 50+ slides
+**Key Feature**: Accordion behavior, answer censoring, unified component
+**Use Cases**: Category import, category management, content review
+**Complexity**: Low-Medium - React component with state management
+**Status**: ✅ Complete (retroactive documentation)
 
 ## Implementation Priority
 
