@@ -156,35 +156,78 @@ export function CategoryImporter({
     setCurrentIndex(0);
     setExpandedSlideIndex(null);
 
-    const contestants: ContestantData[] = [];
+    const filenames = Array.from(selectedSamples);
 
-    for (const filename of selectedSamples) {
-      try {
-        const category = await fetchSampleCategory(filename);
+    // Load only the first category immediately for fast UI
+    const firstFilename = filenames[0];
+    if (!firstFilename) {
+      setIsLoading(false);
+      return;
+    }
 
-        contestants.push({
-          file: null, // No file for sample categories
-          category,
+    try {
+      const firstCategory = await fetchSampleCategory(firstFilename);
+
+      // Show first category immediately
+      setAllContestants([
+        {
+          file: null,
+          category: firstCategory,
           contestantName: initialContestantName ?? '',
-          categoryName: category.name,
+          categoryName: firstCategory.name,
           error: null,
           isSample: true,
+        },
+      ]);
+      setIsLoading(false);
+
+      // Prefetch remaining categories in background
+      if (filenames.length > 1) {
+        // Load the rest in parallel
+        const remainingPromises = filenames.slice(1).map(async (filename) => {
+          try {
+            const category = await fetchSampleCategory(filename);
+            return {
+              file: null,
+              category,
+              contestantName: initialContestantName ?? '',
+              categoryName: category.name,
+              error: null,
+              isSample: true,
+            } as ContestantData;
+          } catch (error) {
+            return {
+              file: null,
+              category: { name: '', slides: [] },
+              contestantName: '',
+              categoryName: '',
+              error: error instanceof Error ? error.message : 'Failed to load sample category',
+              isSample: true,
+            } as ContestantData;
+          }
         });
-      } catch (error) {
-        contestants.push({
+
+        const remainingContestants = await Promise.all(remainingPromises);
+
+        // Append the rest to the list
+        setAllContestants((prev) => [...prev, ...remainingContestants]);
+      }
+    } catch (error) {
+      // First category failed to load
+      setAllContestants([
+        {
           file: null,
           category: { name: '', slides: [] },
           contestantName: '',
           categoryName: '',
           error: error instanceof Error ? error.message : 'Failed to load sample category',
           isSample: true,
-        });
-      }
+        },
+      ]);
+      setIsLoading(false);
     }
 
-    setAllContestants(contestants);
     setSelectedSamples(new Set()); // Clear selection
-    setIsLoading(false);
   };
 
   const updateCurrentContestantName = (name: string) => {

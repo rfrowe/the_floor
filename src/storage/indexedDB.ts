@@ -134,6 +134,46 @@ export async function addContestant<T extends { id: string }>(contestant: T): Pr
 }
 
 /**
+ * Bulk add multiple contestants to IndexedDB in a single transaction
+ * Much faster than adding one at a time
+ */
+export async function addContestants<T extends { id: string }>(contestants: T[]): Promise<void> {
+  try {
+    const db = await initDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([CONTESTANT_STORE], 'readwrite');
+      const store = transaction.objectStore(CONTESTANT_STORE);
+
+      let completed = 0;
+      let hasError = false;
+
+      for (const contestant of contestants) {
+        const request = store.add(contestant);
+
+        request.onsuccess = () => {
+          completed++;
+          if (completed === contestants.length && !hasError) {
+            resolve();
+          }
+        };
+
+        request.onerror = () => {
+          hasError = true;
+          reject(new Error(`Failed to add contestant ${contestant.id} to IndexedDB`));
+        };
+      }
+
+      if (contestants.length === 0) {
+        resolve();
+      }
+    });
+  } catch (error) {
+    console.error('Error bulk adding contestants to IndexedDB:', error);
+    throw error;
+  }
+}
+
+/**
  * Update an existing contestant in IndexedDB
  */
 export async function updateContestant<T extends { id: string }>(contestant: T): Promise<void> {
@@ -365,6 +405,46 @@ export async function addCategory<T extends { id: string }>(category: T): Promis
 }
 
 /**
+ * Bulk add multiple categories to IndexedDB in a single transaction
+ * Much faster than adding one at a time
+ */
+export async function addCategories<T extends { id: string }>(categories: T[]): Promise<void> {
+  try {
+    const db = await initDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([CATEGORY_STORE], 'readwrite');
+      const store = transaction.objectStore(CATEGORY_STORE);
+
+      let completed = 0;
+      let hasError = false;
+
+      for (const category of categories) {
+        const request = store.add(category);
+
+        request.onsuccess = () => {
+          completed++;
+          if (completed === categories.length && !hasError) {
+            resolve();
+          }
+        };
+
+        request.onerror = () => {
+          hasError = true;
+          reject(new Error(`Failed to add category ${category.id} to IndexedDB`));
+        };
+      }
+
+      if (categories.length === 0) {
+        resolve();
+      }
+    });
+  } catch (error) {
+    console.error('Error bulk adding categories to IndexedDB:', error);
+    throw error;
+  }
+}
+
+/**
  * Update an existing category in IndexedDB
  */
 export async function updateCategory<T extends { id: string }>(category: T): Promise<void> {
@@ -436,5 +516,25 @@ export async function clearAllCategories(): Promise<void> {
   } catch (error) {
     console.error('Error clearing categories from IndexedDB:', error);
     throw error;
+  }
+}
+
+/**
+ * Get IndexedDB storage usage estimate
+ * @returns Promise resolving to estimated storage in bytes
+ */
+export async function getStorageEstimate(): Promise<{ usage: number; quota: number }> {
+  try {
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      const estimate = await navigator.storage.estimate();
+      return {
+        usage: estimate.usage ?? 0,
+        quota: estimate.quota ?? 0,
+      };
+    }
+    return { usage: 0, quota: 0 };
+  } catch (error) {
+    console.error('Error getting storage estimate:', error);
+    return { usage: 0, quota: 0 };
   }
 }
