@@ -120,52 +120,41 @@ export function ContestantCreator({
 
         <div className={styles['form-group']}>
           <label htmlFor="category-select">Category:</label>
-          {categories.length === 0 ? (
-            <div className={styles['no-categories']}>
-              <p>No categories available. Import a category first.</p>
-              <Button variant="primary" onClick={handleGoToImport}>
-                Import Category
-              </Button>
-            </div>
-          ) : (
-            <>
-              <select
-                id="category-select"
-                value={selectedCategoryId}
-                onChange={(e) => {
-                  setSelectedCategoryId(e.target.value);
-                }}
-                className={styles['select']}
-              >
-                <option value="">Select a category...</option>
-                {categories.length > 0 && (
-                  <optgroup label="Your Categories">
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name} ({cat.slides.length} slides)
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {sampleCategories.length > 0 && (
-                  <optgroup label="Sample Categories (Demo Data)">
-                    {sampleCategories.map((sample) => (
-                      <option key={`sample-${sample.filename}`} value={`sample:${sample.filename}`}>
-                        {sample.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-              <Button
-                variant="secondary"
-                onClick={handleGoToImport}
-                className={styles['import-button-inline'] ?? ''}
-              >
-                Or Import New Category
-              </Button>
-            </>
-          )}
+          <select
+            id="category-select"
+            value={selectedCategoryId}
+            onChange={(e) => {
+              setSelectedCategoryId(e.target.value);
+            }}
+            className={styles['select']}
+          >
+            <option value="">Select a category...</option>
+            {categories.length > 0 && (
+              <optgroup label="Your Categories">
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.slides.length} slides)
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {sampleCategories.length > 0 && (
+              <optgroup label="Sample Categories (Demo Data)">
+                {sampleCategories.map((sample) => (
+                  <option key={`sample-${sample.filename}`} value={`sample:${sample.filename}`}>
+                    {sample.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+          <Button
+            variant="secondary"
+            onClick={handleGoToImport}
+            className={styles['import-button-inline'] ?? ''}
+          >
+            Or Import New Category
+          </Button>
         </div>
 
         {/* Footer buttons as part of view */}

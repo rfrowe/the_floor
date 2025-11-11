@@ -76,6 +76,7 @@ const mockDuelState: DuelState = {
 
 describe('Dashboard', () => {
   const mockAdd = vi.fn();
+  const mockAddBulk = vi.fn();
   const mockRemove = vi.fn();
   const mockUpdate = vi.fn();
   const mockRefresh = vi.fn();
@@ -96,7 +97,13 @@ describe('Dashboard', () => {
   it('renders header with title and actions', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -114,7 +121,13 @@ describe('Dashboard', () => {
   it('shows empty state when no contestants', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -131,7 +144,13 @@ describe('Dashboard', () => {
   it('displays contestants in grid', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -148,7 +167,13 @@ describe('Dashboard', () => {
   it('sorts contestants with active first, then eliminated', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockEliminatedContestant, mockContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -174,7 +199,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -195,7 +226,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -216,7 +253,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -239,7 +282,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -262,7 +311,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -292,7 +347,13 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -325,7 +386,13 @@ describe('Dashboard', () => {
     const mockRemoveError = vi.fn().mockRejectedValue(new Error('Delete failed'));
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant],
-      { add: mockAdd, remove: mockRemoveError, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemoveError,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -354,7 +421,13 @@ describe('Dashboard', () => {
   it('displays duel setup panel', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -370,7 +443,13 @@ describe('Dashboard', () => {
   it('displays correct contestant count', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [mockContestant, mockEliminatedContestant],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -385,7 +464,13 @@ describe('Dashboard', () => {
   it('does not show Resume Duel button when no active duel', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -401,7 +486,13 @@ describe('Dashboard', () => {
     vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([mockDuelState, mockSetDuelState]);
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -418,7 +509,13 @@ describe('Dashboard', () => {
     vi.spyOn(duelStateHook, 'useDuelState').mockReturnValue([mockDuelState, mockSetDuelState]);
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -440,7 +537,13 @@ describe('Dashboard', () => {
 
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [zebra, alice, mike],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -481,7 +584,13 @@ describe('Dashboard', () => {
 
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [zebraActive, mikeEliminated, aliceActive, bobEliminated],
-      { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        refresh: mockRefresh,
+      },
     ]);
 
     render(
@@ -504,7 +613,13 @@ describe('Dashboard', () => {
     it('shows Reset App button in header', () => {
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -520,7 +635,13 @@ describe('Dashboard', () => {
       const user = userEvent.setup();
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -544,7 +665,13 @@ describe('Dashboard', () => {
       const user = userEvent.setup();
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -576,7 +703,13 @@ describe('Dashboard', () => {
 
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [mockContestant],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -610,7 +743,13 @@ describe('Dashboard', () => {
 
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [mockContestant],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -664,7 +803,13 @@ describe('Dashboard', () => {
 
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [alice, bob, charlie],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -705,7 +850,13 @@ describe('Dashboard', () => {
 
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [alice, bob],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(
@@ -739,7 +890,13 @@ describe('Dashboard', () => {
 
       vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
         [alice, charlie],
-        { add: mockAdd, remove: mockRemove, update: mockUpdate, refresh: mockRefresh },
+        {
+          add: mockAdd,
+          addBulk: mockAddBulk,
+          remove: mockRemove,
+          update: mockUpdate,
+          refresh: mockRefresh,
+        },
       ]);
 
       render(

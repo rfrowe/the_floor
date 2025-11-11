@@ -122,6 +122,7 @@ describe('MasterView', () => {
       [],
       {
         add: vi.fn(),
+        addBulk: vi.fn(),
         update: vi.fn().mockResolvedValue(undefined),
         remove: vi.fn(),
         refresh: vi.fn(),
@@ -371,6 +372,7 @@ describe('MasterView', () => {
         [],
         {
           add: vi.fn() as (contestant: Contestant) => Promise<void>,
+          addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
           update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
           remove: vi.fn() as (id: string) => Promise<void>,
           refresh: vi.fn() as () => Promise<void>,
@@ -434,6 +436,7 @@ describe('MasterView', () => {
           [mockDuelState.contestant1, mockDuelState.contestant2],
           {
             add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
             update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
             remove: vi.fn() as (id: string) => Promise<void>,
             refresh: vi.fn() as () => Promise<void>,
@@ -595,6 +598,7 @@ describe('MasterView', () => {
           [mockDuelState.contestant1, mockDuelState.contestant2],
           {
             add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
             update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
             remove: vi.fn() as (id: string) => Promise<void>,
             refresh: vi.fn() as () => Promise<void>,
@@ -682,6 +686,7 @@ describe('MasterView', () => {
           [thirdCategoryDuelState.contestant1, thirdCategoryDuelState.contestant2],
           {
             add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
             update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
             remove: vi.fn() as (id: string) => Promise<void>,
             refresh: vi.fn() as () => Promise<void>,
@@ -771,6 +776,7 @@ describe('MasterView', () => {
           [contestant2CategoryDuelState.contestant1, contestant2CategoryDuelState.contestant2],
           {
             add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
             update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
             remove: vi.fn() as (id: string) => Promise<void>,
             refresh: vi.fn() as () => Promise<void>,
