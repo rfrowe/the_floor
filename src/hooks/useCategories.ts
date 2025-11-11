@@ -5,7 +5,12 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAllCategories, addCategory, updateCategory, deleteCategory } from '@storage/indexedDB';
+import {
+  getAllCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+} from '@storage/indexedDB';
 import type { StoredCategory } from '@types';
 import { createBroadcastSync } from '@/utils/broadcastSync';
 

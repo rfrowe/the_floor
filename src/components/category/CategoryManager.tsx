@@ -14,6 +14,8 @@ import { Modal } from '@components/common/Modal';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { CategoryStorage } from './CategoryStorage';
 import { SlidePreview } from '@components/slide/SlidePreview';
+import { useCategoryMetadata } from '@hooks/useCategoryMetadata';
+import { getCategoryById } from '@storage/indexedDB';
 import { useCategories } from '@hooks/useCategories';
 import styles from './CategoryManager.module.css';
 
@@ -26,7 +28,11 @@ interface CategoryManagerProps {
 }
 
 export function CategoryManager({ onClose, contestants, onImport }: CategoryManagerProps) {
-  const [categories, { remove: removeCategory }] = useCategories();
+  // Use metadata for fast list loading
+  const [categoryMetadata] = useCategoryMetadata();
+  // Keep useCategories for delete operations
+  const [, { remove: removeCategory }] = useCategories();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingCategory, setViewingCategory] = useState<StoredCategory | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<StoredCategory | null>(null);
@@ -39,11 +45,11 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
   // Filter categories by search query
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) {
-      return categories;
+      return categoryMetadata;
     }
     const query = searchQuery.toLowerCase();
-    return categories.filter((cat) => cat.name.toLowerCase().includes(query));
-  }, [categories, searchQuery]);
+    return categoryMetadata.filter((cat) => cat.name.toLowerCase().includes(query));
+  }, [categoryMetadata, searchQuery]);
 
   // Memoize contestants usage map to avoid recomputing on every render
   const categoryUsageMap = useMemo(() => {
@@ -69,14 +75,21 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
     [categoryUsageMap]
   );
 
-  const handleDeleteClick = (e: React.MouseEvent, category: StoredCategory) => {
+  const handleDeleteClick = (e: React.MouseEvent, categoryMeta: { id: string; name: string }) => {
     e.stopPropagation();
-    const usedBy = getContestantsUsingCategory(category.id);
+    const usedBy = getContestantsUsingCategory(categoryMeta.id);
     if (usedBy.length > 0) {
       // Show warning, don't delete
       return;
     }
-    setDeletingCategory(category);
+    // Create minimal StoredCategory for deletion confirmation
+    setDeletingCategory({
+      id: categoryMeta.id,
+      name: categoryMeta.name,
+      slides: [],
+      createdAt: '',
+      thumbnailUrl: '',
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -102,7 +115,7 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
   const handleConfirmDeleteAll = async () => {
     try {
       // Delete all categories one by one
-      for (const category of categories) {
+      for (const category of categoryMetadata) {
         await removeCategory(category.id);
       }
       setDeletingAllCategories(false);
@@ -114,10 +127,19 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
     }
   };
 
-  const handleViewClick = (category: StoredCategory) => {
-    setViewingCategory(category);
-    setViewMode('detail');
-    setExpandedSlideIndex(null);
+  const handleViewClick = async (categoryId: string) => {
+    // Load full category data only when viewing details
+    try {
+      const fullCategory = await getCategoryById<StoredCategory>(categoryId);
+      if (fullCategory) {
+        setViewingCategory(fullCategory);
+        setViewMode('detail');
+        setExpandedSlideIndex(null);
+      }
+    } catch (error) {
+      console.error('Failed to load category:', error);
+      alert('Failed to load category details');
+    }
   };
 
   const handleSlideAnswerChange = (slideIndex: number, newAnswer: string) => {
@@ -165,11 +187,11 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
     viewMode === 'list' ? (
       <>
         {/* Search box - only show if there are categories */}
-        {categories.length > 0 && (
+        {categoryMetadata.length > 0 && (
           <div className={styles['search-section']}>
             <input
               type="text"
-              placeholder={`Search ${String(categories.length)} ${categories.length === 1 ? 'category' : 'categories'}...`}
+              placeholder={`Search ${String(categoryMetadata.length)} ${categoryMetadata.length === 1 ? 'category' : 'categories'}...`}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -221,7 +243,10 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
 
               {/* Storage component */}
               <div className={styles['storage-container-wrapper']}>
-                <CategoryStorage categories={categories} onDeleteAll={handleDeleteAllCategories} />
+                <CategoryStorage
+                  categories={categoryMetadata}
+                  onDeleteAll={handleDeleteAllCategories}
+                />
               </div>
             </div>
 
@@ -237,12 +262,12 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
                     key={category.id}
                     className={styles['category-item']}
                     onClick={() => {
-                      handleViewClick(category);
+                      void handleViewClick(category.id);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        handleViewClick(category);
+                        void handleViewClick(category.id);
                       }
                     }}
                     onMouseEnter={() => {
@@ -258,7 +283,7 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
                     <div className={styles['category-item-left']}>
                       <h3 className={styles['category-item-title']}>{category.name}</h3>
                       <p className={styles['category-item-slides']}>
-                        {category.slides.length} {category.slides.length === 1 ? 'slide' : 'slides'}
+                        {category.slideCount} {category.slideCount === 1 ? 'slide' : 'slides'}
                       </p>
                       <p
                         className={`${styles['category-item-usage'] ?? ''} ${
@@ -399,8 +424,8 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
         >
           <div className={styles['delete-confirmation']}>
             <p>
-              Are you sure you want to delete all {categories.length} categories? This action cannot
-              be undone.
+              Are you sure you want to delete all {categoryMetadata.length} categories? This action
+              cannot be undone.
             </p>
             <div className={styles['modal-footer']}>
               <button
