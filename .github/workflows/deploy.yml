@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to Production
 
 on:
   push:
@@ -7,47 +7,50 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+  deployments: write
 
 concurrency:
-  group: "pages"
+  group: "production-deploy"
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test -- --run
-      - run: npx vite build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Build for production
+        run: |
+          # Build with base path "/" for Cloudflare Pages
+          npx vite build --base "/"
+
+      - name: Deploy to Cloudflare Pages (Production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=the-floor --branch=main
+
       - name: Create release tag
         run: |
           # Generate timestamp-based version tag
           VERSION="deploy-$(date +%Y%m%d-%H%M%S)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$VERSION" -m "Deployment to GitHub Pages"
+          git tag -a "$VERSION" -m "Production deployment to Cloudflare Pages"
           git push origin "$VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/deploy-pages@v4
-        id: deployment
