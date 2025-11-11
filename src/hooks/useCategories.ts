@@ -5,7 +5,14 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAllCategories, addCategory, updateCategory, deleteCategory } from '@storage/indexedDB';
+import {
+  getAllCategories,
+  addCategory,
+  addCategories,
+  updateCategory,
+  deleteCategory,
+  clearAllCategories,
+} from '@storage/indexedDB';
 import type { StoredCategory } from '@types';
 import { createBroadcastSync } from '@/utils/broadcastSync';
 
@@ -19,8 +26,10 @@ export function useCategories(): [
   StoredCategory[],
   {
     add: (category: StoredCategory) => Promise<void>;
+    addBulk: (categories: StoredCategory[]) => Promise<void>;
     update: (category: StoredCategory) => Promise<void>;
     remove: (id: string) => Promise<void>;
+    removeAll: () => Promise<void>;
     refresh: () => Promise<void>;
   },
 ] {
@@ -91,6 +100,19 @@ export function useCategories(): [
     }
   }, []);
 
+  // Bulk add multiple categories
+  const addBulk = useCallback(async (newCategories: StoredCategory[]) => {
+    try {
+      await addCategories(newCategories);
+      setCategories((prev) => [...prev, ...newCategories]);
+      // Broadcast change to other windows/tabs
+      broadcastRef.current?.send('reload');
+    } catch (error) {
+      console.error('Error bulk adding categories:', error);
+      throw error;
+    }
+  }, []);
+
   // Update an existing category
   const update = useCallback(async (category: StoredCategory) => {
     try {
@@ -121,6 +143,19 @@ export function useCategories(): [
     }
   }, []);
 
+  // Remove all categories
+  const removeAll = useCallback(async () => {
+    try {
+      await clearAllCategories();
+      setCategories([]);
+      // Broadcast change to other windows/tabs
+      broadcastRef.current?.send('reload');
+    } catch (error) {
+      console.error('Error removing all categories:', error);
+      throw error;
+    }
+  }, []);
+
   // Refresh categories from IndexedDB
   const refresh = useCallback(async () => {
     try {
@@ -133,8 +168,8 @@ export function useCategories(): [
 
   // Return empty array while loading to avoid flicker
   if (isLoading) {
-    return [[], { add, update, remove, refresh }];
+    return [[], { add, addBulk, update, remove, removeAll, refresh }];
   }
 
-  return [categories, { add, update, remove, refresh }];
+  return [categories, { add, addBulk, update, remove, removeAll, refresh }];
 }

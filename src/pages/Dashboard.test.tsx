@@ -19,6 +19,7 @@ window.alert = mockAlert;
 // Mock window.location
 const mockLocation = {
   href: '',
+  origin: 'http://localhost',
   reload: vi.fn(),
 };
 Object.defineProperty(window, 'location', {
@@ -228,7 +229,7 @@ describe('Dashboard', () => {
     await user.click(audienceButton);
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      '/the_floor/audience',
+      'http://localhost/audience',
       '_blank',
       'noopener,noreferrer'
     );

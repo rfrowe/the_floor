@@ -31,7 +31,7 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
   // Use metadata for fast list loading
   const [categoryMetadata] = useCategoryMetadata();
   // Keep useCategories for delete operations
-  const [, { remove: removeCategory }] = useCategories();
+  const [, { remove: removeCategory, removeAll: removeAllCategories }] = useCategories();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingCategory, setViewingCategory] = useState<StoredCategory | null>(null);
@@ -114,10 +114,8 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
 
   const handleConfirmDeleteAll = async () => {
     try {
-      // Delete all categories one by one
-      for (const category of categoryMetadata) {
-        await removeCategory(category.id);
-      }
+      // Use hook's removeAll to update UI properly
+      await removeAllCategories();
       setDeletingAllCategories(false);
     } catch (error) {
       console.error('Failed to delete all categories:', error);

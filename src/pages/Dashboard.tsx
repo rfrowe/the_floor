@@ -17,6 +17,7 @@ import { createContestantFromCategory } from '@utils/jsonImport';
 import { resetAppState } from '@utils/resetApp';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useCategories } from '@hooks/useCategories';
+import { addContestants } from '@storage/indexedDB';
 import { useContestantSelection } from '@hooks/useContestantSelection';
 import { useDuelState } from '@hooks/useDuelState';
 import styles from './Dashboard.module.css';
@@ -31,7 +32,7 @@ function Dashboard() {
   const [isImporting, setIsImporting] = useState(false);
   const [contestants, { add: addContestant, remove: removeContestant, update: updateContestant }] =
     useContestants();
-  const [categories, { add: addCategory }] = useCategories();
+  const [categories, { addBulk: addCategoriesBulk }] = useCategories();
   const {
     selected,
     select,
@@ -51,17 +52,18 @@ function Dashboard() {
 
     setIsImporting(true);
 
-    let _categoriesImported = 0;
-    let _contestantsImported = 0;
-    let failCount = 0;
-    const errors: string[] = [];
+    try {
+      // Prepare all categories and contestants for bulk import
+      const categoriesToAdd: StoredCategory[] = [];
+      const contestantsToAdd: Contestant[] = [];
 
-    for (const { name, category } of contestants) {
-      try {
-        // Create a StoredCategory for the category manager
+      for (const { name, category } of contestants) {
         const categoryId = nanoid();
         const firstSlide = category.slides[0];
         const thumbnailUrl = firstSlide?.imageUrl ?? '';
+
+        // Calculate approximate size from JSON stringification
+        const sizeInBytes = JSON.stringify(category).length;
 
         const storedCategory: StoredCategory = {
           id: categoryId,
@@ -69,33 +71,31 @@ function Dashboard() {
           slides: category.slides,
           createdAt: new Date().toISOString(),
           thumbnailUrl,
+          sizeInBytes,
         };
 
-        // Always store the category
-        await addCategory(storedCategory);
-        _categoriesImported++;
+        categoriesToAdd.push(storedCategory);
 
         // Only create contestant if name is provided
         if (name.trim()) {
           const newContestant = createContestantFromCategory(category, name);
           newContestant.categoryId = categoryId;
-          await addContestant(newContestant);
-          _contestantsImported++;
+          contestantsToAdd.push(newContestant);
         }
-      } catch (error) {
-        failCount++;
-        const label = name.trim() || category.name;
-        console.error(`Failed to import "${label}":`, error);
-        errors.push(`${label}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-    }
 
-    setShowImporter(false);
-    setIsImporting(false);
+      // Bulk add categories and contestants in parallel using hooks (updates UI)
+      await Promise.all([
+        categoriesToAdd.length > 0 ? addCategoriesBulk(categoriesToAdd) : Promise.resolve(),
+        contestantsToAdd.length > 0 ? addContestants(contestantsToAdd) : Promise.resolve(),
+      ]);
 
-    // Show summary (only show if there are errors)
-    if (failCount > 0) {
-      alert(`Failed to import:\n${errors.join('\n')}`);
+      setShowImporter(false);
+    } catch (error) {
+      console.error('Failed to import:', error);
+      alert(`Failed to import: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -144,7 +144,10 @@ function Dashboard() {
   };
 
   const handleOpenAudienceView = () => {
-    window.open('/the_floor/audience', '_blank', 'noopener,noreferrer');
+    // Construct full URL using current origin and router basename
+    const basename = import.meta.env.BASE_URL;
+    const audienceUrl = `${window.location.origin}${basename}audience`;
+    window.open(audienceUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleResumeDuel = () => {

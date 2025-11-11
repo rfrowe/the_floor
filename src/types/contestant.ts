@@ -30,6 +30,9 @@ export interface StoredCategory extends Category {
 
   /** Data URL of first slide for thumbnail display */
   thumbnailUrl: string;
+
+  /** Approximate size in bytes (calculated from JSON stringification) */
+  sizeInBytes?: number;
 }
 
 /**
