@@ -198,8 +198,8 @@ function Dashboard() {
     try {
       await resetAppState();
       setShowResetConfirm(false);
-      // Navigate to the app root with proper base path
-      window.location.href = '/the_floor/';
+      // Reload the page to ensure clean state
+      window.location.reload();
     } catch (error) {
       console.error('Failed to reset app:', error);
       alert(

@@ -331,7 +331,7 @@ export function CategoryImporter({
                 }`.trim()}
               >
                 {showSampleCategories && selectedSamples.size > 0
-                  ? `Load ${selectedSamples.size} Sample ${selectedSamples.size === 1 ? 'Category' : 'Categories'}`
+                  ? `Load ${String(selectedSamples.size)} Sample ${selectedSamples.size === 1 ? 'Category' : 'Categories'}`
                   : showSampleCategories
                     ? '← Back'
                     : '📦 Browse Sample Categories'}

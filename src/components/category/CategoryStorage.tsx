@@ -8,7 +8,7 @@ import { formatBytes, calculateStoragePercentage } from '@utils/storageUtils';
 import styles from './CategoryStorage.module.css';
 
 interface CategoryStorageProps {
-  categories: Array<{ id: string; slideCount: number }>;
+  categories: { id: string; slideCount: number }[];
   onDeleteAll: () => void;
 }
 
