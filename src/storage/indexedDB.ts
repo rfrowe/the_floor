@@ -238,6 +238,57 @@ export async function getAllCategories<T>(): Promise<T[]> {
 }
 
 /**
+ * Get lightweight category metadata without loading full slide data
+ * Much faster for displaying category lists
+ */
+export async function getAllCategoryMetadata(): Promise<
+  Array<{
+    id: string;
+    name: string;
+    slideCount: number;
+    thumbnailUrl: string;
+    createdAt: string;
+  }>
+> {
+  try {
+    const db = await initDB();
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction([CATEGORY_STORE], 'readonly');
+      const store = transaction.objectStore(CATEGORY_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const categories = request.result as Array<{
+          id: string;
+          name: string;
+          slides: unknown[];
+          thumbnailUrl: string;
+          createdAt: string;
+        }>;
+
+        // Map to lightweight metadata (exclude slide data)
+        const metadata = categories.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          slideCount: cat.slides.length,
+          thumbnailUrl: cat.thumbnailUrl,
+          createdAt: cat.createdAt,
+        }));
+
+        resolve(metadata);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to get category metadata from IndexedDB'));
+      };
+    });
+  } catch (error) {
+    console.error('Error getting category metadata from IndexedDB:', error);
+    return [];
+  }
+}
+
+/**
  * Get a single category by ID from IndexedDB
  */
 export async function getCategoryById<T>(id: string): Promise<T | null> {
