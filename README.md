@@ -7,564 +7,445 @@
 [![Vite](https://img.shields.io/badge/Vite-7+-646CFF?logo=vite)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18?logo=vitest)](https://vitest.dev/)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-6E44FF?logo=anthropic)](https://claude.ai)
 
-> From empty directory to **live demo success in 20 hours** using [Claude Code](https://claude.ai/claude-code). Zero crashes. Zero errors. Rave reception. This is what happens when AI meets disciplined engineering.
+A web-based trivia game show application inspired by the TV show "The Floor". Features dual-screen gameplay, synchronized timers, and a 7x7 grid floor with territory visualization.
 
-## What is this?
+**Live Demo:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
 
-"The Floor" is a web-based trivia game show application inspired by the TV show of the same name. It features:
+## Table of Contents
 
-- 🎮 **Dual-screen gameplay** - Master control interface + full-screen audience display
+- [What is The Floor?](#what-is-the-floor)
+- [Features](#features)
+- [Live Demo](#live-demo)
+- [Getting Started](#getting-started)
+- [How to Play](#how-to-play)
+- [Creating Categories](#creating-categories)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Available Scripts](#available-scripts)
+- [Development](#development)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [About the Codebase](#about-the-codebase)
+- [Contributing](#contributing)
+- [License](#license)
+
+## What is The Floor?
+
+The Floor is a trivia game show where contestants stand on a grid floor, each owning one or more territories. Contestants duel in head-to-head trivia battles - the winner claims the loser's territory. The game continues until one contestant controls the entire floor.
+
+This web application recreates the game show experience with:
+- **Master control interface** - Game master controls duels, timers, and game flow
+- **Full-screen audience display** - Clean, TV-ready display for players and spectators
+- **Grid floor visualization** - 7x7 grid showing territory ownership in real-time
+- **Synchronized state** - Master and audience views stay perfectly in sync
+
+## Features
+
+### Core Gameplay
+- 🎮 **Dual-screen architecture** - Master control + audience display
 - ⏱️ **Synchronized timers** - <100ms latency between views using BroadcastChannel
-- 🎨 **Dark mode support** - System preference detection + manual toggle
-- 🧪 **Comprehensive testing** - 515 passing tests with 100% reliability
+- 🗺️ **Grid floor display** - Territory visualization with real-time updates
+- 🎯 **Censor box overlays** - Hide answers until reveal
+- 📊 **Territory tracking** - Winners inherit losers' territories
+
+### User Experience
+- 🎨 **Dark mode** - System preference detection + manual toggle
+- ⌨️ **Keyboard shortcuts** - Fast game master controls
+- 📱 **Responsive design** - Works on desktop and tablet
+- 🎪 **Live-tested** - Zero crashes during live gameplay
+
+### Content Management
 - 📦 **PPTX import** - Convert Google Slides to game categories
-- 🎯 **Pixel-perfect censor boxes** - Hide answers until reveal
-- ⚡ **Production deployment** - Live on GitHub Pages with CI/CD
-- 🎪 **Live demo validated** - Rave success with zero crashes
-- 🗺️ **7x7 grid floor display** - Territory visualization with real-time sync
-
-## But more importantly...
-
-This repository demonstrates **what's possible when AI meets disciplined engineering**.
-
-### Built with Claude Code - 20 Hours to Live Demo
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  Empty Directory → Live Demo Success                         │
-│  November 1-2, 2025                                          │
-├──────────────────────────────────────────────────────────────┤
-│  Working Time:      20 hours                                 │
-│  Calendar Time:     26 hours (Nov 1, 14:29 → Nov 2, 16:30)  │
-│                                                              │
-│  Milestones:                                                 │
-│    T+13:31 (03:57)  MVP Complete                            │
-│    T+26:01 (16:30)  🎪 LIVE DEMO - RAVE SUCCESS             │
-│                                                              │
-│  MVP Tasks:         27/29 completed (93.1%)                  │
-│  Total Tasks:       61 documented (27 complete, 34 roadmap)  │
-│  Code Written:      13,200+ lines                            │
-│  Tests:             515 passing (100%)                       │
-│  Demo Result:       Zero crashes, zero errors                │
-│  Reception:         Overwhelmingly positive                  │
-│  Post-Demo:         25 new tasks documented (Phases 10-13)   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**Original projection:** 3-4 weeks (120-160 hours) for 29 MVP tasks
-**What was delivered:** 27 MVP tasks + grid floor + dark mode + 515 tests + live demo validation
-**Realistic projection for delivered scope:** 5-7 weeks (200-280 hours)
-**Actual time:** 20 working hours
-**Acceleration:** **10-14x faster** than realistic projection
-**The real win:** Zero failures during live gameplay - production quality proved under pressure
-
-### How was this possible?
-
-This wasn't about AI writing code blindly. It was about:
-
-1. **Clear task decomposition** - 61 well-defined tasks with acceptance criteria
-2. **Architectural excellence** - Strict TypeScript, hook patterns, component reuse
-3. **Test-first development** - 515 tests written alongside code
-4. **Continuous quality** - Zero runtime errors, 100% test pass rate maintained
-5. **Strategic documentation** - Decisions captured at key moments
-6. **Persistence** - Staying to fix critical bugs (timer sync at hour 13)
-7. **Real-world validation** - Live demo success proved the approach
-8. **Comprehensive planning** - 25 post-demo tasks documented for future work
-
-**Read the MVP story:** [`docs/status-reports/2025-11-02-T+13h31m-final-playable.md`](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)
-
-**Read the complete journey:** [`docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md`](./docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md)
+- 🖼️ **Image optimization** - Automatic 4K resize and JPEG optimization
+- 💾 **IndexedDB storage** - Handle large image datasets
+- 📦 **Sample categories** - 20+ demo categories included
 
 ## Live Demo
 
 **Try it yourself:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
 
-**How to play:**
+**Quick start:**
 1. Open the Dashboard
-2. Import a category (PPTX file) or use sample data
-3. Add contestants
-4. Start a duel
-5. Open Audience View in a separate window/screen
-6. Use Master View controls to run the game
-
-## The Development Journey
-
-This project's documentation is a **case study in AI-assisted development**. Every decision, every task, and every hour is documented.
-
-### 📊 Complete Session Documentation
-
-**[MVP Complete Report](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)** - The MVP story
-- Minute-by-minute timeline (mermaid charts)
-- All 27 MVP tasks with completion times
-- Architecture decisions and ROI analysis
-- The critical final sprint (timer synchronization)
-- Lessons learned and success factors
-
-**[Post-Demo Complete Report](./docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md)** - The full journey
-- Complete 20-hour development timeline
-- Live demo success (zero crashes!)
-- Post-demo hotfixes and task planning
-- 25 new tasks documented (Phases 10-13)
-- Comprehensive future roadmap
-
-**[Status Reports Index](./docs/status-reports/README.md)** - Chronological development log
-- 6 status reports from session start through demo
-- Evolution of "MVP" definition (Basic → Deployed → Playable → Demo-Ready)
-- See how understanding evolved in real-time
-
-**[Project Status](./PROJECT_STATUS.md)** - Current state snapshot
-- What's working (everything!)
-- What's not (backlog items)
-- Architecture highlights
-- Recent major changes
-
-### 📋 Task Documentation
-
-**[61 Task Definitions](./docs/tasks/)** - From conception through future roadmap
-- **27 MVP tasks** completed (Phases 1-8)
-- **25 new tasks** documented post-demo (Phases 9-13)
-- Each task has a PROMPT.md with requirements
-- Objective, Acceptance Criteria, Implementation Guidance
-- Success Criteria and Out of Scope boundaries
-- **These task definitions enabled the 8-11x velocity**
-
-**Critical MVP Example:** [`task-28.1-timer-sync-fix`](./docs/tasks/phase-8-testing/task-28.1-timer-sync-fix/PROMPT.md)
-- The bug fix that made MVP actually playable
-- 9 behavioral cases + 6 edge cases documented
-- Complete architecture specification
-- Implementation plan with time estimates
-
-**Post-Demo Examples:**
-- [`Phase 10: Bug Fixes`](./docs/tasks/phase-10-post-demo-fixes/) - 5 critical bugs from live demo
-- [`Phase 11: Hue Integration`](./docs/tasks/phase-11-hue-integration/PHASE_PROPOSAL.md) - Smart lighting proposal
-- [`Phase 12: LLM Studio`](./docs/tasks/phase-12-llm-studio/PHASE_PROPOSAL.md) - AI content generation
-
-### 🎯 Key Milestones
-
-| Time | Milestone | Significance |
-|------|-----------|--------------|
-| **Nov 1, 14:29** | Session Start | Project bootstrap (Vite + React + TypeScript) |
-| **18:17** | Import System | PPTX parsing + IndexedDB storage working |
-| **20:50** | Dashboard Ready | Contestant management operational |
-| **22:12** | Task Restructuring | Clarified scope (velocity turning point) |
-| **23:36** | Basic MVP | Core features complete (but timer broken) |
-| **Nov 2, 01:02** | Dark Mode | Theme support with system preferences |
-| **01:55** | Deployment | GitHub Pages + CI/CD pipeline |
-| **03:57** | Timer Sync | **MVP ACTUALLY PLAYABLE** 🎉 |
-| **15:31** | Grid Floor | Territory visualization added pre-demo |
-| **16:30** | **LIVE DEMO** | **RAVE SUCCESS - Zero crashes!** 🎪 |
-| **21:12** | Demo Hotfixes | Critical fixes applied same day |
-| **Post-Demo** | Task Planning | 25 new tasks documented (Phases 10-13) |
-
-### 🏗️ Architecture Validation
-
-The final sprint (hours 12-13) validated every architectural decision:
-
-**Timer Sync Refactor** - Replaced entire timer system in 3 hours
-- Before: Timers drifted 1-3 seconds between views
-- After: <100ms latency, <0.1s drift over 30s
-- 405 tests caught regressions immediately
-- Zero impact on other features
-- **Without proper architecture:** Would have taken 8-12 hours
-- **Actual time:** 3 hours (including tests)
-- **Savings:** 5-9 hours on a single refactor
-
-**This is proof that good architecture compounds over time.**
-
-### 📈 What the Metrics Show
-
-**Code Quality:**
-```
-✅ TypeScript:     Strict mode, 0 errors
-✅ Tests:          515 passing (100% rate)
-✅ Runtime Errors: 0 (zero)
-✅ Demo Crashes:   0 (zero)
-✅ Linting:        Clean (0 warnings)
-✅ Build:          Passing
-✅ Deployment:     Automated + Live demo validated
-```
-
-**Development Velocity:**
-```
-Average:        2.0 tasks/hour
-Peak:           7.3 tasks/hour (Phase 5: Master View)
-Slowest:        1.2 tasks/hour (Phase 3: Components)
-  → Early investment in reusable components
-  → Enabled 6x faster velocity later
-
-Final Sprint:   0.4 tasks/hour (but highest impact!)
-  → Task count ≠ value delivered
-  → Timer sync was one task that made MVP playable
-```
-
-**Architecture ROI:**
-```
-Component Reuse:      4.6x ROI (16 hours saved)
-Strict TypeScript:    5-10x (10 hours saved)
-Test-First Development: 3-8x (7 hours saved)
-Hook Architecture:    2-3x (3 hours saved)
-BroadcastChannel:     Enabled timer sync in 3h vs 8-12h
-
-Total Savings: 40+ hours over the session
-```
+2. Browse Sample Categories and load a few
+3. Add contestants (or use sample categories in contestant creation)
+4. Select two contestants and start a duel
+5. Open Audience View in a separate window/screen (press **V** from Dashboard)
+6. Play the game using Master View controls
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- Python 3.9+ with Poetry (for PPTX parsing)
+- Node.js 20+
+- npm
+- Python 3.9+ with Poetry (optional, for PPTX parsing)
 
-### Quick Start
+### Installation
 
 ```bash
-# Clone and install
+# Clone the repository
+git clone https://github.com/rfrowe/the_floor.git
+cd the_floor
+
+# Install dependencies
 npm install
 
 # Start development server
 npm run dev
-# → Open http://localhost:5173
+# → Open http://localhost:5173/
+```
 
+### Quick Development
+
+```bash
 # Run tests
 npm test
 
+# Run tests once (before commits)
+npm test -- --run
+
 # Build for production
 npm run build
+
+# Preview production build
+npm run preview
 ```
 
-### Parsing PPTX Files
+## How to Play
 
-Convert Google Slides exports to game categories:
+### Setup Phase
+1. **Import Categories** - Upload PPTX files or use sample categories
+2. **Add Contestants** - Create contestants and assign them categories
+3. **Configure Grid** - Set grid dimensions (default 7x7)
+4. **Open Views** - Launch Audience View on second screen/window
+
+### Game Flow
+1. **Select Contestants** - Click two contestants (attacker & defender)
+2. **Start Duel** - Launches Master View with duel controls
+3. **Play Slides** - Slides appear on Audience View, timer counts down
+4. **Mark Correct/Skip** - Game master controls from Master View
+5. **Territory Transfer** - Winner claims loser's territory
+6. **Continue** - Select next duel participants
+7. **Win Condition** - Last contestant standing wins
+
+### Views Explained
+
+**Dashboard** - Game master control center
+- Contestant management
+- Category browsing
+- Duel setup
+- Grid configuration
+
+**Master View** - Duel control interface
+- Correct/Skip buttons
+- Timer display
+- Current slide preview
+- Category info
+
+**Audience View** - Full-screen display
+- Large slide images
+- Countdown timer
+- Player names and categories
+- Answer reveals (on skip/timeout)
+
+## Creating Categories
+
+### Using Sample Categories
+
+The app includes 20+ sample categories ready to use:
+1. Click **Manage Categories**
+2. Click **Import Category**
+3. Click **Browse Sample Categories**
+4. Select categories and click **Load**
+
+### From Google Slides (PPTX)
+
+Convert your own Google Slides presentations:
 
 ```bash
-# Install Python dependencies (one-time setup)
-cd scripts && poetry install && cd ..
+# Install Python dependencies (one-time)
+cd scripts
+poetry install
+cd ..
 
 # Parse a PPTX file
-npm run parse:pptx input.pptx output.json -- --category "Category Name"
+npm run parse:pptx input.pptx output.json -- --category "Your Category Name"
+
+# Import the JSON file via Dashboard → Manage Categories → Import
 ```
 
-**What it extracts:**
-- Slide images (resized to 4K, optimized JPEG)
-- Speaker notes (used as answers)
-- Censor box coordinates (rectangle shapes)
-- Cropping information
+**Slide format:**
+- **Image**: Main slide content (will be shown to players)
+- **Speaker notes**: The answer (hidden behind censor boxes)
+- **Rectangle shapes**: Censor box positions (hide parts of the image)
+
+**Tips:**
+- Use high-quality images (parser outputs 4K)
+- Put answers in speaker notes
+- Add rectangle shapes to censor text in images
+- Use descriptive category names
+
+## Tech Stack
+
+- **React 19** - UI library with concurrent features
+- **TypeScript 5.9** - Strict mode for maximum type safety
+- **Vite 7** - Fast dev server and optimized builds
+- **Vitest 4** - Lightning-fast unit testing
+- **React Testing Library** - Component testing best practices
+- **React Router DOM 7** - Client-side routing
+- **BroadcastChannel API** - Cross-window synchronization
+- **IndexedDB** - Large file storage (slide images)
+- **Python + python-pptx** - PowerPoint parsing
+- **Cloudflare Pages** - Production hosting and PR previews
 
 ## Project Structure
 
 ```
 the-floor/
 ├── src/
-│   ├── pages/              # Main views (Dashboard, Master, Audience)
+│   ├── pages/              # Main application views
+│   │   ├── Dashboard.tsx   # Game master control center
+│   │   ├── MasterView.tsx  # Duel control interface
+│   │   └── AudienceView.tsx # Full-screen display
 │   ├── components/         # Reusable UI components
-│   │   ├── duel/           # Duel-specific components
-│   │   ├── slide/          # Slide viewer + overlays
-│   │   └── contestant/     # Contestant cards
+│   │   ├── duel/           # Duel setup and controls
+│   │   ├── slide/          # Slide viewer with censor boxes
+│   │   ├── contestant/     # Contestant cards and management
+│   │   ├── category/       # Category management
+│   │   └── common/         # Shared UI components
 │   ├── hooks/              # Custom React hooks
-│   │   ├── useAuthoritativeTimer.ts    # Audience timer (authoritative)
-│   │   ├── useTimerCommands.ts         # Master commands
-│   │   ├── useAudienceConnection.ts    # Connection detection
-│   │   └── useDuelState.ts             # Duel state management
-│   ├── services/           # Business logic
-│   │   ├── timerSync.ts    # BroadcastChannel messaging
-│   │   └── storage.ts      # localStorage abstraction
-│   └── models/             # TypeScript interfaces
-├── docs/
-│   ├── tasks/              # 27 task definitions (CRITICAL READING)
-│   └── status-reports/     # 5 development status reports
+│   │   ├── useDuelState.ts           # Game state management
+│   │   ├── useAuthoritativeTimer.ts  # Timer synchronization
+│   │   └── useContestants.ts         # Contestant data
+│   ├── storage/            # Data persistence
+│   │   ├── indexedDB.ts    # Large file storage
+│   │   └── localStorage.ts # App preferences
+│   ├── utils/              # Helper functions
+│   └── types/              # TypeScript interfaces
 ├── scripts/                # Python PPTX parser
-├── .github/workflows/      # CI/CD pipeline
-└── public/                 # Static assets
+├── docs/                   # Development documentation
+│   ├── tasks/              # Task definitions and planning
+│   └── status-reports/     # Development session logs
+├── public/categories/      # Sample category data
+└── .github/workflows/      # CI/CD pipelines
 ```
-
-## Tech Stack
-
-- **React 19** - UI library with latest features
-- **TypeScript 5.9** - Strict mode for maximum safety
-- **Vite 7** - Lightning-fast dev server and build
-- **Vitest 4** - Fast unit testing with Vite integration
-- **React Testing Library** - Component testing best practices
-- **React Router DOM 7** - Client-side routing
-- **BroadcastChannel API** - Cross-window timer synchronization
-- **IndexedDB** - Large slide image storage
-- **Python + python-pptx** - PowerPoint parsing
 
 ## Available Scripts
 
 ```bash
-npm run dev              # Start dev server
+# Development
+npm run dev              # Start dev server (hot reload)
 npm run build            # Production build
-npm test                 # Run tests (watch mode)
-npm test -- --run        # Run tests once
-npm run test:coverage    # Generate coverage report
+npm run preview          # Preview production build locally
 npm run lint             # Check code quality
+npm run lint:fix         # Auto-fix linting issues
 npm run format           # Format with Prettier
-npm run preview          # Preview production build
-npm run parse:pptx       # Parse PPTX to JSON
+
+# Testing
+npm test                 # Run tests (watch mode)
+npm test -- --run        # Run tests once (CI mode)
+npm run test:coverage    # Generate coverage report
+npm run test:ui          # Open Vitest UI
+
+# PPTX Parsing
+npm run parse:pptx       # Parse single PPTX file
+npm run parse:pptx:batch # Batch convert multiple files
 ```
 
-## Development Highlights
+## Development
 
-### TypeScript Strict Mode
+### Code Quality
 
-This project uses **maximum type safety**:
+The project enforces strict quality standards:
 
+**TypeScript Strict Mode:**
 ```typescript
-// Strict null checks
+// All code must handle null/undefined explicitly
 const item = array[0];  // Type: Item | undefined
 if (item) {
-  // item is Item here (type narrowing)
+  // Safe to use item here
 }
 
-// No unchecked indexed access
-const value = obj[key];  // Type: Value | undefined
-
-// Explicit null handling
-const name = user?.name ?? 'Guest';
+// No implicit any, all types must be explicit
+function process(data: Category): Contestant {
+  // Implementation
+}
 ```
 
-**Result:** Zero runtime errors throughout entire 13.5-hour session.
+**Testing Requirements:**
+- All business logic has unit tests
+- Components have integration tests
+- 498 tests currently passing
+- Must maintain 100% pass rate
 
-### Timer Synchronization Architecture
+**Commit Requirements:**
+1. `npm run lint` - must pass
+2. `npm test -- --run` - all tests pass
+3. `npm run build` - successful build
 
-The critical innovation that made the game playable:
+See [CLAUDE.md](./CLAUDE.md) for complete development guidelines.
 
-```typescript
-// Audience View = authoritative source
-useAuthoritativeTimer()
-  → Owns the clock
-  → 100ms update interval
-  → BroadcastChannel broadcasts
-  → localStorage persistence (1s interval)
+### Local Development Workflow
 
-// Master View = display + commands
-useTimerCommands()
-  → Receives updates from broadcasts
-  → Sends control commands
-  → No independent countdown (prevents drift)
+```bash
+# Start dev server
+npm run dev
 
-// Connection Detection
-useAudienceConnection()
-  → Prevents timer running without Audience
-  → Fair play requirement
-  → Auto-resume from exact saved position
+# Make changes (hot reload automatically)
+
+# Run tests
+npm test
+
+# Check linting
+npm run lint
+
+# Build to verify
+npm run build
 ```
-
-**Result:** <100ms sync latency, <0.1s drift over 30s, perfect fairness.
-
-### Component Reuse Pattern
-
-Early investment in reusable components paid 4.6x ROI:
-
-```typescript
-// Phase 3 (Hour 3-5): Build reusable components
-<Card>, <Button>, <Container>, <Header>, <Footer>
-SlideViewer with censor box support
-
-// Phase 5+ (Hour 8-13): Assembly at 6x speed
-Master View:   30 minutes (used all base components)
-Audience View: 45 minutes (reused SlideViewer)
-Dark Mode:     60 minutes (CSS variables + toggle)
-```
-
-**Lesson:** Slow down to go fast. Foundation work compounds.
-
-## Documentation Deep Dive
-
-This repository contains **exceptional documentation** as a case study for AI-assisted development:
-
-### For Developers
-
-**[CLAUDE.md](./CLAUDE.md)** - Development guidelines
-- Task-driven development workflow
-- TypeScript strict mode best practices
-- Testing standards and patterns
-- Commit requirements and git workflow
-- Code standards and import aliases
-
-### For Product Managers
-
-**[Project Status](./PROJECT_STATUS.md)** - Current state overview
-- What's working (everything!)
-- What's in backlog (nice-to-haves)
-- Recent major changes
-- Success metrics
-
-### For Engineering Leaders
-
-**[Full Session Report](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)** - Complete analysis
-- Velocity metrics and productivity analysis
-- Architecture decisions and ROI calculations
-- Success factors (why 8-11x faster?)
-- Lessons learned (what would we do differently?)
-- Quality metrics (zero runtime errors, how?)
-
-### For AI Researchers
-
-**[Task Documentation](./docs/tasks/)** - The secret sauce
-- 27 tasks with clear acceptance criteria
-- Objective, implementation guidance, success criteria
-- Out of scope boundaries (critical!)
-- **These task definitions enabled the velocity**
-
-**Key Insight:** Clear task boundaries + AI execution = 8-11x speedup
-
-## Why This Matters
-
-This project demonstrates:
-
-1. **AI + Engineering Discipline = 10x Productivity**
-   - Not just "AI writes code"
-   - Architectural excellence
-   - Test-first development
-   - Clear requirements
-
-2. **Quality and Speed Are Not Tradeoffs**
-   - Zero runtime errors
-   - 100% test pass rate
-   - 8-11x faster than projected
-   - **Proof:** Quality enables speed
-
-3. **Documentation Is an Investment, Not a Cost**
-   - 27 task definitions guided all work
-   - Status reports provided reflection points
-   - Architecture decisions captured for future teams
-   - **Result:** Maintainable, understandable code
-
-4. **"Done" Means "Actually Works"**
-   - 23:36 - Basic MVP (features complete)
-   - 01:36 - Deployed MVP (pretty and live)
-   - **03:57 - Playable MVP (timer sync working)** ← The real finish line
-
-## Contributing
-
-This project welcomes contributions! Before contributing:
-
-1. Read [`CLAUDE.md`](./CLAUDE.md) for development standards
-2. Check [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) for current state
-3. Review [`docs/tasks/`](./docs/tasks/) for task patterns
-4. Run all tests before committing: `npm test -- --run`
-5. Ensure build passes: `npm run build`
-6. Check linting: `npm run lint`
 
 ## Testing
 
 ```bash
-# Run tests in watch mode
+# Watch mode (automatically reruns on changes)
 npm test
 
-# Run tests once (before commits)
+# Single run (use before commits)
 npm test -- --run
 
-# Generate coverage report
+# With coverage report
 npm run test:coverage
 # Open coverage/index.html in browser
+
+# Interactive UI
+npm run test:ui
 ```
 
-**Current Status:** 515/515 tests passing (100%)
+**Current Status:** 498/515 tests passing
 
 ## Deployment
 
-### Cloudflare Pages (Automated)
+### Production (Cloudflare Pages)
 
-Every push to `main` triggers:
-1. Test suite (must pass)
-2. Production build (must succeed)
-3. Deployment to Cloudflare Pages
-4. Automatic release tagging
+Automatic deployment on every push to `main`:
 
-**Production:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
-**PR Previews:** Automatic preview deployments for every pull request
+1. ✅ Run linter (must pass)
+2. ✅ Run test suite (must pass)
+3. ✅ Build production bundle
+4. ✅ Deploy to Cloudflare Pages
+5. ✅ Create release tag
 
-### Manual Testing
+**Production URL:** [https://the-floor.pages.dev/](https://the-floor.pages.dev/)
 
-```bash
-npm run build
-npm run preview
-# Test at http://localhost:4173/
-```
+### PR Preview Deployments
 
-## What's Next?
+Every pull request automatically gets a preview deployment:
 
-See [`docs/tasks/POST_DEMO_TASK_PLANNING_SUMMARY.md`](./docs/tasks/POST_DEMO_TASK_PLANNING_SUMMARY.md) for comprehensive roadmap.
+- **Preview URL:** `https://{branch-name}.the-floor.pages.dev`
+- **GitHub Integration:** "View deployment" button on PR
+- **Auto-update:** Rebuilds on every commit
+- **Auto-cleanup:** Expires 30 days after PR closes
 
-**MVP Completed (27/29 tasks - 93.1%):**
-- ✅ All core gameplay features
-- ✅ Timer synchronization (<100ms latency)
+### Setup Instructions
+
+For repository maintainers:
+
+1. Create Cloudflare Pages project named "the-floor"
+2. Add GitHub repository secrets:
+   - `CLOUDFLARE_API_TOKEN` - API token from Cloudflare
+   - `CLOUDFLARE_ACCOUNT_ID` - Account ID from Cloudflare dashboard
+3. Push to main or create a PR - automatic deployment!
+
+## Roadmap
+
+See [docs/tasks/](./docs/tasks/) for complete task breakdown.
+
+### Completed (Phase 1-8 + enhancements)
+- ✅ Full game implementation (27 core tasks)
+- ✅ Timer synchronization system
 - ✅ Dark mode support
 - ✅ Grid floor visualization
-- ✅ Comprehensive testing (515 tests)
+- ✅ Category management system
+- ✅ Sample categories integration
+- ✅ Comprehensive test coverage (498 tests)
 - ✅ Production deployment with CI/CD
-- ✅ Live demo validation (zero crashes!)
 
-**Phase 10: Critical Bug Fixes (HIGH PRIORITY)**
-- [ ] Task 37: Duel timeout answer reveal
-- [ ] Task 38: Randomizer smallest territory only
-- [ ] Task 39: Fix territory name display
-- [ ] Task 40: Instant fail on late pass
-- [ ] Task 41: Resurrection category logic
-- **Timeline:** 7-11 days
+### In Progress (Phase 9)
+- [ ] Sound effects for game actions
+- [ ] Audience view theming
+- [ ] Enhanced winning animations
+- [ ] Single-combat exhibition mode
+- [ ] Finale best-of-three format
 
-**Phase 9: Enhancements (MEDIUM)**
-- [ ] Task 42-47: Grid colors, animations, new game modes
-- **Timeline:** 10-15 days
+### Planned (Phase 10+)
+- [ ] **Phase 10**: Critical bug fixes from live demo (5 tasks)
+- [ ] **Phase 11**: Philips Hue integration for "Randomizer" effect (5 tasks)
+- [ ] **Phase 12**: LLM-powered category generation studio (8 tasks)
 
-**Phase 11: Philips Hue Integration (PROPOSED)**
-- [ ] Smart lighting "Randomizer" effect (5 tasks)
-- **Timeline:** 7-11 days
+**Total roadmap:** 61 tasks (29 complete, 32 planned)
 
-**Phase 12: LLM Studio (PROPOSED)**
-- [ ] AI-powered category generation (8 tasks)
-- **Timeline:** 17-23 days (could be standalone product)
+See [POST_DEMO_TASK_PLANNING_SUMMARY.md](./docs/tasks/POST_DEMO_TASK_PLANNING_SUMMARY.md) for details.
 
-**Total Roadmap:** 61 tasks (27 complete, 34 documented)
+## About the Codebase
 
-## The Bottom Line
+### Built with AI Assistance
 
-**This project proves:**
-- AI-assisted development can achieve 8-11x speedup
-- Quality and speed are not mutually exclusive
-- Clear requirements + good architecture = rapid iteration
-- Persistence matters (staying to fix critical bugs)
-- Documentation is an investment that pays dividends
-- **Real-world validation works** - Zero crashes in live demo
+This project was built using [Claude Code](https://claude.ai/claude-code) as an experiment in AI-assisted development. The results exceeded expectations:
 
-**Read the MVP story:** [`docs/status-reports/2025-11-02-T+13h31m-final-playable.md`](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md)
+- **Timeline:** 20 working hours (Nov 1-2, 2025)
+- **Result:** Complete playable application with 498 passing tests
+- **Live demo:** Zero crashes, rave reception
+- **Velocity:** 10-14x faster than traditional estimates
 
-**Read the complete journey:** [`docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md`](./docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md)
+**What made it work:**
+- Clear task decomposition (61 documented tasks)
+- Strict TypeScript and comprehensive testing
+- Architectural discipline from day one
+- Test-first development approach
 
-**Explore all 61 tasks:** [`docs/tasks/`](./docs/tasks/)
+### Documentation
 
-**See the timeline:** [`docs/status-reports/README.md`](./docs/status-reports/README.md)
+The development process is extensively documented as a case study:
 
----
+**For learning how this was built:**
+- [Development Timeline](./docs/status-reports/README.md) - Chronological session logs
+- [MVP Complete Report](./docs/status-reports/2025-11-02-T+13h31m-final-playable.md) - The 20-hour story
+- [Task Definitions](./docs/tasks/) - All 61 tasks with acceptance criteria
+
+**For contributors:**
+- [CLAUDE.md](./CLAUDE.md) - Development guidelines and standards
+- [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current state and recent changes
+
+The comprehensive documentation serves as both project history and a case study in AI-assisted development from conception through live validation.
+
+## Contributing
+
+Contributions welcome! Before contributing:
+
+1. Read [CLAUDE.md](./CLAUDE.md) for development standards
+2. Check [PROJECT_STATUS.md](./PROJECT_STATUS.md) for current state
+3. Review [docs/tasks/](./docs/tasks/) for planned work
+4. Ensure all checks pass:
+   ```bash
+   npm run lint        # Linting
+   npm test -- --run   # Tests
+   npm run build       # Build
+   ```
 
 ## License
 
-CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)
+[CC BY-NC-SA 4.0](./LICENSE) (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)
 
-See [LICENSE](./LICENSE) for details.
+You are free to:
+- Share and adapt the code
+- Use for non-commercial purposes
 
----
-
-## Acknowledgments
-
-**Built with [Claude Code](https://claude.ai/claude-code)** - Anthropic's AI assistant for software development.
-
-This project demonstrates what's possible when AI meets disciplined engineering. The comprehensive documentation serves as a case study for AI-assisted development from conception through live demo validation.
-
-**Development Timeline:** November 1-2, 2025
-**Working Time to Demo:** 20 hours
-**Calendar Time:** 26 hours (14:29 → 16:30)
-**Live Demo:** 16:30 on Nov 2 - **Rave success, zero crashes, zero errors**
-**Post-Demo:** Hotfixes same day + 25 new tasks documented (Phases 10-13)
-**Result:** Production-validated application with comprehensive roadmap
-**Methodology:** Task-driven development (61 tasks total)
-**The Real Win:** Application performed flawlessly under live gameplay pressure
+You must:
+- Give appropriate credit
+- Share adaptations under the same license
+- Not use for commercial purposes
 
 ---
 
-*Want to see how this was built? Read the [complete journey](./docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md) from empty directory through successful live demo.*
+**Built with** [Claude Code](https://claude.ai/claude-code) | **Documentation:** [Complete Development Journey](./docs/status-reports/2025-11-02-T+19h46m-post-demo-complete.md)
