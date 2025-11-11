@@ -4,6 +4,7 @@ import styles from './ContestantCard.module.css';
 export interface ContestantCardProps {
   contestant: Contestant;
   isSelected?: boolean;
+  selectionPosition?: 'P1' | 'P2';
   onSelect?: (contestant: Contestant) => void;
   onClick?: (contestant: Contestant) => void;
   className?: string;
@@ -14,6 +15,7 @@ export interface ContestantCardProps {
 export function ContestantCard({
   contestant,
   isSelected = false,
+  selectionPosition,
   onSelect,
   onClick,
   className = '',
@@ -66,8 +68,15 @@ export function ContestantCard({
           <h3 className={styles['name']}>{contestant.name}</h3>
           <div className={styles['wins-badge-wrapper']}>
             {hasTopWins && <span className={styles['crown']}>👑</span>}
-            <div className={styles['wins-badge']} aria-label={`${String(contestant.wins)} wins`}>
-              {contestant.wins}
+            <div
+              className={`${styles['wins-badge'] ?? ''} ${selectionPosition ? (styles['selection-badge'] ?? '') : ''}`.trim()}
+              aria-label={
+                selectionPosition
+                  ? `Selected as ${selectionPosition}`
+                  : `${String(contestant.wins)} wins`
+              }
+            >
+              {selectionPosition ?? contestant.wins}
             </div>
           </div>
         </div>
@@ -76,12 +85,6 @@ export function ContestantCard({
           <span className={styles['category-label']}>Category:</span>
           <span className={styles['category-name']}>{contestant.category.name}</span>
         </div>
-
-        {isEliminated && (
-          <div className={styles['eliminated-badge']} aria-label="Eliminated">
-            Eliminated
-          </div>
-        )}
       </div>
     </div>
   );

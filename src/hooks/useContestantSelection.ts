@@ -63,6 +63,39 @@ export function useContestantSelection(contestants: Contestant[]): ContestantSel
     });
   }, [selectedContestant1, selectedContestant2]);
 
+  // Re-validate P2 selection when contestants' positions change
+  useEffect(() => {
+    // If we have both P1 and P2 selected, check if P2 is still valid
+    if (selectedContestant1 && selectedContestant2) {
+      // Find the updated versions of the selected contestants
+      const updatedP1 = contestants.find((c) => c.id === selectedContestant1.id);
+      const updatedP2 = contestants.find((c) => c.id === selectedContestant2.id);
+
+      if (updatedP1 && updatedP2) {
+        // Update the selected contestants with their latest data
+        setSelectedContestant1(updatedP1);
+        setSelectedContestant2(updatedP2);
+
+        // Check if P2 is still adjacent to P1
+        if (updatedP1.controlledSquares && updatedP1.controlledSquares.length > 0) {
+          const adjacentContestants = getAdjacentContestants(updatedP1, contestants);
+          const isStillAdjacent = adjacentContestants.some((c) => c.id === updatedP2.id);
+
+          if (!isStillAdjacent) {
+            // P2 is no longer adjacent to P1, clear P2 selection
+            setSelectedContestant2(null);
+          }
+        }
+      }
+    } else if (selectedContestant1) {
+      // Just update P1 with latest data
+      const updatedP1 = contestants.find((c) => c.id === selectedContestant1.id);
+      if (updatedP1) {
+        setSelectedContestant1(updatedP1);
+      }
+    }
+  }, [contestants, selectedContestant1, selectedContestant2]);
+
   /**
    * Check if a contestant can be selected as P2.
    * P2 must be adjacent to P1's territory (share at least one edge).
@@ -92,23 +125,29 @@ export function useContestantSelection(contestants: Contestant[]): ContestantSel
   };
 
   const select = (contestant: Contestant) => {
+    // Only allow selection of contestants who are on the board
+    const isOnBoard = contestant.controlledSquares && contestant.controlledSquares.length > 0;
+
     // Toggle selection logic: select contestant1, then contestant2
     if (selectedContestant1?.id === contestant.id) {
-      // Deselect contestant1
-      setSelectedContestant1(null);
+      // Only allow deselecting P1 if P2 is not selected
+      if (!selectedContestant2) {
+        setSelectedContestant1(null);
+      }
+      // Silently ignore if P2 is selected (can't deselect P1 while P2 exists)
     } else if (selectedContestant2?.id === contestant.id) {
-      // Deselect contestant2
+      // Always allow deselecting P2
       setSelectedContestant2(null);
-    } else if (!selectedContestant1) {
-      // Select as contestant1 (P1 can be anyone)
+    } else if (!selectedContestant1 && isOnBoard) {
+      // Select as contestant1 (P1 must be on the board)
       setSelectedContestant1(contestant);
-    } else if (!selectedContestant2) {
-      // Select as contestant2 (P2 must be adjacent to P1)
+    } else if (!selectedContestant2 && isOnBoard) {
+      // Select as contestant2 (P2 must be adjacent to P1 and on the board)
       if (canSelectAsP2(contestant)) {
         setSelectedContestant2(contestant);
       }
       // Silently ignore non-adjacent selections
-    } else {
+    } else if (selectedContestant1 && selectedContestant2 && isOnBoard) {
       // Both slots full, replace contestant1 and shift contestant2 to contestant1
       setSelectedContestant1(selectedContestant2);
       setSelectedContestant2(contestant);
@@ -129,28 +168,48 @@ export function useContestantSelection(contestants: Contestant[]): ContestantSel
   };
 
   const randomSelect = () => {
-    // Filter eligible contestants based on selection state
-    let eligibleContestants: Contestant[];
+    // Random select only picks P1 (the challenger)
+    // P1 then manually chooses which neighbor to challenge
 
-    if (!selectedContestant1) {
-      // No P1 yet, anyone can be selected
-      eligibleContestants = contestants;
-    } else if (!selectedContestant2) {
-      // P1 selected, P2 must be adjacent
-      eligibleContestants = contestants.filter(
-        (c) => c.id !== selectedContestant1.id && canSelectAsP2(c)
-      );
-    } else {
-      // Both selected, replace one contestant
-      eligibleContestants = contestants.filter(
-        (c) => c.id !== selectedContestant1.id && c.id !== selectedContestant2.id
-      );
+    // If P2 is selected, clear it first since we're picking a new P1
+    if (selectedContestant2) {
+      setSelectedContestant2(null);
     }
 
-    const selected = randomSelectUtil(eligibleContestants);
-    if (selected) {
-      // Add to selection using the same logic as manual selection
-      select(selected);
+    // Select from active contestants who are on the board (have territory)
+    const activeContestants = contestants.filter(
+      (c) => !c.eliminated && c.controlledSquares && c.controlledSquares.length > 0
+    );
+
+    if (activeContestants.length === 0) {
+      return;
+    }
+
+    // Find minimum territory size
+    const minTerritory = Math.min(
+      ...activeContestants.map((c) => c.controlledSquares?.length ?? 0)
+    );
+
+    // Filter to only contestants with minimum territory
+    // Exclude current P1 if already selected to ensure we pick someone different
+    const eligibleContestants = activeContestants.filter(
+      (c) => (c.controlledSquares?.length ?? 0) === minTerritory && c.id !== selectedContestant1?.id
+    );
+
+    // If no other contestants with min territory exist, include current P1
+    if (eligibleContestants.length === 0) {
+      const allMinTerritoryContestants = activeContestants.filter(
+        (c) => (c.controlledSquares?.length ?? 0) === minTerritory
+      );
+      const selected = randomSelectUtil(allMinTerritoryContestants);
+      if (selected) {
+        setSelectedContestant1(selected);
+      }
+    } else {
+      const selected = randomSelectUtil(eligibleContestants);
+      if (selected) {
+        setSelectedContestant1(selected);
+      }
     }
   };
 

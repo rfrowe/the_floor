@@ -18,6 +18,33 @@ export interface Category {
 }
 
 /**
+ * Represents a category as stored in IndexedDB with metadata.
+ * Categories are stored separately and referenced by contestants.
+ */
+export interface StoredCategory extends Category {
+  /** Unique identifier for IndexedDB storage */
+  id: string;
+
+  /** Timestamp when category was created */
+  createdAt: string;
+
+  /** Data URL of first slide for thumbnail display */
+  thumbnailUrl: string;
+}
+
+/**
+ * Lightweight reference to a category for display in lists/dropdowns.
+ * Used to show category options without loading full slide data.
+ */
+export interface CategoryReference {
+  id: string;
+  name: string;
+  slideCount: number;
+  thumbnailUrl: string;
+  createdAt: string;
+}
+
+/**
  * Represents a game show contestant who owns one category.
  * When a contestant wins a duel, they inherit the loser's category
  * (not the one that was played in the duel).
@@ -31,6 +58,9 @@ export interface Contestant {
 
   /** The category currently owned by this contestant */
   category: Category;
+
+  /** Optional reference to a stored category ID for category manager feature */
+  categoryId?: string;
 
   /** Number of duels won by this contestant */
   wins: number;

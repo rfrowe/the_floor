@@ -10,6 +10,29 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.overlay-closing {
+  animation: fadeOut 0.2s ease-out forwards;
 }
 
 .modal {
@@ -17,11 +40,46 @@
   border-radius: 0.5rem;
   box-shadow: var(--shadow-lg);
   max-width: 32rem;
-  width: 100%;
-  max-height: 90vh;
+  width: calc(100% - 2rem);
+  max-height: calc(100vh - 2rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: height 0.3s ease-in-out;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@media (min-width: 640px) {
+  .modal {
+    width: 100%;
+    max-height: 90vh;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+}
+
+.modal-closing {
+  animation: popOut 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
 }
 
 .modal:focus {
@@ -36,14 +94,17 @@
   border-bottom: 1px solid var(--border-default);
 }
 
-.title {
+/* Shared styles for ViewStack-based headers */
+.modal-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
+  text-align: center;
+  flex: 1;
 }
 
-.closeButton {
+.back-button {
   background: none;
   border: none;
   font-size: 2rem;
@@ -51,6 +112,8 @@
   color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
+  padding-bottom: 0.3rem;
+  margin-right: 0.5rem;
   width: 2rem;
   height: 2rem;
   display: flex;
@@ -62,21 +125,110 @@
     color 0.2s ease;
 }
 
-.closeButton:hover {
+.back-button:hover {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
 }
 
+.back-button:focus {
+  outline: none;
+}
+
+/* Legacy title (for non-ViewStack modals) */
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  flex: 1;
+}
+
+.backButton,
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  padding-bottom: 0.3rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.backButton.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+  transition: all var(--view-transition-duration) cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.backButton:not(.hidden) {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all var(--view-transition-duration) cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.backButton:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.closeButton:hover {
+  background-color: color-mix(in srgb, var(--status-danger) 15%, transparent);
+  color: var(--status-danger);
+}
+
+.backButton:focus,
+.backButton:focus-visible,
+.closeButton:focus,
 .closeButton:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
+  outline: none;
+}
+
+.backButton {
+  margin-right: 0.5rem;
+  padding-bottom: 0;
 }
 
 .body {
   padding: 1.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   color: var(--text-primary);
+  box-sizing: border-box;
 }
 
 .footer {

@@ -1,5 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { MODAL_DISMISS_DURATION_MS } from '@/constants/animations';
 import styles from './Modal.module.css';
 
 export interface ModalProps {
@@ -10,6 +11,7 @@ export interface ModalProps {
   footer?: ReactNode;
   showCloseButton?: boolean;
   className?: string;
+  onBack?: () => void;
 }
 
 export function Modal({
@@ -20,12 +22,17 @@ export function Modal({
   footer,
   showCloseButton = true,
   className = '',
+  onBack,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      // Reset closing state when opening
+      setIsClosing(false);
+
       // Store previously focused element
       previousFocusRef.current = document.activeElement as HTMLElement;
 
@@ -51,10 +58,18 @@ export function Modal({
     return undefined;
   }, [isOpen]);
 
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      onClose();
+    }, MODAL_DISMISS_DURATION_MS);
+  }, [onClose]);
+
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
+      if (event.key === 'Escape' && isOpen && !isClosing) {
+        handleClose();
       }
     };
 
@@ -62,15 +77,15 @@ export function Modal({
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, isClosing, handleClose]);
 
   if (!isOpen) {
     return null;
   }
 
   const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
+    if (event.target === event.currentTarget && !isClosing) {
+      handleClose();
     }
   };
 
@@ -98,8 +113,10 @@ export function Modal({
     }
   };
 
-  const overlayClass = styles['overlay'] ?? '';
-  const modalClass = styles['modal'] ?? '';
+  const overlayClass =
+    `${styles['overlay'] ?? ''} ${isClosing ? (styles['overlay-closing'] ?? '') : ''}`.trim();
+  const modalClass =
+    `${styles['modal'] ?? ''} ${isClosing ? (styles['modal-closing'] ?? '') : ''}`.trim();
 
   return createPortal(
     <div
@@ -107,9 +124,9 @@ export function Modal({
       onClick={handleOverlayClick}
       onKeyDown={(e) => {
         // Only close on space/enter if the overlay itself is focused, not children (like form inputs)
-        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget && !isClosing) {
           e.preventDefault();
-          onClose();
+          handleClose();
         }
       }}
       role="button"
@@ -126,8 +143,18 @@ export function Modal({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
       >
-        {(title ?? showCloseButton) && (
+        {(title !== undefined || showCloseButton || onBack !== undefined) && (
           <div className={styles['header']}>
+            {onBack && (
+              <button
+                className={styles['backButton']}
+                onClick={onBack}
+                aria-label="Go back"
+                type="button"
+              >
+                ←
+              </button>
+            )}
             {title && (
               <h2 id="modal-title" className={styles['title']}>
                 {title}
@@ -136,7 +163,7 @@ export function Modal({
             {showCloseButton && (
               <button
                 className={styles['closeButton']}
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
                 type="button"
               >
