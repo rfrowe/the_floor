@@ -17,7 +17,6 @@ import { createContestantFromCategory } from '@utils/jsonImport';
 import { resetAppState } from '@utils/resetApp';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useCategories } from '@hooks/useCategories';
-import { addContestants } from '@storage/indexedDB';
 import { useContestantSelection } from '@hooks/useContestantSelection';
 import { useDuelState } from '@hooks/useDuelState';
 import styles from './Dashboard.module.css';
@@ -30,8 +29,15 @@ function Dashboard() {
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [contestants, { add: addContestant, remove: removeContestant, update: updateContestant }] =
-    useContestants();
+  const [
+    contestants,
+    {
+      add: addContestant,
+      addBulk: addContestantsBulk,
+      remove: removeContestant,
+      update: updateContestant,
+    },
+  ] = useContestants();
   const [categories, { addBulk: addCategoriesBulk }] = useCategories();
   const {
     selected,
@@ -87,7 +93,7 @@ function Dashboard() {
       // Bulk add categories and contestants in parallel using hooks (updates UI)
       await Promise.all([
         categoriesToAdd.length > 0 ? addCategoriesBulk(categoriesToAdd) : Promise.resolve(),
-        contestantsToAdd.length > 0 ? addContestants(contestantsToAdd) : Promise.resolve(),
+        contestantsToAdd.length > 0 ? addContestantsBulk(contestantsToAdd) : Promise.resolve(),
       ]);
 
       setShowImporter(false);

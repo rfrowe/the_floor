@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getAllContestants,
   addContestant,
+  addContestants,
   updateContestant,
   deleteContestant,
 } from '@storage/indexedDB';
@@ -24,6 +25,7 @@ export function useContestants(): [
   Contestant[],
   {
     add: (contestant: Contestant) => Promise<void>;
+    addBulk: (contestants: Contestant[]) => Promise<void>;
     update: (contestant: Contestant) => Promise<void>;
     remove: (id: string) => Promise<void>;
     refresh: () => Promise<void>;
@@ -96,6 +98,19 @@ export function useContestants(): [
     }
   }, []);
 
+  // Bulk add multiple contestants
+  const addBulk = useCallback(async (newContestants: Contestant[]) => {
+    try {
+      await addContestants(newContestants);
+      setContestants((prev) => [...prev, ...newContestants]);
+      // Broadcast change to other windows/tabs
+      broadcastRef.current?.send('reload');
+    } catch (error) {
+      console.error('Error bulk adding contestants:', error);
+      throw error;
+    }
+  }, []);
+
   // Update an existing contestant
   const update = useCallback(async (contestant: Contestant) => {
     try {
@@ -138,8 +153,8 @@ export function useContestants(): [
 
   // Return empty array while loading to avoid flicker
   if (isLoading) {
-    return [[], { add, update, remove, refresh }];
+    return [[], { add, addBulk, update, remove, refresh }];
   }
 
-  return [contestants, { add, update, remove, refresh }];
+  return [contestants, { add, addBulk, update, remove, refresh }];
 }
