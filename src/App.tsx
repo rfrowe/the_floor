@@ -7,8 +7,12 @@ import NotFound from '@pages/NotFound';
 import './App.css';
 
 function App() {
+  // Use base path from Vite config (set at build time)
+  // GitHub Pages: /the_floor/, Cloudflare Pages: /
+  const basename = import.meta.env.BASE_URL;
+
   return (
-    <BrowserRouter basename="/the_floor">
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/master" element={<MasterView />} />

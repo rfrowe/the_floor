@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Lock file generated in CI for platform compatibility
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

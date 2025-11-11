@@ -21,10 +21,7 @@ export interface CategoryMetadata {
  * Hook for loading category metadata without full slide data
  * Use this for category lists, dropdowns, and overview displays
  */
-export function useCategoryMetadata(): [
-  CategoryMetadata[],
-  { refresh: () => Promise<void> },
-] {
+export function useCategoryMetadata(): [CategoryMetadata[], { refresh: () => Promise<void> }] {
   const [metadata, setMetadata] = useState<CategoryMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

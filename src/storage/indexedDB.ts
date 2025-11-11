@@ -242,13 +242,13 @@ export async function getAllCategories<T>(): Promise<T[]> {
  * Much faster for displaying category lists
  */
 export async function getAllCategoryMetadata(): Promise<
-  Array<{
+  {
     id: string;
     name: string;
     slideCount: number;
     thumbnailUrl: string;
     createdAt: string;
-  }>
+  }[]
 > {
   try {
     const db = await initDB();
@@ -258,13 +258,13 @@ export async function getAllCategoryMetadata(): Promise<
       const request = store.getAll();
 
       request.onsuccess = () => {
-        const categories = request.result as Array<{
+        const categories = request.result as {
           id: string;
           name: string;
           slides: unknown[];
           thumbnailUrl: string;
           createdAt: string;
-        }>;
+        }[];
 
         // Map to lightweight metadata (exclude slide data)
         const metadata = categories.map((cat) => ({

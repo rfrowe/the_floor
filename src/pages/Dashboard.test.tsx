@@ -598,7 +598,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(resetSpy).toHaveBeenCalledOnce();
-        expect(mockLocation.href).toBe('/the_floor/');
+        expect(mockLocation.reload).toHaveBeenCalledOnce();
       });
     });
 
