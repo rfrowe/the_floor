@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Category, Contestant } from '@types';
+import { nanoid } from 'nanoid';
+import type { Category, Contestant, StoredCategory } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
+import { CategoryManager } from '@components/category/CategoryManager';
 import { ContestantCard } from '@components/contestant/ContestantCard';
+import { ContestantCreator } from '@components/contestant/ContestantCreator';
 import { DuelSetup, type DuelConfig, type DuelSetupHandle } from '@components/duel/DuelSetup';
 import { GridConfigurator } from '@components/dashboard/GridConfigurator';
 import { Container } from '@components/common/Container';
@@ -13,6 +16,7 @@ import { ThemeToggle } from '@components/common/ThemeToggle';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { resetAppState } from '@utils/resetApp';
 import { useContestants } from '@hooks/useIndexedDB';
+import { useCategories } from '@hooks/useCategories';
 import { useContestantSelection } from '@hooks/useContestantSelection';
 import { useDuelState } from '@hooks/useDuelState';
 import styles from './Dashboard.module.css';
@@ -20,11 +24,14 @@ import styles from './Dashboard.module.css';
 function Dashboard() {
   const navigate = useNavigate();
   const [showImporter, setShowImporter] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showAddContestant, setShowAddContestant] = useState(false);
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [contestants, { add: addContestant, remove: removeContestant, update: updateContestant }] =
     useContestants();
+  const [categories, { add: addCategory }] = useCategories();
   const {
     selected,
     select,
@@ -44,41 +51,74 @@ function Dashboard() {
 
     setIsImporting(true);
 
-    let successCount = 0;
+    let _categoriesImported = 0;
+    let _contestantsImported = 0;
     let failCount = 0;
     const errors: string[] = [];
 
     for (const { name, category } of contestants) {
-      const newContestant = createContestantFromCategory(category, name);
       try {
-        await addContestant(newContestant);
-        successCount++;
+        // Create a StoredCategory for the category manager
+        const categoryId = nanoid();
+        const firstSlide = category.slides[0];
+        const thumbnailUrl = firstSlide?.imageUrl ?? '';
+
+        const storedCategory: StoredCategory = {
+          id: categoryId,
+          name: category.name,
+          slides: category.slides,
+          createdAt: new Date().toISOString(),
+          thumbnailUrl,
+        };
+
+        // Always store the category
+        await addCategory(storedCategory);
+        _categoriesImported++;
+
+        // Only create contestant if name is provided
+        if (name.trim()) {
+          const newContestant = createContestantFromCategory(category, name);
+          newContestant.categoryId = categoryId;
+          await addContestant(newContestant);
+          _contestantsImported++;
+        }
       } catch (error) {
         failCount++;
-        console.error(`Failed to import contestant "${name}":`, error);
-        errors.push(`${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const label = name.trim() || category.name;
+        console.error(`Failed to import "${label}":`, error);
+        errors.push(`${label}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
     setShowImporter(false);
     setIsImporting(false);
 
-    // Show summary
-    if (successCount > 0 && failCount === 0) {
-      alert(
-        `Successfully imported ${String(successCount)} contestant${successCount !== 1 ? 's' : ''}!`
-      );
-    } else if (successCount > 0 && failCount > 0) {
-      alert(
-        `Imported ${String(successCount)} contestant${successCount !== 1 ? 's' : ''}, but ${String(failCount)} failed:\n${errors.join('\n')}`
-      );
-    } else {
-      alert(`Failed to import all contestants:\n${errors.join('\n')}`);
+    // Show summary (only show if there are errors)
+    if (failCount > 0) {
+      alert(`Failed to import:\n${errors.join('\n')}`);
     }
   };
 
   const handleCancel = () => {
     setShowImporter(false);
+  };
+
+  const handleCreateContestant = async (name: string, categoryId: string) => {
+    const category = categories.find((c) => c.id === categoryId);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Create contestant from the category
+    const categoryData: Category = {
+      name: category.name,
+      slides: category.slides,
+    };
+
+    const newContestant = createContestantFromCategory(categoryData, name);
+    newContestant.categoryId = categoryId;
+
+    await addContestant(newContestant);
   };
 
   const handleDeleteClick = (contestant: Contestant) => {
@@ -118,6 +158,21 @@ function Dashboard() {
   };
 
   const isContestantDisabled = (contestant: Contestant): boolean => {
+    // Disable contestants who are not on the board (no controlled squares)
+    if (!contestant.controlledSquares || contestant.controlledSquares.length === 0) {
+      return true;
+    }
+
+    // Never disable already selected contestants (so they can be deselected)
+    if (selectedContestant1?.id === contestant.id || selectedContestant2?.id === contestant.id) {
+      return false;
+    }
+
+    // If both P1 and P2 are selected, disable all other contestants
+    if (selectedContestant1 && selectedContestant2) {
+      return true;
+    }
+
     // If selecting P2 (P1 already selected, P2 not yet), disable non-adjacent contestants
     if (selectedContestant1 && !selectedContestant2) {
       return !canSelectAsP2(contestant);
@@ -240,12 +295,13 @@ function Dashboard() {
             Open Audience View
           </Button>
           <Button
-            variant="primary"
+            variant="secondary"
             onClick={() => {
-              setShowImporter(true);
+              setShowCategoryManager(true);
             }}
+            title="Manage categories"
           >
-            Import Contestant
+            Manage Categories
           </Button>
           <Button variant="danger" onClick={handleResetClick} title="Reset all application data">
             Reset App
@@ -281,31 +337,36 @@ function Dashboard() {
           <h2>Contestants ({contestants.length})</h2>
         </div>
 
-        {contestants.length === 0 ? (
-          // Empty State
-          <Card className={styles['empty-state'] ?? ''}>
-            <div className={styles['empty-state-content'] ?? ''}>
-              <h3>No Contestants Yet</h3>
-              <p>Get started by importing contestant data from a PPTX file.</p>
-              <Button
-                variant="primary"
-                size="large"
-                onClick={() => {
-                  setShowImporter(true);
-                }}
+        {/* Contestants Grid - always show even when empty */}
+        <div
+          className={`${styles['contestants-grid'] ?? ''} ${selectedContestant2 ? (styles['has-p2'] ?? '') : ''}`.trim()}
+        >
+          {sortedContestants.map((contestant) => {
+            const wrapperClass = styles['contestant-card-wrapper'] ?? '';
+            const duelP1Class =
+              selectedContestant1?.id === contestant.id ? (styles['duel-p1'] ?? '') : '';
+            const duelP2Class =
+              selectedContestant2?.id === contestant.id ? (styles['duel-p2'] ?? '') : '';
+            const eliminatedWrapperClass = contestant.eliminated
+              ? (styles['eliminated-wrapper'] ?? '')
+              : '';
+
+            const selectionPos =
+              selectedContestant1?.id === contestant.id
+                ? 'P1'
+                : selectedContestant2?.id === contestant.id
+                  ? 'P2'
+                  : undefined;
+
+            return (
+              <div
+                key={contestant.id}
+                className={`${wrapperClass} ${duelP1Class} ${duelP2Class} ${eliminatedWrapperClass}`.trim()}
               >
-                Import Your First Contestant
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          // Contestants Grid
-          <div className={styles['contestants-grid'] ?? ''}>
-            {sortedContestants.map((contestant) => (
-              <div key={contestant.id} className={styles['contestant-card-wrapper'] ?? ''}>
                 <ContestantCard
                   contestant={contestant}
                   isSelected={isContestantSelected(contestant)}
+                  {...(selectionPos ? { selectionPosition: selectionPos } : {})}
                   onClick={handleContestantClick}
                   hasTopWins={hasTopWins(contestant)}
                   disabled={isContestantDisabled(contestant)}
@@ -328,7 +389,13 @@ function Dashboard() {
                       variant="danger"
                       size="small"
                       onClick={() => {
-                        void updateContestant({ ...contestant, eliminated: true });
+                        const { gridPosition: _gridPosition, ...contestantWithoutPosition } =
+                          contestant;
+                        void updateContestant({
+                          ...contestantWithoutPosition,
+                          eliminated: true,
+                          controlledSquares: [],
+                        });
                       }}
                       className={styles['eliminate-button'] ?? ''}
                       title="Eliminate contestant"
@@ -349,14 +416,36 @@ function Dashboard() {
                   </Button>
                 </div>
               </div>
-            ))}
+            );
+          })}
+
+          {/* Add Contestant card */}
+          <div className={styles['contestant-card-wrapper'] ?? ''}>
+            <div
+              className={styles['add-contestant-card'] ?? ''}
+              onClick={() => {
+                setShowAddContestant(true);
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowAddContestant(true);
+                }
+              }}
+              aria-label="Add new contestant"
+            >
+              <div className={styles['add-icon'] ?? ''}>+</div>
+              <div className={styles['add-label'] ?? ''}>Add Contestant</div>
+            </div>
           </div>
-        )}
+        </div>
       </section>
 
       {/* Import Modal */}
       {showImporter && (
-        <Modal isOpen={showImporter} onClose={handleCancel} title="Import Contestant">
+        <Modal isOpen={showImporter} onClose={handleCancel} title="Import Category">
           <CategoryImporter onImport={handleImport} onCancel={handleCancel} />
         </Modal>
       )}
@@ -424,6 +513,29 @@ function Dashboard() {
           <strong>This action cannot be undone.</strong>
         </p>
       </Modal>
+
+      {/* Category Manager Modal */}
+      {showCategoryManager && (
+        <CategoryManager
+          onClose={() => {
+            setShowCategoryManager(false);
+          }}
+          contestants={contestants}
+          onImport={handleImport}
+        />
+      )}
+
+      {/* Add Contestant Modal */}
+      {showAddContestant && (
+        <ContestantCreator
+          onClose={() => {
+            setShowAddContestant(false);
+          }}
+          onCreate={handleCreateContestant}
+          categories={categories}
+          onImport={handleImport}
+        />
+      )}
     </Container>
   );
 }

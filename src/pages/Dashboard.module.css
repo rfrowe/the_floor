@@ -2,8 +2,6 @@
 .dashboard {
   min-height: 100vh;
   padding: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 /* Header */
@@ -86,6 +84,29 @@
   transform: translateY(-2px);
 }
 
+/* Eliminated contestants should not move on hover */
+.eliminated-wrapper:hover {
+  transform: translateY(0);
+}
+
+/* CSS module classes for duel positions */
+.duel-p1 {
+  /* P1 marker class */
+}
+
+.duel-p2 {
+  /* P2 marker class */
+}
+
+.has-p2 {
+  /* Grid has P2 selected */
+}
+
+/* When P2 exists, P1's wrapper should not move on hover */
+.has-p2 .duel-p1:hover {
+  transform: translateY(0) !important;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -102,11 +123,14 @@
 
 .revive-button {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none !important;
+  color: white;
 }
 
 .revive-button:hover {
   transform: translateY(-1px) scale(1.1);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border: none !important;
 }
 
 .eliminate-button {
@@ -120,6 +144,48 @@
 
 .delete-button:hover {
   transform: translateY(-1px) scale(1.1);
+}
+
+/* Add Contestant Card */
+.add-contestant-card {
+  background-color: var(--bg-primary);
+  border: 2px dashed var(--status-success);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.add-contestant-card:hover {
+  border-color: var(--status-success);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  background-color: color-mix(in srgb, var(--status-success) 5%, var(--bg-primary));
+}
+
+.add-contestant-card:focus {
+  outline: none;
+  border-color: var(--status-success);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.add-icon {
+  font-size: 3rem;
+  color: var(--status-success);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.add-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--status-success);
 }
 
 /* Empty State */
