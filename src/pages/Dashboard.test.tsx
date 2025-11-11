@@ -106,7 +106,8 @@ describe('Dashboard', () => {
 
     expect(screen.getByRole('heading', { name: 'The Floor' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open Audience View' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Import Contestant' })).toBeInTheDocument();
+    // Import Contestant button replaced by Add Contestant card
+    expect(screen.getByRole('button', { name: 'Add new contestant' })).toBeInTheDocument();
   });
 
   it('shows empty state when no contestants', () => {
@@ -121,13 +122,9 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('No Contestants Yet')).toBeInTheDocument();
-    expect(
-      screen.getByText('Get started by importing contestant data from a PPTX file.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Import Your First Contestant' })
-    ).toBeInTheDocument();
+    // When empty, just shows the Add Contestant card
+    expect(screen.getByRole('button', { name: 'Add new contestant' })).toBeInTheDocument();
+    expect(screen.getByText('Contestants (0)')).toBeInTheDocument();
   });
 
   it('displays contestants in grid', () => {
@@ -160,14 +157,19 @@ describe('Dashboard', () => {
     );
 
     // Check contestant names appear in the correct order
-    expect(screen.getByText('Test Contestant')).toBeInTheDocument();
-    expect(screen.getByText('Eliminated Contestant')).toBeInTheDocument();
+    const contestantHeadings = screen.getAllByRole('heading', { level: 3 });
+    const contestantNames = contestantHeadings.map((h) => h.textContent);
 
-    // Verify eliminated badge only appears on eliminated contestant
-    expect(screen.getAllByText('Eliminated').length).toBe(1);
+    // Active contestant (Test Contestant) should appear before eliminated (Eliminated Contestant)
+    const testIndex = contestantNames.indexOf('Test Contestant');
+    const eliminatedIndex = contestantNames.indexOf('Eliminated Contestant');
+
+    expect(testIndex).toBeGreaterThanOrEqual(0);
+    expect(eliminatedIndex).toBeGreaterThanOrEqual(0);
+    expect(testIndex).toBeLessThan(eliminatedIndex);
   });
 
-  it('opens import modal when Import Contestant button clicked', async () => {
+  it('opens add contestant modal when Add Contestant card clicked', async () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
@@ -180,15 +182,15 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    const importButton = screen.getByRole('button', { name: 'Import Contestant' });
-    await user.click(importButton);
+    const addButton = screen.getByRole('button', { name: 'Add new contestant' });
+    await user.click(addButton);
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 
-  it('opens import modal when Import Your First Contestant button clicked in empty state', async () => {
+  it('opens add contestant modal when Add Contestant card clicked in empty state', async () => {
     const user = userEvent.setup();
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
@@ -201,8 +203,8 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    const importButton = screen.getByRole('button', { name: 'Import Your First Contestant' });
-    await user.click(importButton);
+    const addButton = screen.getByRole('button', { name: 'Add new contestant' });
+    await user.click(addButton);
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();

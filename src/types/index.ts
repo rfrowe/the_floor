@@ -4,7 +4,14 @@
  */
 
 // Contestant and Category types
-export type { Contestant, Category, ContestantInput, ContestantUpdate } from './contestant';
+export type {
+  Contestant,
+  Category,
+  ContestantInput,
+  ContestantUpdate,
+  StoredCategory,
+  CategoryReference,
+} from './contestant';
 
 // Slide and CensorBox types
 export type { Slide, CensorBox } from './slide';

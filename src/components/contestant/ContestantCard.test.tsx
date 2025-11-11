@@ -41,16 +41,20 @@ describe('ContestantCard', () => {
       eliminated: true,
     };
 
-    render(<ContestantCard contestant={eliminatedContestant} />);
+    const { container } = render(<ContestantCard contestant={eliminatedContestant} />);
 
-    expect(screen.getByText('Eliminated')).toBeInTheDocument();
-    expect(screen.getByLabelText('Eliminated')).toBeInTheDocument();
+    // Check for eliminated class instead of badge text
+    const card = container.firstChild as HTMLElement;
+    expect(card.className).toContain('eliminated');
+    expect(card).toHaveAttribute('aria-label', expect.stringContaining('eliminated'));
   });
 
   it('does not render eliminated badge for active contestant', () => {
-    render(<ContestantCard contestant={mockContestant} />);
+    const { container } = render(<ContestantCard contestant={mockContestant} />);
 
-    expect(screen.queryByText('Eliminated')).not.toBeInTheDocument();
+    // Check that eliminated class is not present
+    const card = container.firstChild as HTMLElement;
+    expect(card.className).not.toContain('eliminated');
   });
 
   it('applies selected styling when isSelected is true', () => {

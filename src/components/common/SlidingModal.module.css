@@ -1,0 +1,36 @@
+.sliding-modal {
+  max-width: 50rem !important;
+}
+
+.sliding-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 70vh;
+  max-height: 800px;
+}
+
+.slide-wrapper {
+  display: flex;
+  width: 200%;
+  transition: transform 0.3s ease-in-out;
+  height: 100%;
+}
+
+.slide-wrapper.slide-left.show-secondary {
+  transform: translateX(-50%);
+}
+
+.slide-wrapper:not(.show-secondary) {
+  transform: translateX(0);
+}
+
+.view-panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}

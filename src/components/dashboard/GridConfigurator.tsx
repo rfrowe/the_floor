@@ -60,12 +60,6 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
   }, [contestants, gridConfig]);
 
   const handleApplyDimensions = () => {
-    // Validate
-    if (tempRows < 1 || tempRows > 20 || tempCols < 1 || tempCols > 20) {
-      alert('Grid dimensions must be between 1 and 20');
-      return;
-    }
-
     const totalSquares = tempRows * tempCols;
     const positionedContestants = contestants.filter(
       (c) => c.controlledSquares && c.controlledSquares.length > 0
@@ -80,7 +74,6 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
 
     setGridConfig({ rows: tempRows, cols: tempCols });
     setIsEditingGrid(false);
-    alert('Grid dimensions updated! Contestants outside the new grid have been removed.');
 
     // Remove contestants that are now outside the grid
     const updatedContestants = contestants.map((c) => {
@@ -121,13 +114,12 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
 
     const squareId = `${String(row)}-${String(col)}`;
 
-    // Check if square is already occupied
+    // Check if square is already occupied - silently ignore if it is
     const occupiedBy = contestants.find(
       (c) => c.controlledSquares?.includes(squareId) && c.id !== draggedContestant.id
     );
 
     if (occupiedBy) {
-      alert(`Square is occupied by ${occupiedBy.name}. Please choose an empty square.`);
       setDraggedContestant(null);
       return;
     }

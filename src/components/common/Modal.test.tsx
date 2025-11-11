@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
 
@@ -85,7 +85,11 @@ describe('Modal', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /close modal/i }));
-    expect(handleClose).toHaveBeenCalledTimes(1);
+
+    // Wait for the modal dismiss animation to complete
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('calls onClose when Escape key is pressed', async () => {
@@ -99,7 +103,11 @@ describe('Modal', () => {
     );
 
     await user.keyboard('{Escape}');
-    expect(handleClose).toHaveBeenCalledTimes(1);
+
+    // Wait for the modal dismiss animation to complete
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('applies custom className', () => {

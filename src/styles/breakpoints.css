@@ -1,0 +1,29 @@
+/**
+ * Unified Responsive Design Breakpoints
+ *
+ * Standard breakpoints used across the application:
+ * - mobile: < 640px (default, no media query needed)
+ * - tablet: 640px - 1023px
+ * - desktop: >= 1024px
+ * - large: >= 1280px
+ */
+
+:root {
+  /* Breakpoint values for JS (if needed) */
+  --breakpoint-tablet: 640px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-large: 1280px;
+}
+
+/* Usage examples:
+ *
+ * Mobile-first approach (recommended):
+ * .element { ... } // Mobile styles
+ * @media (min-width: 640px) { ... } // Tablet and up
+ * @media (min-width: 1024px) { ... } // Desktop and up
+ *
+ * Desktop-first approach:
+ * .element { ... } // Desktop styles
+ * @media (max-width: 1023px) { ... } // Tablet and down
+ * @media (max-width: 639px) { ... } // Mobile only
+ */

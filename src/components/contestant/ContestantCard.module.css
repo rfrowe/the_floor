@@ -39,6 +39,12 @@
   border-radius: 9999px;
   min-width: 2rem;
   text-align: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.selection-badge {
+  background-color: var(--status-success);
+  color: white;
 }
 
 .crown {
@@ -105,13 +111,21 @@
 
 /* Selected state */
 .selected {
-  border-color: var(--border-focus);
+  border-color: var(--border-focus) !important;
   background-color: var(--bg-secondary);
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+  transform: translateY(-2px);
 }
 
 .selected .name {
   color: var(--btn-primary-bg);
+}
+
+/* Keep selected cards elevated on hover */
+.selected.interactive:hover {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+  transform: translateY(-2px);
 }
 
 /* Eliminated state */
@@ -148,10 +162,13 @@
 
 /* Disabled state (not eligible for selection) */
 .disabled {
-  opacity: 0.5;
   background-color: var(--bg-secondary);
   cursor: not-allowed;
-  border-color: var(--border-disabled, #ccc);
+  border-color: var(--border-default);
+}
+
+.disabled .content {
+  opacity: 0.5;
 }
 
 .disabled .name {
@@ -175,6 +192,5 @@
 .disabled.interactive:hover {
   transform: none;
   box-shadow: var(--shadow-sm);
-  border-color: var(--border-disabled, #ccc);
-  opacity: 0.5;
+  border-color: var(--border-default);
 }
