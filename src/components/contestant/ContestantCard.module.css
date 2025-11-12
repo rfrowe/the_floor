@@ -59,7 +59,9 @@
   transition: transform 0.3s ease-out;
 }
 
-.card:hover .crown {
+/* Tip crown on hover or when selected (for mobile) */
+.card:hover .crown,
+.selected .crown {
   transform: rotate(35deg) translateY(-0.25rem);
 }
 

@@ -23,7 +23,22 @@
 }
 
 .toggle-button {
-  min-width: 120px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.toggle-button:hover {
+  color: var(--text-primary);
+}
+
+.toggle-button:focus {
+  outline: none;
 }
 
 .section {
@@ -85,8 +100,8 @@
   border-radius: 8px;
   padding: 1rem;
   background: var(--bg-secondary);
-  overflow: visible;
-  /* Let grid size determine height naturally */
+  overflow: auto; /* Allow scrolling on all screens */
+  max-width: 100%;
 }
 
 .grid {
@@ -123,19 +138,13 @@
 
 .contestant-square {
   color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  cursor: grab;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    1px 1px 2px rgba(0, 0, 0, 0.9),
+    -1px -1px 2px rgba(0, 0, 0, 0.9);
+  cursor: default;
   border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.contestant-square:active {
-  cursor: grabbing;
-}
-
-.contestant-square:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  z-index: 10;
 }
 
 .contestant-name {
@@ -147,6 +156,9 @@
   padding: 0.25rem;
   text-align: center;
   word-break: break-word;
+  user-select: none;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .remove-button {
@@ -175,6 +187,17 @@
   background: rgba(255, 0, 0, 0.8);
 }
 
+.remove-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.touch-target {
+  border: 3px solid var(--accent-primary) !important;
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
 .unpositioned-list {
   display: flex;
   flex-wrap: wrap;
@@ -187,6 +210,13 @@
   font-weight: 600;
   border: 2px solid rgba(255, 255, 255, 0.3);
   transition: transform 0.1s;
+  touch-action: none;
+  user-select: none;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    1px 1px 2px rgba(0, 0, 0, 0.9),
+    -1px -1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .contestant-item:hover {
@@ -195,4 +225,9 @@
 
 .contestant-item:active {
   cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
 }

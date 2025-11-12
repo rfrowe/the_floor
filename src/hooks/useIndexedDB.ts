@@ -10,6 +10,7 @@ import {
   addContestant,
   addContestants,
   updateContestant,
+  updateContestantsBulk,
   deleteContestant,
 } from '@storage/indexedDB';
 import type { Contestant } from '@types';
@@ -27,6 +28,7 @@ export function useContestants(): [
     add: (contestant: Contestant) => Promise<void>;
     addBulk: (contestants: Contestant[]) => Promise<void>;
     update: (contestant: Contestant) => Promise<void>;
+    updateBulk: (contestants: Contestant[]) => Promise<void>;
     remove: (id: string) => Promise<void>;
     refresh: () => Promise<void>;
   },
@@ -128,6 +130,28 @@ export function useContestants(): [
     }
   }, []);
 
+  // Bulk update multiple contestants in a single transaction
+  const updateBulk = useCallback(async (updatedContestants: Contestant[]) => {
+    try {
+      await updateContestantsBulk(updatedContestants);
+
+      // Create a map for fast lookup
+      const updatedMap = new Map(updatedContestants.map((c) => [c.id, c]));
+
+      // Single setState call with all updates
+      setContestants((prev) => prev.map((c) => updatedMap.get(c.id) ?? c));
+
+      // Small delay to ensure IndexedDB transaction is fully committed before broadcasting
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Broadcast change to other windows/tabs
+      broadcastRef.current?.send('reload');
+    } catch (error) {
+      console.error('Error bulk updating contestants:', error);
+      throw error;
+    }
+  }, []);
+
   // Remove a contestant
   const remove = useCallback(async (id: string) => {
     try {
@@ -153,8 +177,8 @@ export function useContestants(): [
 
   // Return empty array while loading to avoid flicker
   if (isLoading) {
-    return [[], { add, addBulk, update, remove, refresh }];
+    return [[], { add, addBulk, update, updateBulk, remove, refresh }];
   }
 
-  return [contestants, { add, addBulk, update, remove, refresh }];
+  return [contestants, { add, addBulk, update, updateBulk, remove, refresh }];
 }

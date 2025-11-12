@@ -79,7 +79,7 @@ export function PreviewContent({
           {...(totalCategories !== undefined ? { totalCategories } : {})}
           isSample={isSample}
           {...(fileName !== undefined ? { fileName } : {})}
-          {...(fileSizeWarningThresholdMB !== undefined ? { fileSizeWarningThresholdMB } : {})}
+          fileSizeWarningThresholdMB={fileSizeWarningThresholdMB}
           isLastCategory={isLastCategory}
           totalPopsToList={totalPopsToList}
           {...(createNextView !== undefined ? { createNextView } : {})}
@@ -113,7 +113,7 @@ export function PreviewContent({
           <div className={fileNameClass}>
             {isSample ? (
               <>
-                📦 {fileName || category.name}
+                📦 {fileName ?? category.name}
                 <span className={styles['file-size'] ?? ''}>
                   {(() => {
                     const sizeInMB = categoryMemorySize / (1024 * 1024);
@@ -145,12 +145,14 @@ export function PreviewContent({
                     );
                   })()}
                 </span>
-                {totalCategories !== undefined && totalCategories > 1 && categoryNumber !== undefined && (
-                  <span className={styles['file-counter'] ?? ''}>
-                    {' '}
-                    (File {categoryNumber} of {totalCategories})
-                  </span>
-                )}
+                {totalCategories !== undefined &&
+                  totalCategories > 1 &&
+                  categoryNumber !== undefined && (
+                    <span className={styles['file-counter'] ?? ''}>
+                      {' '}
+                      (File {categoryNumber} of {totalCategories})
+                    </span>
+                  )}
               </>
             ) : null}
           </div>
@@ -172,16 +174,16 @@ export function PreviewContent({
         <div className={styles['form-group'] ?? ''}>
           <label htmlFor="contestant-name-input">
             Contestant Name{' '}
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal' }}>
-              (optional)
-            </span>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal' }}>(optional)</span>
             :
           </label>
           <input
             id="contestant-name-input"
             type="text"
             value={editedContestantName}
-            onChange={(e) => setEditedContestantName(e.target.value)}
+            onChange={(e) => {
+              setEditedContestantName(e.target.value);
+            }}
             placeholder="Leave empty to import category only"
           />
           <p
@@ -202,7 +204,9 @@ export function PreviewContent({
             id="category-name-input"
             type="text"
             value={editedCategoryName}
-            onChange={(e) => setEditedCategoryName(e.target.value)}
+            onChange={(e) => {
+              setEditedCategoryName(e.target.value);
+            }}
             placeholder="Enter category name"
             required
           />
@@ -222,8 +226,12 @@ export function PreviewContent({
                 slideNumber={index + 1}
                 mode="edit"
                 isExpanded={expandedSlideIndex === index}
-                onToggleExpand={() => toggleSlideExpanded(index)}
-                onAnswerChange={(newAnswer) => handleSlideAnswerChange(index, newAnswer)}
+                onToggleExpand={() => {
+                  toggleSlideExpanded(index);
+                }}
+                onAnswerChange={(newAnswer) => {
+                  handleSlideAnswerChange(index, newAnswer);
+                }}
               />
             ))}
           </div>

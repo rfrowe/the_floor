@@ -15,7 +15,10 @@ interface DeleteConfirmationContentProps {
   categoryName: string;
 }
 
-export function DeleteConfirmationContent({ categoryId, categoryName }: DeleteConfirmationContentProps) {
+export function DeleteConfirmationContent({
+  categoryId,
+  categoryName,
+}: DeleteConfirmationContentProps) {
   const { popView } = useViewStack();
   const [, { remove: removeCategory }] = useCategories();
 
@@ -25,7 +28,9 @@ export function DeleteConfirmationContent({ categoryId, categoryName }: DeleteCo
       popView(); // Close confirmation view after delete
     } catch (error) {
       console.error('Failed to delete category:', error);
-      alert(`Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -37,16 +42,10 @@ export function DeleteConfirmationContent({ categoryId, categoryName }: DeleteCo
     <div className={styles['delete-confirmation']}>
       <p>Are you sure you want to delete the category &quot;{categoryName}&quot;?</p>
       <div className={styles['modal-footer']}>
-        <button
-          onClick={handleCancel}
-          className={styles['modal-button-secondary']}
-        >
+        <button onClick={handleCancel} className={styles['modal-button-secondary']}>
           Cancel
         </button>
-        <button
-          onClick={() => void handleConfirm()}
-          className={styles['modal-button-danger']}
-        >
+        <button onClick={() => void handleConfirm()} className={styles['modal-button-danger']}>
           Delete
         </button>
       </div>

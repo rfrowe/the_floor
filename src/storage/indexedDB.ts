@@ -199,6 +199,51 @@ export async function updateContestant<T extends { id: string }>(contestant: T):
 }
 
 /**
+ * Bulk update multiple contestants in a single transaction
+ */
+export async function updateContestantsBulk<T extends { id: string }>(
+  contestants: T[]
+): Promise<void> {
+  try {
+    const db = await initDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([CONTESTANT_STORE], 'readwrite');
+      const store = transaction.objectStore(CONTESTANT_STORE);
+
+      let completedCount = 0;
+      let hasError = false;
+
+      // Handle empty array case
+      if (contestants.length === 0) {
+        resolve();
+        return;
+      }
+
+      contestants.forEach((contestant) => {
+        const request = store.put(contestant);
+
+        request.onsuccess = () => {
+          completedCount++;
+          if (completedCount === contestants.length && !hasError) {
+            resolve();
+          }
+        };
+
+        request.onerror = () => {
+          if (!hasError) {
+            hasError = true;
+            reject(new Error('Failed to bulk update contestants in IndexedDB'));
+          }
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error bulk updating contestants in IndexedDB:', error);
+    throw error;
+  }
+}
+
+/**
  * Delete a contestant from IndexedDB
  */
 export async function deleteContestant(id: string): Promise<void> {
