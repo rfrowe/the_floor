@@ -282,6 +282,11 @@ function Dashboard() {
   const maxWins = contestants.length > 0 ? Math.max(...contestants.map((c) => c.wins)) : 0;
   const hasTopWins = (contestant: Contestant) => contestant.wins > 0 && contestant.wins === maxWins;
 
+  // Check if there are any contestants on the grid (for enabling Random Select)
+  const hasContestantsOnGrid = contestants.some(
+    (c) => !c.eliminated && c.controlledSquares && c.controlledSquares.length > 0
+  );
+
   const dashboardClass = styles['dashboard'] ?? '';
   const headerClass = styles['header'] ?? '';
   const titleClass = styles['title'] ?? '';
@@ -327,6 +332,7 @@ function Dashboard() {
           onClear={handleClearDuelSelection}
           onStartDuel={handleStartDuel}
           onRandomSelect={randomSelect}
+          canRandomSelect={hasContestantsOnGrid}
         />
       </Card>
 

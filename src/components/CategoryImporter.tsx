@@ -10,11 +10,6 @@ import { useState, useEffect } from 'react';
 import type { Category } from '@types';
 import { loadCategoryJSON, JSONImportError } from '@utils/jsonImport';
 import { SlidePreview } from '@components/slide/SlidePreview';
-import {
-  getSampleCategories,
-  fetchSampleCategory,
-  type SampleCategoryMeta,
-} from '@utils/sampleCategories';
 import styles from './CategoryImporter.module.css';
 
 interface ContestantData {
@@ -24,6 +19,7 @@ interface ContestantData {
   categoryName: string;
   error: string | null;
   isSample?: boolean; // Track if this is from sample categories
+  sizeBytes: number | undefined; // File size in bytes
 }
 
 interface CategoryImporterProps {
@@ -31,6 +27,8 @@ interface CategoryImporterProps {
   onCancel: () => void;
   initialContestantName?: string;
   fileSizeWarningThresholdMB?: number;
+  onBrowseSamples?: () => void;
+  preloadedCategories?: { name: string; category: Category; sizeBytes: number | undefined }[] | null;
 }
 
 export function CategoryImporter({
@@ -38,25 +36,32 @@ export function CategoryImporter({
   onCancel: _onCancel,
   initialContestantName,
   fileSizeWarningThresholdMB = 30,
+  onBrowseSamples,
+  preloadedCategories,
 }: CategoryImporterProps) {
   const [allContestants, setAllContestants] = useState<ContestantData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
-  const [showSampleCategories, setShowSampleCategories] = useState(false);
-  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(new Set());
 
-  // Load sample categories on mount
+  // Load preloaded categories when provided
   useEffect(() => {
-    try {
-      const samples = getSampleCategories();
-      setSampleCategories(samples);
-    } catch (error) {
-      console.error('Failed to load sample categories:', error);
+    if (preloadedCategories && preloadedCategories.length > 0) {
+      const contestants: ContestantData[] = preloadedCategories.map((item) => ({
+        file: null,
+        category: item.category,
+        contestantName: item.name || initialContestantName || '',
+        categoryName: item.category.name,
+        error: null,
+        isSample: true,
+        sizeBytes: item.sizeBytes,
+      }));
+      setAllContestants(contestants);
+      setCurrentIndex(0);
+      setExpandedSlideIndex(null);
     }
-  }, []);
+  }, [preloadedCategories, initialContestantName]);
 
   const currentContestant = allContestants[currentIndex];
   const isLastContestant = currentIndex === allContestants.length - 1;
@@ -95,6 +100,7 @@ export function CategoryImporter({
           contestantName: name,
           categoryName: loadedCategory.name,
           error: null,
+          sizeBytes: file.size,
         });
       } catch (err) {
         contestants.push({
@@ -103,6 +109,7 @@ export function CategoryImporter({
           contestantName: '',
           categoryName: '',
           error: err instanceof JSONImportError ? err.message : 'Failed to load file',
+          sizeBytes: file.size,
         });
       }
     }
@@ -134,101 +141,6 @@ export function CategoryImporter({
     setIsDragging(false);
   };
 
-  const toggleSampleSelection = (filename: string) => {
-    setSelectedSamples((prev) => {
-      const next = new Set(prev);
-      if (next.has(filename)) {
-        next.delete(filename);
-      } else {
-        next.add(filename);
-      }
-      return next;
-    });
-  };
-
-  const handleLoadSelectedSamples = async () => {
-    if (selectedSamples.size === 0) {
-      return;
-    }
-
-    setIsLoading(true);
-    setShowSampleCategories(false);
-    setCurrentIndex(0);
-    setExpandedSlideIndex(null);
-
-    const filenames = Array.from(selectedSamples);
-
-    // Load only the first category immediately for fast UI
-    const firstFilename = filenames[0];
-    if (!firstFilename) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const firstCategory = await fetchSampleCategory(firstFilename);
-
-      // Show first category immediately
-      setAllContestants([
-        {
-          file: null,
-          category: firstCategory,
-          contestantName: initialContestantName ?? '',
-          categoryName: firstCategory.name,
-          error: null,
-          isSample: true,
-        },
-      ]);
-      setIsLoading(false);
-
-      // Prefetch remaining categories in background
-      if (filenames.length > 1) {
-        // Load the rest in parallel
-        const remainingPromises = filenames.slice(1).map(async (filename) => {
-          try {
-            const category = await fetchSampleCategory(filename);
-            return {
-              file: null,
-              category,
-              contestantName: initialContestantName ?? '',
-              categoryName: category.name,
-              error: null,
-              isSample: true,
-            } as ContestantData;
-          } catch (error) {
-            return {
-              file: null,
-              category: { name: '', slides: [] },
-              contestantName: '',
-              categoryName: '',
-              error: error instanceof Error ? error.message : 'Failed to load sample category',
-              isSample: true,
-            } as ContestantData;
-          }
-        });
-
-        const remainingContestants = await Promise.all(remainingPromises);
-
-        // Append the rest to the list
-        setAllContestants((prev) => [...prev, ...remainingContestants]);
-      }
-    } catch (error) {
-      // First category failed to load
-      setAllContestants([
-        {
-          file: null,
-          category: { name: '', slides: [] },
-          contestantName: '',
-          categoryName: '',
-          error: error instanceof Error ? error.message : 'Failed to load sample category',
-          isSample: true,
-        },
-      ]);
-      setIsLoading(false);
-    }
-
-    setSelectedSamples(new Set()); // Clear selection
-  };
 
   const updateCurrentContestantName = (name: string) => {
     setAllContestants((prev) =>
@@ -355,57 +267,18 @@ export function CategoryImporter({
           </div>
 
           {/* Sample categories section - outside drop zone */}
-          {!isLoading && sampleCategories.length > 0 && (
+          {!isLoading && onBrowseSamples && (
             <div className={styles['sample-categories-section'] ?? ''}>
               <div className={styles['section-divider'] ?? ''}>
                 <span>OR</span>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  if (showSampleCategories && selectedSamples.size > 0) {
-                    void handleLoadSelectedSamples();
-                  } else {
-                    setShowSampleCategories(!showSampleCategories);
-                  }
-                }}
-                className={`${styles['browse-samples-button'] ?? ''} ${
-                  selectedSamples.size > 0 ? (styles['load-active'] ?? '') : ''
-                }`.trim()}
+                onClick={onBrowseSamples}
+                className={styles['browse-samples-button'] ?? ''}
               >
-                {showSampleCategories && selectedSamples.size > 0
-                  ? `Load ${String(selectedSamples.size)} Sample ${selectedSamples.size === 1 ? 'Category' : 'Categories'}`
-                  : showSampleCategories
-                    ? '← Back'
-                    : '📦 Browse Sample Categories'}
+                📦 Browse Sample Categories
               </button>
-
-              {showSampleCategories && (
-                <div className={styles['sample-categories-list'] ?? ''}>
-                  <h4>Available Sample Categories ({sampleCategories.length})</h4>
-                  <div className={styles['sample-grid'] ?? ''}>
-                    {sampleCategories.map((sample) => {
-                      const isSelected = selectedSamples.has(sample.filename);
-                      return (
-                        <button
-                          key={sample.filename}
-                          type="button"
-                          onClick={() => {
-                            toggleSampleSelection(sample.filename);
-                          }}
-                          className={`${styles['sample-category-button'] ?? ''} ${
-                            isSelected ? (styles['selected'] ?? '') : ''
-                          }`.trim()}
-                          aria-pressed={isSelected}
-                        >
-                          {isSelected && <span className={styles['checkmark'] ?? ''}>✓</span>}
-                          {sample.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </>
@@ -416,8 +289,20 @@ export function CategoryImporter({
               <div className={fileNameClass}>
                 {currentContestant.isSample ? (
                   <>
-                    📦 Sample: {currentContestant.categoryName}
-                    <span className={styles['sample-badge'] ?? ''}>Demo Category</span>
+                    📦 {currentContestant.categoryName}
+                    {currentContestant.sizeBytes !== undefined && (
+                      <span className={styles['file-size'] ?? ''}>
+                        {(() => {
+                          const sizeInMB = currentContestant.sizeBytes / (1024 * 1024);
+                          const sizeText =
+                            sizeInMB < 1
+                              ? `${(currentContestant.sizeBytes / 1024).toFixed(1)} KB`
+                              : `${sizeInMB.toFixed(1)} MB`;
+                          return sizeText;
+                        })()}
+                      </span>
+                    )}
+                    <span className={styles['sample-badge'] ?? ''}>Sample</span>
                   </>
                 ) : currentContestant.file ? (
                   <>
