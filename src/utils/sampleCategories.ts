@@ -13,6 +13,7 @@ import type { Category } from '@types';
 export interface SampleCategoryMeta {
   name: string;
   filename: string;
+  sizeBytes?: number;
 }
 
 /**
@@ -49,9 +50,11 @@ export function getSampleCategories(): SampleCategoryMeta[] {
 /**
  * Fetch a sample category by filename
  * @param filename - The filename of the sample category (e.g., "Dogs.json")
- * @returns Promise resolving to the category data
+ * @returns Promise resolving to the category data and file size
  */
-export async function fetchSampleCategory(filename: string): Promise<Category> {
+export async function fetchSampleCategory(
+  filename: string
+): Promise<{ category: Category; sizeBytes?: number }> {
   const basePath = import.meta.env.BASE_URL || '/';
   const url = `${basePath}categories/${encodeURIComponent(filename)}`;
 
@@ -59,6 +62,13 @@ export async function fetchSampleCategory(filename: string): Promise<Category> {
 
   if (!response.ok) {
     throw new Error(`Failed to fetch sample category: ${response.statusText}`);
+  }
+
+  // Try to get size from Content-Length header
+  let sizeBytes: number | undefined;
+  const contentLength = response.headers.get('Content-Length');
+  if (contentLength) {
+    sizeBytes = parseInt(contentLength, 10);
   }
 
   const data = (await response.json()) as { category: Category } | Category;
@@ -71,7 +81,13 @@ export async function fetchSampleCategory(filename: string): Promise<Category> {
     throw new Error('Invalid category format');
   }
 
-  return category;
+  // If we didn't get Content-Length, calculate size from stringified JSON
+  if (!sizeBytes) {
+    const jsonString = JSON.stringify(category);
+    sizeBytes = new Blob([jsonString]).size;
+  }
+
+  return { category, sizeBytes };
 }
 
 /**

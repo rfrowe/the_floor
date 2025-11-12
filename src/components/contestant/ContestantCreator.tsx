@@ -12,6 +12,7 @@ import type { StoredCategory, Category } from '@types';
 import { Modal } from '@components/common/Modal';
 import { Button } from '@components/common/Button';
 import { CategoryImporter } from '@components/CategoryImporter';
+import { SampleCategoryBrowser } from '@components/category/SampleCategoryBrowser';
 import {
   getSampleCategories,
   fetchSampleCategory,
@@ -20,7 +21,7 @@ import {
 import styles from './ContestantCreator.module.css';
 import modalStyles from '@components/common/Modal.module.css';
 
-type ViewMode = 'create' | 'import';
+type ViewMode = 'create' | 'import' | 'samples';
 
 interface ContestantCreatorProps {
   onClose: () => void;
@@ -41,6 +42,9 @@ export function ContestantCreator({
   const [viewMode, setViewMode] = useState<ViewMode>('create');
   const [isOpen, setIsOpen] = useState(true);
   const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
+  const [preloadedCategories, setPreloadedCategories] = useState<
+    { name: string; category: Category; sizeBytes: number | undefined }[] | null
+  >(null);
 
   // Load sample categories on mount
   useEffect(() => {
@@ -70,7 +74,7 @@ export function ContestantCreator({
       // Check if this is a sample category (starts with "sample:")
       if (selectedCategoryId.startsWith('sample:')) {
         const filename = selectedCategoryId.substring(7); // Remove "sample:" prefix
-        const category = await fetchSampleCategory(filename);
+        const { category } = await fetchSampleCategory(filename);
 
         // Import the sample category along with the contestant
         await onImport([{ name: contestantName.trim(), category }]);
@@ -95,11 +99,24 @@ export function ContestantCreator({
     setViewMode('import');
   };
 
+  const handleGoToSamples = () => {
+    setViewMode('samples');
+  };
+
   const handleBackToCreate = () => {
     setViewMode('create');
   };
 
-  const currentTitle = viewMode === 'create' ? 'Add Contestant' : 'Import Category';
+  const handleBackToImport = () => {
+    setViewMode('import');
+  };
+
+  const currentTitle =
+    viewMode === 'create'
+      ? 'Add Contestant'
+      : viewMode === 'samples'
+        ? 'Sample Categories'
+        : 'Import Category';
 
   const currentContent =
     viewMode === 'create' ? (
@@ -170,14 +187,29 @@ export function ContestantCreator({
           </Button>
         </div>
       </>
+    ) : viewMode === 'samples' ? (
+      <SampleCategoryBrowser
+        onLoadCategories={(categories) => {
+          // Store the loaded categories and go to import view to preview them
+          setPreloadedCategories(categories);
+          setViewMode('import');
+        }}
+        initialContestantName={contestantName}
+      />
     ) : (
       <CategoryImporter
         onImport={(data) => {
           void onImport(data);
           handleBackToCreate();
+          setPreloadedCategories(null);
         }}
-        onCancel={handleBackToCreate}
+        onCancel={() => {
+          handleBackToCreate();
+          setPreloadedCategories(null);
+        }}
         initialContestantName={contestantName}
+        onBrowseSamples={handleGoToSamples}
+        preloadedCategories={preloadedCategories}
       />
     );
 
@@ -186,8 +218,8 @@ export function ContestantCreator({
       isOpen={isOpen}
       onClose={handleClose}
       title={currentTitle}
-      className={viewMode === 'import' ? (modalStyles['modal-wide'] ?? '') : ''}
-      {...(viewMode === 'import' ? { onBack: handleBackToCreate } : {})}
+      className={viewMode === 'import' || viewMode === 'samples' ? (modalStyles['modal-wide'] ?? '') : ''}
+      {...(viewMode === 'import' ? { onBack: handleBackToCreate } : viewMode === 'samples' ? { onBack: handleBackToImport } : {})}
     >
       {currentContent}
     </Modal>
