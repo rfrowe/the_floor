@@ -5,7 +5,7 @@
  * Fully self-contained - uses hooks directly, no callbacks.
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import type { Category, StoredCategory, Contestant } from '@types';
 import { useViewStack, type View } from '@components/common/ViewStack';
@@ -22,13 +22,17 @@ interface ImportResult {
 }
 
 interface ImportContentProps {
-  // No callbacks needed - fully self-contained
+  // Optional: Pre-fill contestant name in previews (from ContestantCreator)
+  initialContestantName?: string;
 }
 
-export function ImportContent({}: ImportContentProps) {
+export function ImportContent({ initialContestantName = '' }: ImportContentProps) {
   const { pushView, popView, replaceView } = useViewStack();
   const [, { add: addCategory, remove: removeCategory }] = useCategories();
   const [, { add: addContestant, remove: removeContestant }] = useContestants();
+
+  // Track edited contestant names for each preview (by index)
+  const editedNamesRef = useRef<Map<number, string>>(new Map());
 
   // Import function using hooks
   const handleImportCategory = async (data: { name: string; category: Category }): Promise<{ categoryId: string; contestantId?: string }> => {
@@ -101,9 +105,12 @@ export function ImportContent({}: ImportContentProps) {
     const categoryNumber = index + 1;
     const totalPopsToList = 1 + index + popsBeforeResult;
 
+    // Use edited name if available, otherwise use original name or initialContestantName
+    const contestantName = editedNamesRef.current.get(index) || item.name || initialContestantName;
+
     // Create command for this preview using local hook functions
     const command = new ImportCategoryCommand(
-      { name: item.name, category: item.category },
+      { name: contestantName, category: item.category },
       handleImportCategory,
       handleUndoImport
     );
@@ -112,7 +119,11 @@ export function ImportContent({}: ImportContentProps) {
     const createNextView: ((editedData: { contestantName: string; categoryName: string }) => View) | undefined =
       isLastCategory
         ? undefined
-        : () => createPreviewView(categories, index + 1, popsBeforeResult);
+        : (editedData) => {
+            // Store edited name for current index only (don't propagate forward)
+            editedNamesRef.current.set(index, editedData.contestantName);
+            return createPreviewView(categories, index + 1, popsBeforeResult);
+          };
 
     const previewView: View = {
       id: `import-preview-${index}`,
@@ -120,7 +131,7 @@ export function ImportContent({}: ImportContentProps) {
       content: (
         <PreviewContent
           category={item.category}
-          contestantName={item.name}
+          contestantName={contestantName}
           categoryNumber={categoryNumber}
           totalCategories={categories.length}
           isSample={true}
@@ -129,6 +140,8 @@ export function ImportContent({}: ImportContentProps) {
           totalPopsToList={totalPopsToList}
           {...(createNextView ? { createNextView } : {})}
           updateCommand={(contestantName, categoryName) => {
+            // Store edited name in ref for future previews
+            editedNamesRef.current.set(index, contestantName);
             command.updateData(contestantName, categoryName);
           }}
         />
@@ -156,6 +169,7 @@ export function ImportContent({}: ImportContentProps) {
     content: (
       <SampleCategoryBrowser
         initialSelections={selections}
+        initialContestantName={initialContestantName}
         onLoadCategories={(categories, currentSelections) => {
           setSelectedSampleFilenames(currentSelections);
           const updatedSamplesView = createSamplesView(currentSelections);

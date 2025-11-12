@@ -118,7 +118,7 @@ export function SampleCategoryBrowser({
               onClick={() => {
                 toggleSampleSelection(sample.filename);
               }}
-              className={`${styles['sample-category-button'] ?? ''} ${
+              className={`hover-lift ${styles['sample-category-button'] ?? ''} ${
                 isSelected ? (styles['selected'] ?? '') : ''
               }`.trim()}
               aria-pressed={isSelected}

@@ -83,23 +83,14 @@ export function CategoryImporter({
       try {
         const loadedCategory = await loadCategoryJSON(file);
 
-        // Use initialContestantName if provided, otherwise extract from filename
-        let name = initialContestantName ?? '';
-
-        if (!name) {
-          // Try to extract contestant name from filename (e.g., "john-movies.json" -> "John")
-          const fileNameWithoutExt = file.name.replace(/\.json$/i, '');
-          const parts = fileNameWithoutExt.split('-');
-          if (parts.length > 0 && parts[0]) {
-            name = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-          }
-        }
+        // Use initialContestantName if provided, otherwise leave blank
+        const name = initialContestantName ?? '';
 
         contestants.push({
           file,
           category: loadedCategory,
           contestantName: name,
-          categoryName: loadedCategory.name,
+          categoryName: loadedCategory.name, // Always use category.name from JSON
           error: null,
           sizeBytes: file.size,
         });
