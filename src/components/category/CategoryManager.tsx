@@ -8,416 +8,95 @@
  * - View category slides with slide animations
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import type { StoredCategory, Contestant, Category } from '@types';
+import { useState, useCallback } from 'react';
+import type { Contestant, Category } from '@types';
 import { Modal } from '@components/common/Modal';
-import { CategoryImporter } from '@components/CategoryImporter';
-import { CategoryStorage } from './CategoryStorage';
-import { SlidePreview } from '@components/slide/SlidePreview';
+import { ViewStack, type View } from '@components/common/ViewStack';
+import { ListContent } from './manager/ListContent';
 import { useCategoryMetadata } from '@hooks/useCategoryMetadata';
-import { getCategoryById } from '@storage/indexedDB';
 import { useCategories } from '@hooks/useCategories';
+import { useContestants } from '@hooks/useIndexedDB';
 import styles from './CategoryManager.module.css';
-
-type ViewMode = 'list' | 'detail' | 'import';
 
 interface CategoryManagerProps {
   onClose: () => void;
   contestants: Contestant[];
-  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void>;
+  onImport: (contestants: { name: string; category: Category }[]) => Promise<Array<{ categoryId: string; contestantId?: string }>>;
 }
 
 export function CategoryManager({ onClose, contestants, onImport }: CategoryManagerProps) {
   // Use metadata for fast list loading
-  const [categoryMetadata] = useCategoryMetadata();
+  const [categoryMetadata, { refresh: refreshMetadata }] = useCategoryMetadata();
   // Keep useCategories for delete operations
   const [, { remove: removeCategory, removeAll: removeAllCategories }] = useCategories();
+  const [, { remove: removeContestant }] = useContestants();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewingCategory, setViewingCategory] = useState<StoredCategory | null>(null);
-  const [deletingCategory, setDeletingCategory] = useState<StoredCategory | null>(null);
   const [deletingAllCategories, setDeletingAllCategories] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const [hoveredDeleteButton, setHoveredDeleteButton] = useState<string | null>(null);
-  const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
 
-  // Filter categories by search query
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return categoryMetadata;
-    }
-    const query = searchQuery.toLowerCase();
-    return categoryMetadata.filter((cat) => cat.name.toLowerCase().includes(query));
-  }, [categoryMetadata, searchQuery]);
+  const handleDeleteCategory = useCallback(async (categoryId: string) => {
+    await removeCategory(categoryId);
+  }, [removeCategory]);
 
-  // Memoize contestants usage map to avoid recomputing on every render
-  const categoryUsageMap = useMemo(() => {
-    const map = new Map<string, Contestant[]>();
-    for (const contestant of contestants) {
-      if (contestant.categoryId) {
-        const existing = map.get(contestant.categoryId);
-        if (existing) {
-          existing.push(contestant);
-        } else {
-          map.set(contestant.categoryId, [contestant]);
-        }
-      }
-    }
-    return map;
-  }, [contestants]);
-
-  // Get contestants using a specific category (now O(1) lookup)
-  const getContestantsUsingCategory = useCallback(
-    (categoryId: string): Contestant[] => {
-      return categoryUsageMap.get(categoryId) ?? [];
-    },
-    [categoryUsageMap]
-  );
-
-  const handleDeleteClick = (e: React.MouseEvent, categoryMeta: { id: string; name: string }) => {
-    e.stopPropagation();
-    const usedBy = getContestantsUsingCategory(categoryMeta.id);
-    if (usedBy.length > 0) {
-      // Show warning, don't delete
-      return;
-    }
-    // Create minimal StoredCategory for deletion confirmation
-    setDeletingCategory({
-      id: categoryMeta.id,
-      name: categoryMeta.name,
-      slides: [],
-      createdAt: '',
-      thumbnailUrl: '',
-    });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deletingCategory) {
-      return;
-    }
-
-    try {
-      await removeCategory(deletingCategory.id);
-      setDeletingCategory(null);
-    } catch (error) {
-      console.error('Failed to delete category:', error);
-      alert(
-        `Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
-  };
-
-  const handleDeleteAllCategories = () => {
+  const handleDeleteAllCategories = useCallback(() => {
     setDeletingAllCategories(true);
-  };
+  }, []);
 
   const handleConfirmDeleteAll = async () => {
     try {
-      // Use hook's removeAll to update UI properly
       await removeAllCategories();
       setDeletingAllCategories(false);
     } catch (error) {
       console.error('Failed to delete all categories:', error);
-      alert(
-        `Failed to delete all categories: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      alert(`Failed to delete all categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-
-  const handleViewClick = async (categoryId: string) => {
-    // Load full category data only when viewing details
-    try {
-      const fullCategory = await getCategoryById<StoredCategory>(categoryId);
-      if (fullCategory) {
-        setViewingCategory(fullCategory);
-        setViewMode('detail');
-        setExpandedSlideIndex(null);
-      }
-    } catch (error) {
-      console.error('Failed to load category:', error);
-      alert('Failed to load category details');
-    }
-  };
-
-  const handleSlideAnswerChange = (slideIndex: number, newAnswer: string) => {
-    if (!viewingCategory) {
-      return;
-    }
-
-    const updatedSlides = viewingCategory.slides.map((slide, index) =>
-      index === slideIndex ? { ...slide, answer: newAnswer } : slide
-    );
-
-    const updatedCategory = {
-      ...viewingCategory,
-      slides: updatedSlides,
-    };
-
-    setViewingCategory(updatedCategory);
-    // TODO: Persist changes to storage if needed
-  };
-
-  const toggleSlideExpanded = (slideIndex: number) => {
-    setExpandedSlideIndex((prev) => (prev === slideIndex ? null : slideIndex));
-  };
-
-  const handleBackToList = () => {
-    setViewMode('list');
-    setViewingCategory(null);
-    setExpandedSlideIndex(null);
-  };
-
-  const handleGoToImport = () => {
-    setViewMode('import');
-  };
-
-  // Get current title based on view mode
-  const currentTitle =
-    viewMode === 'list'
-      ? 'Manage Categories'
-      : viewMode === 'detail' && viewingCategory
-        ? `${viewingCategory.name} - ${String(viewingCategory.slides.length)} slides`
-        : 'Import Category';
-
-  // Render current view content
-  const currentContent =
-    viewMode === 'list' ? (
-      <>
-        {/* Search box - only show if there are categories */}
-        {categoryMetadata.length > 0 && (
-          <div className={styles['search-section']}>
-            <input
-              type="text"
-              placeholder={`Search ${String(categoryMetadata.length)} ${categoryMetadata.length === 1 ? 'category' : 'categories'}...`}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-              }}
-              className={styles['search-input']}
-            />
-          </div>
-        )}
-
-        {/* Categories list */}
-        {filteredCategories.length === 0 ? (
-          <div className={styles['empty-state']}>
-            {searchQuery ? (
-              'No categories match your search.'
-            ) : (
-              <>
-                <p>No categories yet. Import some contestants to get started!</p>
-                <button
-                  className={styles['import-button']}
-                  onClick={handleGoToImport}
-                  type="button"
-                >
-                  Import Category
-                </button>
-              </>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Import/Storage section - shown when categories exist */}
-            <div className={styles['import-storage-section']}>
-              {/* Import Category card */}
-              <div
-                className={styles['import-category-card-inline']}
-                onClick={handleGoToImport}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleGoToImport();
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-label="Import category"
-              >
-                <div className={styles['import-icon']}>+</div>
-                <div className={styles['import-label']}>Import Category</div>
-              </div>
-
-              {/* Storage component */}
-              <div className={styles['storage-container-wrapper']}>
-                <CategoryStorage
-                  categories={categoryMetadata}
-                  onDeleteAll={handleDeleteAllCategories}
-                />
-              </div>
-            </div>
-
-            <div className={styles['categories-list']}>
-              {filteredCategories.map((category) => {
-                const usedBy = getContestantsUsingCategory(category.id);
-                const isInUse = usedBy.length > 0;
-                const isHovered = hoveredCategory === category.id;
-                const isDeleteHovered = hoveredDeleteButton === category.id;
-
-                return (
-                  <div
-                    key={category.id}
-                    className={styles['category-item']}
-                    onClick={() => {
-                      void handleViewClick(category.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        void handleViewClick(category.id);
-                      }
-                    }}
-                    onMouseEnter={() => {
-                      setHoveredCategory(category.id);
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredCategory(null);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    {/* Left side - category info */}
-                    <div className={styles['category-item-left']}>
-                      <h3 className={styles['category-item-title']}>{category.name}</h3>
-                      <p className={styles['category-item-slides']}>
-                        {category.slideCount} {category.slideCount === 1 ? 'slide' : 'slides'}
-                      </p>
-                      <p
-                        className={`${styles['category-item-usage'] ?? ''} ${
-                          isInUse && isDeleteHovered ? (styles['pulse'] ?? '') : ''
-                        }`.trim()}
-                      >
-                        {isInUse ? (
-                          <span className={styles['in-use']}>
-                            Used by {usedBy.length} contestant{usedBy.length === 1 ? '' : 's'}
-                          </span>
-                        ) : (
-                          <span className={styles['not-in-use']}>Not in use</span>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* Right side - actions */}
-                    <div className={styles['category-item-right']}>
-                      {/* Trash icon */}
-                      <button
-                        onClick={(e) => {
-                          handleDeleteClick(e, category);
-                        }}
-                        onMouseEnter={(e) => {
-                          e.stopPropagation();
-                          setHoveredDeleteButton(category.id);
-                        }}
-                        onMouseLeave={(e) => {
-                          e.stopPropagation();
-                          setHoveredDeleteButton(null);
-                        }}
-                        className={`${styles['delete-button'] ?? ''} ${
-                          isInUse ? (styles['disabled'] ?? '') : ''
-                        }`.trim()}
-                        title={isInUse ? 'Cannot delete - category is in use' : 'Delete category'}
-                        aria-label="Delete category"
-                      >
-                        🗑️
-                      </button>
-
-                      {/* Chevron */}
-                      <div
-                        className={`${styles['chevron'] ?? ''} ${isHovered ? (styles['nudge'] ?? '') : ''}`.trim()}
-                      >
-                        ›
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </>
-    ) : viewMode === 'detail' && viewingCategory ? (
-      <div className={styles['slides-viewer']}>
-        {viewingCategory.slides.map((slide, index) => (
-          <SlidePreview
-            key={index}
-            slide={slide}
-            slideNumber={index + 1}
-            mode="edit"
-            isExpanded={expandedSlideIndex === index}
-            onToggleExpand={() => {
-              toggleSlideExpanded(index);
-            }}
-            onAnswerChange={(newAnswer) => {
-              handleSlideAnswerChange(index, newAnswer);
-            }}
-          />
-        ))}
-      </div>
-    ) : (
-      <CategoryImporter
-        onImport={(data) => {
-          void onImport(data);
-          setViewMode('list');
-        }}
-        onCancel={() => {
-          setViewMode('list');
-        }}
-      />
-    );
 
   const categoryModalClass = styles['category-modal'];
 
+  // Simplified handlers for Command pattern
+  const handleImportCategory = useCallback(async (data: { name: string; category: Category }) => {
+    const results = await onImport([data]);
+    await refreshMetadata();
+    return results[0] ?? { categoryId: '' };
+  }, [onImport, refreshMetadata]);
+
+  const handleUndoImport = useCallback(async (categoryId: string, contestantId?: string) => {
+    await Promise.all([
+      removeCategory(categoryId),
+      contestantId ? removeContestant(contestantId) : Promise.resolve(),
+    ]);
+    await refreshMetadata();
+  }, [removeCategory, removeContestant, refreshMetadata]);
+
+  const listView = {
+    id: 'list',
+    title: 'Manage Categories',
+    content: (
+      <ListContent
+        categoryMetadata={categoryMetadata}
+        contestants={contestants}
+        onDeleteCategory={handleDeleteCategory}
+        onDeleteAllCategories={handleDeleteAllCategories}
+        onImportCategory={handleImportCategory}
+        onUndoImport={handleUndoImport}
+      />
+    ),
+  } satisfies View;
+
   return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      title={currentTitle}
-      {...(viewMode !== 'list' ? { onBack: handleBackToList } : {})}
-      {...(categoryModalClass ? { className: categoryModalClass } : {})}
-    >
-      {currentContent}
+    <>
+      <ViewStack
+        isOpen={true}
+        onClose={onClose}
+        initialView={listView}
+        {...(categoryModalClass ? { className: categoryModalClass } : {})}
+      />
 
-      {/* Delete confirmation modal */}
-      {deletingCategory && (
-        <Modal
-          isOpen={true}
-          onClose={() => {
-            setDeletingCategory(null);
-          }}
-          title="Confirm Delete"
-        >
-          <div className={styles['delete-confirmation']}>
-            <p>Are you sure you want to delete the category &quot;{deletingCategory.name}&quot;?</p>
-            <div className={styles['modal-footer']}>
-              <button
-                onClick={() => {
-                  setDeletingCategory(null);
-                }}
-                className={styles['modal-button-secondary']}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  void handleConfirmDelete();
-                }}
-                className={styles['modal-button-danger']}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Delete all confirmation modal */}
+      {/* Delete all confirmation modal - separate from ViewStack */}
       {deletingAllCategories && (
         <Modal
           isOpen={true}
-          onClose={() => {
-            setDeletingAllCategories(false);
-          }}
+          onClose={() => setDeletingAllCategories(false)}
           title="Confirm Delete All"
         >
           <div className={styles['delete-confirmation']}>
@@ -427,17 +106,13 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
             </p>
             <div className={styles['modal-footer']}>
               <button
-                onClick={() => {
-                  setDeletingAllCategories(false);
-                }}
+                onClick={() => setDeletingAllCategories(false)}
                 className={styles['modal-button-secondary']}
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  void handleConfirmDeleteAll();
-                }}
+                onClick={() => void handleConfirmDeleteAll()}
                 className={styles['modal-button-danger']}
               >
                 Delete All
@@ -446,6 +121,6 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
           </div>
         </Modal>
       )}
-    </Modal>
+    </>
   );
 }

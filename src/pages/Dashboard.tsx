@@ -50,10 +50,10 @@ function Dashboard() {
   const duelSetupRef = useRef<DuelSetupHandle>(null);
   const [duelState] = useDuelState();
 
-  const handleImport = async (contestants: { name: string; category: Category }[]) => {
+  const handleImport = async (contestants: { name: string; category: Category }[]): Promise<Array<{ categoryId: string; contestantId?: string }>> => {
     // Prevent multiple simultaneous imports
     if (isImporting) {
-      return;
+      return [];
     }
 
     setIsImporting(true);
@@ -62,9 +62,11 @@ function Dashboard() {
       // Prepare all categories and contestants for bulk import
       const categoriesToAdd: StoredCategory[] = [];
       const contestantsToAdd: Contestant[] = [];
+      const importResults: Array<{ categoryId: string; contestantId?: string }> = [];
 
       for (const { name, category } of contestants) {
         const categoryId = nanoid();
+
         const firstSlide = category.slides[0];
         const thumbnailUrl = firstSlide?.imageUrl ?? '';
 
@@ -87,6 +89,9 @@ function Dashboard() {
           const newContestant = createContestantFromCategory(category, name);
           newContestant.categoryId = categoryId;
           contestantsToAdd.push(newContestant);
+          importResults.push({ categoryId, contestantId: newContestant.id });
+        } else {
+          importResults.push({ categoryId });
         }
       }
 
@@ -97,9 +102,11 @@ function Dashboard() {
       ]);
 
       setShowImporter(false);
+      return importResults;
     } catch (error) {
       console.error('Failed to import:', error);
       alert(`Failed to import: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return [];
     } finally {
       setIsImporting(false);
     }
