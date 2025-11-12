@@ -35,7 +35,10 @@ export function ImportContent({ initialContestantName = '' }: ImportContentProps
   const editedNamesRef = useRef<Map<number, string>>(new Map());
 
   // Import function using hooks
-  const handleImportCategory = async (data: { name: string; category: Category }): Promise<{ categoryId: string; contestantId?: string }> => {
+  const handleImportCategory = async (data: {
+    name: string;
+    category: Category;
+  }): Promise<{ categoryId: string; contestantId?: string }> => {
     const categoryId = nanoid();
     const firstSlide = data.category.slides[0];
     const thumbnailUrl = firstSlide?.imageUrl ?? '';
@@ -98,7 +101,7 @@ export function ImportContent({ initialContestantName = '' }: ImportContentProps
   ): View => {
     const item = categories[index];
     if (!item) {
-      throw new Error(`No category at index ${index}`);
+      throw new Error(`No category at index ${String(index)}`);
     }
 
     const isLastCategory = index === categories.length - 1;
@@ -106,7 +109,8 @@ export function ImportContent({ initialContestantName = '' }: ImportContentProps
     const totalPopsToList = 1 + index + popsBeforeResult;
 
     // Use edited name if available, otherwise use original name or initialContestantName
-    const contestantName = editedNamesRef.current.get(index) || item.name || initialContestantName;
+    const contestantName =
+      editedNamesRef.current.get(index) ?? (item.name || initialContestantName);
 
     // Create command for this preview using local hook functions
     const command = new ImportCategoryCommand(
@@ -116,17 +120,18 @@ export function ImportContent({ initialContestantName = '' }: ImportContentProps
     );
 
     // Factory to create the next preview view (only if not last)
-    const createNextView: ((editedData: { contestantName: string; categoryName: string }) => View) | undefined =
-      isLastCategory
-        ? undefined
-        : (editedData) => {
-            // Store edited name for current index only (don't propagate forward)
-            editedNamesRef.current.set(index, editedData.contestantName);
-            return createPreviewView(categories, index + 1, popsBeforeResult);
-          };
+    const createNextView:
+      | ((editedData: { contestantName: string; categoryName: string }) => View)
+      | undefined = isLastCategory
+      ? undefined
+      : (editedData) => {
+          // Store edited name for current index only (don't propagate forward)
+          editedNamesRef.current.set(index, editedData.contestantName);
+          return createPreviewView(categories, index + 1, popsBeforeResult);
+        };
 
     const previewView: View = {
-      id: `import-preview-${index}`,
+      id: `import-preview-${String(index)}`,
       title: `${item.category.name} - Preview`,
       content: (
         <PreviewContent

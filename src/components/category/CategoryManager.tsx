@@ -30,7 +30,6 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
 
   const [deletingAllCategories, setDeletingAllCategories] = useState(false);
 
-
   const handleDeleteAllCategories = useCallback(() => {
     setDeletingAllCategories(true);
   }, []);
@@ -41,7 +40,9 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
       setDeletingAllCategories(false);
     } catch (error) {
       console.error('Failed to delete all categories:', error);
-      alert(`Failed to delete all categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to delete all categories: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -72,7 +73,9 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
       {deletingAllCategories && (
         <Modal
           isOpen={true}
-          onClose={() => setDeletingAllCategories(false)}
+          onClose={() => {
+            setDeletingAllCategories(false);
+          }}
           title="Confirm Delete All"
         >
           <div className={styles['delete-confirmation']}>
@@ -82,7 +85,9 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
             </p>
             <div className={styles['modal-footer']}>
               <button
-                onClick={() => setDeletingAllCategories(false)}
+                onClick={() => {
+                  setDeletingAllCategories(false);
+                }}
                 className={styles['modal-button-secondary']}
               >
                 Cancel

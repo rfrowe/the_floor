@@ -36,6 +36,7 @@ function Dashboard() {
       addBulk: addContestantsBulk,
       remove: removeContestant,
       update: updateContestant,
+      updateBulk: updateContestantsBulk,
     },
   ] = useContestants();
   const [categories, { addBulk: addCategoriesBulk }] = useCategories();
@@ -50,7 +51,9 @@ function Dashboard() {
   const duelSetupRef = useRef<DuelSetupHandle>(null);
   const [duelState] = useDuelState();
 
-  const handleImport = async (contestants: { name: string; category: Category }[]): Promise<Array<{ categoryId: string; contestantId?: string }>> => {
+  const handleImport = async (
+    contestants: { name: string; category: Category }[]
+  ): Promise<{ categoryId: string; contestantId?: string }[]> => {
     // Prevent multiple simultaneous imports
     if (isImporting) {
       return [];
@@ -62,7 +65,7 @@ function Dashboard() {
       // Prepare all categories and contestants for bulk import
       const categoriesToAdd: StoredCategory[] = [];
       const contestantsToAdd: Contestant[] = [];
-      const importResults: Array<{ categoryId: string; contestantId?: string }> = [];
+      const importResults: { categoryId: string; contestantId?: string }[] = [];
 
       for (const { name, category } of contestants) {
         const categoryId = nanoid();
@@ -217,13 +220,15 @@ function Dashboard() {
   };
 
   const handleUpdateContestants = async (updatedContestants: Contestant[]) => {
-    // Only update contestants that actually changed (performance optimization)
-    for (const updated of updatedContestants) {
+    // Filter to only contestants that actually changed
+    const changedContestants = updatedContestants.filter((updated) => {
       const original = contestants.find((c) => c.id === updated.id);
-      // Deep comparison to detect changes
-      if (JSON.stringify(original) !== JSON.stringify(updated)) {
-        await updateContestant(updated);
-      }
+      return JSON.stringify(original) !== JSON.stringify(updated);
+    });
+
+    // Bulk update all changed contestants in a single transaction
+    if (changedContestants.length > 0) {
+      await updateContestantsBulk(changedContestants);
     }
   };
 

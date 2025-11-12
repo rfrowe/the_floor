@@ -31,7 +31,7 @@ export function CreateContent({
   categories,
   contestantName: propsContestantName,
   selectedCategoryId: propsSelectedCategoryId,
-  onStateChange
+  onStateChange,
 }: CreateContentProps) {
   const { pushView, popView } = useViewStack();
   const [, { add: addContestant }] = useContestants();
@@ -66,7 +66,13 @@ export function CreateContent({
     if (contestantName !== propsContestantName || selectedCategoryId !== propsSelectedCategoryId) {
       onStateChange({ contestantName, selectedCategoryId });
     }
-  }, [contestantName, selectedCategoryId, propsContestantName, propsSelectedCategoryId, onStateChange]);
+  }, [
+    contestantName,
+    selectedCategoryId,
+    propsContestantName,
+    propsSelectedCategoryId,
+    onStateChange,
+  ]);
 
   const handleCreate = async () => {
     if (!contestantName.trim() || !selectedCategoryId) {

@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: auto; /* Allow scrolling if grid is too big */
   margin: 0;
   padding: 0;
 }
@@ -47,5 +47,17 @@
 @media (max-width: 768px) {
   .container {
     padding: 10px;
+    justify-content: flex-start;
+  }
+
+  .floor-grid {
+    /* On small screens, allow grid to scroll horizontally if too wide */
+    width: auto;
+    min-width: 100%;
+    height: auto;
+  }
+
+  .grid-row > * {
+    min-width: 50px; /* Minimum square size on mobile */
   }
 }

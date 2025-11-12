@@ -92,12 +92,7 @@ export function ListContent({
     pushView({
       id: `delete-confirm-${category.id}`,
       title: 'Confirm Delete',
-      content: (
-        <DeleteConfirmationContent
-          categoryId={category.id}
-          categoryName={category.name}
-        />
-      ),
+      content: <DeleteConfirmationContent categoryId={category.id} categoryName={category.name} />,
     });
   };
 
@@ -110,7 +105,9 @@ export function ListContent({
             type="text"
             placeholder={`Search ${String(categoryMetadata.length)} ${categoryMetadata.length === 1 ? 'category' : 'categories'}...`}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+            }}
             className={styles['search-input']}
           />
         </div>
@@ -152,10 +149,7 @@ export function ListContent({
             </div>
 
             <div className={styles['storage-container-wrapper']}>
-              <CategoryStorage
-                categories={categoryMetadata}
-                onDeleteAll={onDeleteAllCategories}
-              />
+              <CategoryStorage categories={categoryMetadata} onDeleteAll={onDeleteAllCategories} />
             </div>
           </div>
 
@@ -170,15 +164,21 @@ export function ListContent({
                 <div
                   key={category.id}
                   className={styles['category-item']}
-                  onClick={() => handleViewClick(category)}
+                  onClick={() => {
+                    handleViewClick(category);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       handleViewClick(category);
                     }
                   }}
-                  onMouseEnter={() => setHoveredCategory(category.id)}
-                  onMouseLeave={() => setHoveredCategory(null)}
+                  onMouseEnter={() => {
+                    setHoveredCategory(category.id);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredCategory(null);
+                  }}
                   role="button"
                   tabIndex={0}
                 >
@@ -204,7 +204,9 @@ export function ListContent({
 
                   <div className={styles['category-item-right']}>
                     <button
-                      onClick={(e) => handleDeleteClick(e, category)}
+                      onClick={(e) => {
+                        handleDeleteClick(e, category);
+                      }}
                       onMouseEnter={(e) => {
                         e.stopPropagation();
                         setHoveredDeleteButton(category.id);
