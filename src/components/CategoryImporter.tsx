@@ -19,7 +19,7 @@ interface ContestantData {
   categoryName: string;
   error: string | null;
   isSample?: boolean; // Track if this is from sample categories
-  sizeBytes: number | undefined; // File size in bytes
+  sizeBytes?: number; // File size in bytes (only for file uploads, not needed for in-memory calculation)
 }
 
 interface CategoryImporterProps {
@@ -28,8 +28,8 @@ interface CategoryImporterProps {
   initialContestantName?: string;
   fileSizeWarningThresholdMB?: number;
   onBrowseSamples?: () => void;
-  onFilesLoaded?: (categories: { name: string; category: Category; sizeBytes: number | undefined }[]) => void; // NEW: Called when files are dropped and parsed
-  preloadedCategories?: { name: string; category: Category; sizeBytes: number | undefined }[] | null; // For preview mode
+  onFilesLoaded?: (categories: { name: string; category: Category }[]) => void; // NEW: Called when files are dropped and parsed
+  preloadedCategories?: { name: string; category: Category }[] | null; // For preview mode
 }
 
 export function CategoryImporter({
@@ -57,7 +57,6 @@ export function CategoryImporter({
         categoryName: item.category.name,
         error: null,
         isSample: true,
-        sizeBytes: item.sizeBytes,
       }));
       setAllContestants(contestants);
       setCurrentIndex(0);
@@ -126,7 +125,6 @@ export function CategoryImporter({
         .map((c) => ({
           name: c.contestantName,
           category: c.category,
-          sizeBytes: c.sizeBytes,
         }));
       onFilesLoaded(loadedCategories);
     } else {

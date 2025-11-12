@@ -93,6 +93,7 @@ export function useCategories(): [
       await addCategory(category);
       setCategories((prev) => [...prev, category]);
       // Broadcast change to other windows/tabs
+      console.log('[useCategories] Broadcasting reload after add');
       broadcastRef.current?.send('reload');
     } catch (error) {
       console.error('Error adding category:', error);

@@ -19,6 +19,7 @@
     "parse:pptx:downscale": "cd scripts && poetry run python downscale_pptx_images.py"
   },
   "dependencies": {
+    "object-sizeof": "^2.6.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5"

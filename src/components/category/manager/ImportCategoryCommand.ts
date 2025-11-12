@@ -35,6 +35,11 @@ export class ImportCategoryCommand implements Command {
   }
 
   async execute(): Promise<void> {
+    // Guard against duplicate execution (idempotent)
+    if (this.categoryId !== null) {
+      return;
+    }
+
     const result = await this.onImport(this.data);
     this.categoryId = result.categoryId;
     this.contestantId = result.contestantId ?? null;
@@ -43,6 +48,9 @@ export class ImportCategoryCommand implements Command {
   async undo(): Promise<void> {
     if (this.categoryId) {
       await this.onUndo(this.categoryId, this.contestantId ?? undefined);
+      // Reset execution state so command can be re-executed after undo
+      this.categoryId = null;
+      this.contestantId = null;
     }
   }
 
