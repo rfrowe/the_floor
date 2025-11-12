@@ -23,12 +23,13 @@ interface ContestantData {
 }
 
 interface CategoryImporterProps {
-  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void>;
+  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void> | Promise<string[]> | Promise<Array<{ categoryId: string; contestantId?: string }>>;
   onCancel: () => void;
   initialContestantName?: string;
   fileSizeWarningThresholdMB?: number;
   onBrowseSamples?: () => void;
-  preloadedCategories?: { name: string; category: Category; sizeBytes: number | undefined }[] | null;
+  onFilesLoaded?: (categories: { name: string; category: Category; sizeBytes: number | undefined }[]) => void; // NEW: Called when files are dropped and parsed
+  preloadedCategories?: { name: string; category: Category; sizeBytes: number | undefined }[] | null; // For preview mode
 }
 
 export function CategoryImporter({
@@ -37,6 +38,7 @@ export function CategoryImporter({
   initialContestantName,
   fileSizeWarningThresholdMB = 30,
   onBrowseSamples,
+  onFilesLoaded,
   preloadedCategories,
 }: CategoryImporterProps) {
   const [allContestants, setAllContestants] = useState<ContestantData[]>([]);
@@ -114,8 +116,23 @@ export function CategoryImporter({
       }
     }
 
-    setAllContestants(contestants);
     setIsLoading(false);
+
+    // If onFilesLoaded callback provided, call it instead of showing preview internally
+    if (onFilesLoaded) {
+      console.log('[CategoryImporter] Calling onFilesLoaded with parsed files');
+      const loadedCategories = contestants
+        .filter((c) => c.error === null)
+        .map((c) => ({
+          name: c.contestantName,
+          category: c.category,
+          sizeBytes: c.sizeBytes,
+        }));
+      onFilesLoaded(loadedCategories);
+    } else {
+      // Fallback: show preview internally (backward compatibility)
+      setAllContestants(contestants);
+    }
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
