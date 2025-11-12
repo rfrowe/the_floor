@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef, useEffect, useRef } from 'react';
+import { useState, useImperativeHandle, forwardRef, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_GAME_CONFIG, type Contestant, type Category } from '@types';
 import { useDuelState } from '@hooks/useDuelState';
@@ -37,6 +37,9 @@ export interface DuelSetupProps {
 
   /** Optional callback for random contestant selection */
   onRandomSelect?: () => void;
+
+  /** Whether random select is available (i.e., there are contestants on the grid) */
+  canRandomSelect?: boolean;
 }
 
 /**
@@ -58,7 +61,7 @@ export interface DuelSetupHandle {
  * - Information about winner receiving unplayed category
  */
 export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function DuelSetup(
-  { contestant1, contestant2, onClear, onStartDuel, onRandomSelect },
+  { contestant1, contestant2, onClear, onStartDuel, onRandomSelect, canRandomSelect = true },
   ref
 ) {
   const navigate = useNavigate();
@@ -83,6 +86,7 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
   }, []);
 
   // Broadcast category selection changes
+  // Note: broadcastRef is intentionally omitted from deps as refs are stable and don't trigger re-renders
   useEffect(() => {
     broadcastRef.current?.send(selectedCategory?.name ?? null);
   }, [selectedCategory]);
@@ -94,41 +98,7 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
   const canStartDuel =
     contestant1 !== null && contestant2 !== null && selectedCategory !== null && audienceConnected;
 
-  // Expose startDuel method via ref
-  useImperativeHandle(ref, () => ({
-    startDuel: handleStartDuel,
-  }));
-
-  // Get validation messages
-  const getValidationMessage = (): string | null => {
-    if (!contestant1 || !contestant2) {
-      return 'Select 2 contestants to set up a duel';
-    }
-    if (!selectedCategory) {
-      return 'Select a category for the duel';
-    }
-    if (!audienceConnected) {
-      return '⚠️ No Audience View detected. Open Audience View in a new window to begin duel.';
-    }
-    return null;
-  };
-
-  const validationMessage = getValidationMessage();
-
-  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const categoryName = event.target.value;
-
-    // Find the matching category from either contestant
-    if (contestant1?.category.name === categoryName) {
-      setSelectedCategory(contestant1.category);
-    } else if (contestant2?.category.name === categoryName) {
-      setSelectedCategory(contestant2.category);
-    } else {
-      setSelectedCategory(null);
-    }
-  };
-
-  const handleStartDuel = () => {
+  const handleStartDuel = useCallback(() => {
     console.log('🎮 Start Duel clicked!');
     console.log('Contestant 1:', contestant1?.name);
     console.log('Contestant 2:', contestant2?.name);
@@ -176,6 +146,44 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
 
     // Navigate to master view
     void navigate('/master');
+  }, [contestant1, contestant2, selectedCategory, setDuelState, onStartDuel, navigate]);
+
+  // Expose startDuel method via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      startDuel: handleStartDuel,
+    }),
+    [handleStartDuel]
+  );
+
+  // Get validation messages
+  const getValidationMessage = (): string | null => {
+    if (!contestant1 || !contestant2) {
+      return 'Select 2 contestants to set up a duel';
+    }
+    if (!selectedCategory) {
+      return 'Select a category for the duel';
+    }
+    if (!audienceConnected) {
+      return '⚠️ No Audience View detected. Open Audience View in a new window to begin duel.';
+    }
+    return null;
+  };
+
+  const validationMessage = getValidationMessage();
+
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const categoryName = event.target.value;
+
+    // Find the matching category from either contestant
+    if (contestant1?.category.name === categoryName) {
+      setSelectedCategory(contestant1.category);
+    } else if (contestant2?.category.name === categoryName) {
+      setSelectedCategory(contestant2.category);
+    } else {
+      setSelectedCategory(null);
+    }
   };
 
   const handleClear = () => {
@@ -244,7 +252,7 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
       {/* Actions */}
       <div className={actionsClass}>
         {onRandomSelect && (
-          <Button variant="secondary" onClick={onRandomSelect}>
+          <Button variant="secondary" onClick={onRandomSelect} disabled={!canRandomSelect}>
             Random Select
           </Button>
         )}
