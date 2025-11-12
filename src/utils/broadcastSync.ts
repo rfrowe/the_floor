@@ -13,11 +13,15 @@ export interface BroadcastSyncOptions<T> {
 }
 
 // Singleton storage for BroadcastChannels
-const channelRegistry = new Map<string, {
-  channel: BroadcastChannel | null;
-  listeners: Set<(data: any) => void>;
-  refCount: number;
-}>();
+const channelRegistry = new Map<
+  string,
+  {
+    channel: BroadcastChannel | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listeners: Set<(data: any) => void>;
+    refCount: number;
+  }
+>();
 
 /**
  * Creates a BroadcastChannel for cross-window sync using singleton pattern
@@ -45,7 +49,8 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
 
       // Set up message handler to dispatch to all listeners (from other tabs)
       channel.onmessage = (event: MessageEvent) => {
-        entry!.listeners.forEach(listener => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        entry!.listeners.forEach((listener) => {
           try {
             listener(event.data);
           } catch (error) {
@@ -79,7 +84,7 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
 
   const send = (data: T) => {
     // Immediately dispatch to all listeners in the current window/tab
-    currentEntry.listeners.forEach(listener => {
+    currentEntry.listeners.forEach((listener) => {
       try {
         listener(data);
       } catch (error) {
@@ -93,7 +98,7 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
         currentEntry.channel.postMessage(data);
       } catch (error) {
         if (error instanceof Error && !error.message.includes('closed')) {
-          onError?.(error as Error);
+          onError?.(error);
           console.error(`[BroadcastSync:${channelName}] Failed to send:`, error);
         }
       }

@@ -29,7 +29,9 @@ export function SampleCategoryBrowser({
   initialSelections,
 }: SampleCategoryBrowserProps) {
   const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
-  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(initialSelections ?? new Set());
+  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(
+    initialSelections ?? new Set()
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Load sample categories on mount

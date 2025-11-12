@@ -23,7 +23,13 @@ interface ContestantData {
 }
 
 interface CategoryImporterProps {
-  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void> | Promise<string[]> | Promise<Array<{ categoryId: string; contestantId?: string }>>;
+  onImport: (
+    contestants: { name: string; category: Category }[]
+  ) => // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  | void
+    | Promise<void>
+    | Promise<string[]>
+    | Promise<{ categoryId: string; contestantId?: string }[]>;
   onCancel: () => void;
   initialContestantName?: string;
   fileSizeWarningThresholdMB?: number;
@@ -53,6 +59,7 @@ export function CategoryImporter({
       const contestants: ContestantData[] = preloadedCategories.map((item) => ({
         file: null,
         category: item.category,
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         contestantName: item.name || initialContestantName || '',
         categoryName: item.category.name,
         error: null,
@@ -146,7 +153,6 @@ export function CategoryImporter({
   const handleDragLeave = () => {
     setIsDragging(false);
   };
-
 
   const updateCurrentContestantName = (name: string) => {
     setAllContestants((prev) =>

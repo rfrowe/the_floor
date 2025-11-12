@@ -4,7 +4,11 @@
  * Displays current category storage capacity and provides action to delete all categories
  */
 
-import { formatBytes, calculateStoragePercentage, calculateTotalStorageUsed } from '@utils/storageUtils';
+import {
+  formatBytes,
+  calculateStoragePercentage,
+  calculateTotalStorageUsed,
+} from '@utils/storageUtils';
 import styles from './CategoryStorage.module.css';
 
 interface CategoryStorageProps {
@@ -43,8 +47,9 @@ export function CategoryStorage({ categories, onDeleteAll }: CategoryStorageProp
         {categoryCount > 0 && (
           <>
             {' '}
-            <span style={{ whiteSpace: 'nowrap' }}>• {String(categoryCount)} {categoryCount === 1 ? 'category' : 'categories'}</span>
-            {' '}
+            <span style={{ whiteSpace: 'nowrap' }}>
+              • {String(categoryCount)} {categoryCount === 1 ? 'category' : 'categories'}
+            </span>{' '}
             <span style={{ whiteSpace: 'nowrap' }}>• {String(totalSlides)} slides</span>
           </>
         )}

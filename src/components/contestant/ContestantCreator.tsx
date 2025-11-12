@@ -18,11 +18,7 @@ interface ContestantCreatorProps {
   categories: StoredCategory[];
 }
 
-export function ContestantCreator({
-  onClose,
-  onCreate,
-  categories,
-}: ContestantCreatorProps) {
+export function ContestantCreator({ onClose, onCreate, categories }: ContestantCreatorProps) {
   // Lift form state to this level for proper preservation across navigation
   const [formState, setFormState] = useState({
     contestantName: '',
@@ -30,18 +26,22 @@ export function ContestantCreator({
   });
 
   // Recreate view whenever formState changes (ensures latest state on back navigation)
-  const createView = useMemo(() => ({
-    id: 'create',
-    title: 'Add Contestant',
-    content: (
-      <CreateContent
-        categories={categories}
-        contestantName={formState.contestantName}
-        selectedCategoryId={formState.selectedCategoryId}
-        onStateChange={setFormState}
-      />
-    ),
-  } satisfies View), [formState, categories]);
+  const createView = useMemo(
+    () =>
+      ({
+        id: 'create',
+        title: 'Add Contestant',
+        content: (
+          <CreateContent
+            categories={categories}
+            contestantName={formState.contestantName}
+            selectedCategoryId={formState.selectedCategoryId}
+            onStateChange={setFormState}
+          />
+        ),
+      }) satisfies View,
+    [formState, categories]
+  );
 
   return (
     <ViewStack

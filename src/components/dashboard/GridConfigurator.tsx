@@ -3,7 +3,7 @@
  * Allows game master to configure grid dimensions and rearrange contestants
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGridConfig } from '@hooks/useGridConfig';
 import type { Contestant } from '@types';
 import { Button } from '@components/common/Button';
@@ -21,6 +21,110 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
   const [tempCols, setTempCols] = useState(gridConfig.cols);
   const [draggedContestant, setDraggedContestant] = useState<Contestant | null>(null);
   const [isEditingGrid, setIsEditingGrid] = useState(false);
+  const [touchTarget, setTouchTarget] = useState<{ row: number; col: number } | null>(null);
+  const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Define handleDrop early so it can be used in useEffect
+  const handleDrop = useCallback(
+    async (row: number, col: number) => {
+      if (!draggedContestant) return;
+
+      const squareId = `${String(row)}-${String(col)}`;
+
+      // Check if square is already occupied - silently ignore if it is
+      const occupiedBy = contestants.find(
+        (c) => c.controlledSquares?.includes(squareId) && c.id !== draggedContestant.id
+      );
+
+      if (occupiedBy) {
+        setDraggedContestant(null);
+        return;
+      }
+
+      // Update contestant position
+      const updatedContestants = contestants.map((c) => {
+        if (c.id === draggedContestant.id) {
+          return {
+            ...c,
+            gridPosition: { row, col },
+            controlledSquares: [squareId],
+          };
+        }
+        return c;
+      });
+
+      await onUpdateContestants(updatedContestants);
+      setDraggedContestant(null);
+    },
+    [draggedContestant, contestants, onUpdateContestants]
+  );
+
+  // Set up document-level touch event listeners (non-passive)
+  useEffect(() => {
+    if (!draggedContestant) return;
+
+    console.log('[Touch] Setting up document listeners');
+
+    const handleDocumentTouchMove = (e: TouchEvent) => {
+      console.log('[Touch] Document move');
+      e.preventDefault();
+
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      console.log('[Touch] Move at:', touch.clientX, touch.clientY);
+
+      // Update touch position for visual feedback
+      setTouchPosition({ x: touch.clientX, y: touch.clientY });
+
+      // Find which grid square is under the touch
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      console.log('[Touch] Element under finger:', element?.className);
+
+      const square = element?.closest('[data-grid-square]');
+      console.log('[Touch] Closest square:', square ? 'found' : 'not found');
+
+      if (square) {
+        const row = parseInt(square.getAttribute('data-row') ?? '-1', 10);
+        const col = parseInt(square.getAttribute('data-col') ?? '-1', 10);
+        console.log('[Touch] Target square:', row, col);
+        if (row >= 0 && col >= 0) {
+          setTouchTarget({ row, col });
+        }
+      } else {
+        setTouchTarget(null);
+      }
+    };
+
+    const handleDocumentTouchEnd = () => {
+      console.log(
+        '[Touch] Document end - draggedContestant:',
+        draggedContestant.name,
+        'touchTarget:',
+        touchTarget
+      );
+
+      if (touchTarget) {
+        console.log('[Touch] Dropping at:', touchTarget.row, touchTarget.col);
+        void handleDrop(touchTarget.row, touchTarget.col);
+      }
+
+      console.log('[Touch] Cleaning up');
+      setDraggedContestant(null);
+      setTouchTarget(null);
+      setTouchPosition(null);
+    };
+
+    // Add non-passive listeners
+    document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
+    document.addEventListener('touchend', handleDocumentTouchEnd);
+
+    return () => {
+      console.log('[Touch] Removing document listeners');
+      document.removeEventListener('touchmove', handleDocumentTouchMove);
+      document.removeEventListener('touchend', handleDocumentTouchEnd);
+    };
+  }, [draggedContestant, touchTarget, handleDrop]);
 
   // Auto-collapse when all active contestants are positioned
   // Exclude eliminated contestants from positioning
@@ -105,42 +209,31 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
     setDraggedContestant(contestant);
   };
 
+  const handleTouchStart = (contestant: Contestant, e: React.TouchEvent) => {
+    if (!canRemoveFromGrid(contestant)) {
+      console.log('[Touch] Cannot drag - contestant has won territory');
+      return;
+    }
+    console.log('[Touch] Start dragging:', contestant.name);
+
+    const touch = e.touches[0];
+    if (touch) {
+      setTouchPosition({ x: touch.clientX, y: touch.clientY });
+    }
+
+    setDraggedContestant(contestant);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = async (row: number, col: number) => {
-    if (!draggedContestant) return;
-
-    const squareId = `${String(row)}-${String(col)}`;
-
-    // Check if square is already occupied - silently ignore if it is
-    const occupiedBy = contestants.find(
-      (c) => c.controlledSquares?.includes(squareId) && c.id !== draggedContestant.id
-    );
-
-    if (occupiedBy) {
-      setDraggedContestant(null);
+  const handleRemoveFromGrid = async (contestant: Contestant) => {
+    // Prevent removing contestants who have won (expanded territory)
+    if (contestant.controlledSquares && contestant.controlledSquares.length > 1) {
       return;
     }
 
-    // Update contestant position
-    const updatedContestants = contestants.map((c) => {
-      if (c.id === draggedContestant.id) {
-        return {
-          ...c,
-          gridPosition: { row, col },
-          controlledSquares: [squareId],
-        };
-      }
-      return c;
-    });
-
-    await onUpdateContestants(updatedContestants);
-    setDraggedContestant(null);
-  };
-
-  const handleRemoveFromGrid = async (contestant: Contestant) => {
     const updatedContestants = contestants.map((c) => {
       if (c.id === contestant.id) {
         // Remove grid properties by creating new object without them
@@ -152,6 +245,123 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
 
     await onUpdateContestants(updatedContestants);
   };
+
+  // Check if contestant can be removed (has not won any duels)
+  const canRemoveFromGrid = (contestant: Contestant): boolean => {
+    return !contestant.controlledSquares || contestant.controlledSquares.length <= 1;
+  };
+
+  // Calculate optimal grid dimensions for K contestants
+  // Minimizes waste (N*M - K) first, then minimizes aspect difference |N - M|
+  const calculateOptimalDimensions = (k: number): { rows: number; cols: number } => {
+    if (k === 0) return { rows: 1, cols: 1 };
+
+    // Iterate in order of increasing waste (0, 1, 2, ...)
+    // For each waste level, find factorization with minimum |N - M|
+    const maxWaste = Math.min(k, 20); // Reasonable upper bound
+
+    for (let waste = 0; waste <= maxWaste; waste++) {
+      const product = k + waste;
+      const sqrtProduct = Math.floor(Math.sqrt(product));
+
+      // Iterate from sqrt down to 1 to find most square-ish factorization
+      // First exact divisor found will have minimum |N - M|
+      for (let rows = sqrtProduct; rows >= 1; rows--) {
+        if (product % rows === 0) {
+          const cols = product / rows;
+          // Return immediately - this is optimal for current waste level
+          return { rows, cols };
+        }
+      }
+    }
+
+    // Fallback (should never reach here)
+    return { rows: 1, cols: k };
+  };
+
+  // Place contestants in a random contiguous block
+  const placeContestantsContiguously = (
+    contestants: Contestant[],
+    rows: number,
+    cols: number
+  ): Contestant[] => {
+    const eligibleContestants = contestants.filter((c) => !c.eliminated);
+
+    if (eligibleContestants.length === 0) return contestants;
+
+    // Create list of all squares
+    const allSquares: string[] = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        allSquares.push(`${String(r)}-${String(c)}`);
+      }
+    }
+
+    // Shuffle squares randomly
+    const shuffled = [...allSquares].sort(() => Math.random() - 0.5);
+
+    // Take first K squares for contiguous block
+    const selectedSquares = shuffled.slice(0, eligibleContestants.length);
+
+    // Create mapping of contestant ID to square assignment
+    const squareAssignments = new Map<string, string>();
+    eligibleContestants.forEach((c, index) => {
+      const square = selectedSquares[index];
+      if (square) {
+        squareAssignments.set(c.id, square);
+      }
+    });
+
+    // Assign squares to contestants in a single pass
+    return contestants.map((c) => {
+      if (c.eliminated) return c;
+
+      const square = squareAssignments.get(c.id);
+      if (!square) {
+        // Remove from grid
+        const { controlledSquares: _, gridPosition: __, ...rest } = c;
+        return rest;
+      }
+
+      const [rowStr, colStr] = square.split('-');
+      const row = parseInt(rowStr ?? '0', 10);
+      const col = parseInt(colStr ?? '0', 10);
+
+      return {
+        ...c,
+        gridPosition: { row, col },
+        controlledSquares: [square],
+      };
+    });
+  };
+
+  const handleAutoLayout = async () => {
+    // Calculate optimal dimensions
+    const eligibleCount = activeContestants.length;
+    const { rows, cols } = calculateOptimalDimensions(eligibleCount);
+
+    // Apply new dimensions
+    setGridConfig({ rows, cols });
+    setTempRows(rows);
+    setTempCols(cols);
+
+    // Place contestants
+    const updatedContestants = placeContestantsContiguously(contestants, rows, cols);
+    await onUpdateContestants(updatedContestants);
+  };
+
+  // Check if auto layout is enabled
+  const canAutoLayout = useMemo(() => {
+    // Need at least one eligible contestant
+    if (activeContestants.length === 0) return false;
+
+    // All positioned contestants must have exactly 1 square
+    const positionedContestants = activeContestants.filter(
+      (c) => c.controlledSquares && c.controlledSquares.length > 0
+    );
+
+    return positionedContestants.every((c) => c.controlledSquares?.length === 1);
+  }, [activeContestants]);
 
   const containerClass = styles['container'] ?? '';
   const headerClass = styles['header'] ?? '';
@@ -178,17 +388,17 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
       {/* Collapsible Header */}
       <div className={headerClass}>
         <h2>Grid Configuration</h2>
-        <Button
-          variant="secondary"
-          size="small"
+        <button
+          type="button"
           onClick={() => {
             setIsExpanded(!isExpanded);
           }}
           className={toggleButtonClass}
           aria-expanded={isExpanded}
+          aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
-          {isExpanded ? 'Collapse ▲' : 'Expand ▼'}
-        </Button>
+          {isExpanded ? '▼' : '▶'}
+        </button>
       </div>
 
       {isExpanded && (
@@ -231,15 +441,32 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
               </div>
               <div className={buttonGroupClass}>
                 {!isEditingGrid ? (
-                  <Button
-                    onClick={() => {
-                      setIsEditingGrid(true);
-                    }}
-                    variant="secondary"
-                    size="small"
-                  >
-                    Edit Dimensions
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => {
+                        setIsEditingGrid(true);
+                      }}
+                      variant="secondary"
+                      size="small"
+                    >
+                      Edit Dimensions
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        void handleAutoLayout();
+                      }}
+                      variant="secondary"
+                      size="small"
+                      disabled={!canAutoLayout}
+                      title={
+                        !canAutoLayout
+                          ? 'Disabled: Remove expanded territories first'
+                          : 'Automatically resize grid and place all contestants'
+                      }
+                    >
+                      Auto Layout
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button onClick={handleApplyDimensions} size="small">
@@ -281,10 +508,18 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
                   row.map((contestant, colIndex) => (
                     <div
                       key={`${String(rowIndex)}-${String(colIndex)}`}
-                      className={`${squareClass} ${contestant ? contestantSquareClass : emptySquareClass}`.trim()}
+                      className={`${squareClass} ${contestant ? contestantSquareClass : emptySquareClass} ${
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        touchTarget?.row === rowIndex && touchTarget?.col === colIndex
+                          ? (styles['touch-target'] ?? '')
+                          : ''
+                      }`.trim()}
                       style={{
                         backgroundColor: contestant ? getContestantColor(contestant.id) : undefined,
                       }}
+                      data-grid-square="true"
+                      data-row={rowIndex}
+                      data-col={colIndex}
                       onDragOver={handleDragOver}
                       onDrop={() => {
                         void handleDrop(rowIndex, colIndex);
@@ -292,19 +527,40 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
                     >
                       {contestant && (
                         <div
-                          draggable
+                          draggable={canRemoveFromGrid(contestant)}
                           onDragStart={() => {
-                            handleDragStart(contestant);
+                            if (canRemoveFromGrid(contestant)) {
+                              handleDragStart(contestant);
+                            }
                           }}
-                          className={contestantNameClass}
+                          onTouchStart={(e) => {
+                            handleTouchStart(contestant, e);
+                          }}
+                          className={`${contestantNameClass} ${
+                            draggedContestant?.id === contestant.id
+                              ? (styles['dragging'] ?? '')
+                              : ''
+                          }`.trim()}
+                          style={{
+                            cursor: canRemoveFromGrid(contestant) ? 'grab' : 'default',
+                          }}
                         >
                           {contestant.name}
                           <button
                             onClick={() => {
                               void handleRemoveFromGrid(contestant);
                             }}
-                            className={removeButtonClass}
-                            title="Remove from grid"
+                            className={`${removeButtonClass} ${
+                              !canRemoveFromGrid(contestant)
+                                ? (styles['remove-button-disabled'] ?? '')
+                                : ''
+                            }`.trim()}
+                            title={
+                              canRemoveFromGrid(contestant)
+                                ? 'Remove from grid'
+                                : 'Cannot remove - contestant has won territory'
+                            }
+                            disabled={!canRemoveFromGrid(contestant)}
                           >
                             ×
                           </button>
@@ -326,10 +582,15 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
                 {unpositionedContestants.map((contestant) => (
                   <div
                     key={contestant.id}
-                    className={contestantItemClass}
+                    className={`${contestantItemClass} ${
+                      draggedContestant?.id === contestant.id ? (styles['dragging'] ?? '') : ''
+                    }`.trim()}
                     draggable
                     onDragStart={() => {
                       handleDragStart(contestant);
+                    }}
+                    onTouchStart={(e) => {
+                      handleTouchStart(contestant, e);
                     }}
                     style={{
                       backgroundColor: getContestantColor(contestant.id),
@@ -344,6 +605,32 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
             </div>
           )}
         </>
+      )}
+
+      {/* Floating touch drag preview */}
+      {draggedContestant && touchPosition && (
+        <div
+          style={{
+            position: 'fixed',
+            left: touchPosition.x,
+            top: touchPosition.y,
+            transform: 'translate(-50%, -50%)',
+            padding: '0.5rem 1rem',
+            borderRadius: '6px',
+            backgroundColor: getContestantColor(draggedContestant.id),
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            opacity: 0.8,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            textShadow:
+              '0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9)',
+          }}
+        >
+          {draggedContestant.name}
+        </div>
       )}
     </div>
   );
