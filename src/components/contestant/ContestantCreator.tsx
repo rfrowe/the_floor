@@ -26,7 +26,7 @@ type ViewMode = 'create' | 'import' | 'samples';
 interface ContestantCreatorProps {
   onClose: () => void;
   onCreate: (name: string, categoryId: string) => Promise<void>;
-  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void>;
+  onImport: (contestants: { name: string; category: Category }[]) => void | Promise<void> | Promise<string[]> | Promise<Array<{ categoryId: string; contestantId?: string }>>;
   categories: StoredCategory[];
 }
 
@@ -43,7 +43,7 @@ export function ContestantCreator({
   const [isOpen, setIsOpen] = useState(true);
   const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
   const [preloadedCategories, setPreloadedCategories] = useState<
-    { name: string; category: Category; sizeBytes: number | undefined }[] | null
+    { name: string; category: Category }[] | null
   >(null);
 
   // Load sample categories on mount

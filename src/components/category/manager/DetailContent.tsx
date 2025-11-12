@@ -2,49 +2,30 @@
  * DetailContent Component
  *
  * Detail view showing all slides in a category.
- * Loaded lazily when view is pushed to stack.
+ * Fully self-contained with ViewStack state management.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { StoredCategory } from '@types';
 import { SlidePreview } from '@components/slide/SlidePreview';
-import { getCategoryById } from '@storage/indexedDB';
 import styles from '../CategoryManager.module.css';
 
 interface DetailContentProps {
-  categoryId: string;
+  category: StoredCategory;
+  expandedSlideIndex: number | null;
+  setExpandedSlideIndex: (index: number | null | ((prev: number | null) => number | null)) => void;
 }
 
-export function DetailContent({ categoryId }: DetailContentProps) {
-  const [category, setCategory] = useState<StoredCategory | null>(null);
-  const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadCategory() {
-      try {
-        const fullCategory = await getCategoryById<StoredCategory>(categoryId);
-        setCategory(fullCategory);
-      } catch (error) {
-        console.error('Failed to load category:', error);
-        alert('Failed to load category details');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadCategory();
-  }, [categoryId]);
+export function DetailContent({ category, expandedSlideIndex, setExpandedSlideIndex }: DetailContentProps) {
+  const [localCategory, setLocalCategory] = useState(category);
 
   const handleSlideAnswerChange = (slideIndex: number, newAnswer: string) => {
-    if (!category) return;
-
-    const updatedSlides = category.slides.map((slide, index) =>
+    const updatedSlides = localCategory.slides.map((slide, index) =>
       index === slideIndex ? { ...slide, answer: newAnswer } : slide
     );
 
-    setCategory({
-      ...category,
+    setLocalCategory({
+      ...localCategory,
       slides: updatedSlides,
     });
     // TODO: Persist changes to storage if needed
@@ -54,17 +35,9 @@ export function DetailContent({ categoryId }: DetailContentProps) {
     setExpandedSlideIndex((prev) => (prev === slideIndex ? null : slideIndex));
   };
 
-  if (isLoading) {
-    return <div>Loading category...</div>;
-  }
-
-  if (!category) {
-    return <div>Category not found</div>;
-  }
-
   return (
     <div className={styles['slides-viewer']}>
-      {category.slides.map((slide, index) => (
+      {localCategory.slides.map((slide, index) => (
         <SlidePreview
           key={index}
           slide={slide}

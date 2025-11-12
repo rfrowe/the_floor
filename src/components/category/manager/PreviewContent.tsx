@@ -3,40 +3,51 @@
  *
  * Shows preview of a single category before import.
  * Each category gets its own view on the stack.
- * Matches the original CategoryImporter design.
+ * Uses ViewStack context directly for navigation.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Category } from '@types';
 import { SlidePreview } from '@components/slide/SlidePreview';
+import { calculateCategorySize } from '@utils/storageUtils';
+import { useViewStack, type View } from '@components/common/ViewStack';
 import styles from '../../CategoryImporter.module.css';
 
 interface PreviewContentProps {
   category: Category;
   contestantName: string;
-  sizeBytes: number | undefined;
-  onImport: (editedContestantName: string, editedCategoryName: string) => void;
   categoryNumber?: number;
   totalCategories?: number;
   isSample?: boolean;
   fileName?: string;
   fileSizeWarningThresholdMB?: number;
+  // Navigation metadata
+  isLastCategory: boolean;
+  totalPopsToList: number;
+  createNextView?: (editedData: { contestantName: string; categoryName: string }) => View;
+  updateCommand: (contestantName: string, categoryName: string) => void;
 }
 
 export function PreviewContent({
   category,
   contestantName,
-  sizeBytes,
-  onImport,
   categoryNumber,
   totalCategories,
   isSample = true,
   fileName,
   fileSizeWarningThresholdMB = 30,
+  isLastCategory,
+  totalPopsToList,
+  createNextView,
+  updateCommand,
 }: PreviewContentProps) {
+  const { pushView, popMultiple, updateCurrentView } = useViewStack();
   const [expandedSlideIndex, setExpandedSlideIndex] = useState<number | null>(null);
   const [editedContestantName, setEditedContestantName] = useState(contestantName);
   const [editedCategoryName, setEditedCategoryName] = useState(category.name);
+
+  // Calculate actual in-memory size of the category
+  const categoryMemorySize = useMemo(() => calculateCategorySize(category), [category]);
 
   // Reset state when category changes (important for stack navigation)
   useEffect(() => {
@@ -54,7 +65,50 @@ export function PreviewContent({
   };
 
   const handleImportClick = () => {
-    onImport(editedContestantName, editedCategoryName);
+    console.log('[PreviewContent] Import clicked', {
+      category: category.name,
+      isLastCategory,
+      totalPopsToList,
+      categoryNumber,
+      totalCategories,
+    });
+
+    // Update command with edited values
+    updateCommand(editedContestantName, editedCategoryName);
+
+    // Update current view to reflect edits (for proper display if user navigates back)
+    updateCurrentView((view) => ({
+      ...view,
+      content: (
+        <PreviewContent
+          category={{ ...category, name: editedCategoryName }}
+          contestantName={editedContestantName}
+          {...(categoryNumber !== undefined ? { categoryNumber } : {})}
+          {...(totalCategories !== undefined ? { totalCategories } : {})}
+          isSample={isSample}
+          {...(fileName !== undefined ? { fileName } : {})}
+          {...(fileSizeWarningThresholdMB !== undefined ? { fileSizeWarningThresholdMB } : {})}
+          isLastCategory={isLastCategory}
+          totalPopsToList={totalPopsToList}
+          {...(createNextView !== undefined ? { createNextView } : {})}
+          updateCommand={updateCommand}
+        />
+      ),
+    }));
+
+    if (isLastCategory) {
+      // Last category - pop all views to return to list (onLeave will execute command)
+      console.log(`[PreviewContent] Last category - popping ${totalPopsToList} views to return to list`);
+      void popMultiple(totalPopsToList);
+    } else if (createNextView) {
+      // Not last - push next preview (onLeave will execute command automatically)
+      console.log('[PreviewContent] Not last - pushing next preview');
+      const nextView = createNextView({
+        contestantName: editedContestantName,
+        categoryName: editedCategoryName,
+      });
+      pushView(nextView);
+    }
   };
 
   const categoryImporterClass = styles['category-importer'] ?? '';
@@ -70,41 +124,37 @@ export function PreviewContent({
             {isSample ? (
               <>
                 📦 {fileName || category.name}
-                {sizeBytes !== undefined && (
-                  <span className={styles['file-size'] ?? ''}>
-                    {(() => {
-                      const sizeInMB = sizeBytes / (1024 * 1024);
-                      const sizeText =
-                        sizeInMB < 1
-                          ? `${(sizeBytes / 1024).toFixed(1)} KB`
-                          : `${sizeInMB.toFixed(1)} MB`;
-                      return sizeText;
-                    })()}
-                  </span>
-                )}
+                <span className={styles['file-size'] ?? ''}>
+                  {(() => {
+                    const sizeInMB = categoryMemorySize / (1024 * 1024);
+                    const sizeText =
+                      sizeInMB < 1
+                        ? `${(categoryMemorySize / 1024).toFixed(1)} KB`
+                        : `${sizeInMB.toFixed(1)} MB`;
+                    return sizeText;
+                  })()}
+                </span>
                 <span className={styles['sample-badge'] ?? ''}>Sample</span>
               </>
             ) : fileName ? (
               <>
                 📄 {fileName}
-                {sizeBytes !== undefined && (
-                  <span className={styles['file-size'] ?? ''}>
-                    {(() => {
-                      const sizeInMB = sizeBytes / (1024 * 1024);
-                      const isLarge = sizeInMB > fileSizeWarningThresholdMB;
-                      const sizeText =
-                        sizeInMB < 1
-                          ? `${(sizeBytes / 1024).toFixed(1)} KB`
-                          : `${sizeInMB.toFixed(1)} MB`;
-                      return (
-                        <span className={isLarge ? (styles['file-size-warning'] ?? '') : ''}>
-                          {sizeText}
-                          {isLarge && ' ⚠️ Large file - may be slow'}
-                        </span>
-                      );
-                    })()}
-                  </span>
-                )}
+                <span className={styles['file-size'] ?? ''}>
+                  {(() => {
+                    const sizeInMB = categoryMemorySize / (1024 * 1024);
+                    const isLarge = sizeInMB > fileSizeWarningThresholdMB;
+                    const sizeText =
+                      sizeInMB < 1
+                        ? `${(categoryMemorySize / 1024).toFixed(1)} KB`
+                        : `${sizeInMB.toFixed(1)} MB`;
+                    return (
+                      <span className={isLarge ? (styles['file-size-warning'] ?? '') : ''}>
+                        {sizeText}
+                        {isLarge && ' ⚠️ Large file - may be slow'}
+                      </span>
+                    );
+                  })()}
+                </span>
                 {totalCategories !== undefined && totalCategories > 1 && categoryNumber !== undefined && (
                   <span className={styles['file-counter'] ?? ''}>
                     {' '}
