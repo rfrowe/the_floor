@@ -65,14 +65,6 @@ export function PreviewContent({
   };
 
   const handleImportClick = () => {
-    console.log('[PreviewContent] Import clicked', {
-      category: category.name,
-      isLastCategory,
-      totalPopsToList,
-      categoryNumber,
-      totalCategories,
-    });
-
     // Update command with edited values
     updateCommand(editedContestantName, editedCategoryName);
 
@@ -97,12 +89,10 @@ export function PreviewContent({
     }));
 
     if (isLastCategory) {
-      // Last category - pop all views to return to list (onLeave will execute command)
-      console.log(`[PreviewContent] Last category - popping ${totalPopsToList} views to return to list`);
+      // Last category - pop all views to return to list
       void popMultiple(totalPopsToList);
     } else if (createNextView) {
-      // Not last - push next preview (onLeave will execute command automatically)
-      console.log('[PreviewContent] Not last - pushing next preview');
+      // Not last - push next preview
       const nextView = createNextView({
         contestantName: editedContestantName,
         categoryName: editedCategoryName,

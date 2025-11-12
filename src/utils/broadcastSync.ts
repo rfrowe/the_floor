@@ -34,7 +34,6 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
   let entry = channelRegistry.get(channelName);
 
   if (!entry) {
-    console.log(`[BroadcastSync:${channelName}] Creating singleton channel`);
     try {
       const channel = new BroadcastChannel(channelName);
 
@@ -44,9 +43,8 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
         refCount: 0,
       };
 
-      // Set up message handler to dispatch to all listeners
+      // Set up message handler to dispatch to all listeners (from other tabs)
       channel.onmessage = (event: MessageEvent) => {
-        console.log(`[BroadcastSync:${channelName}] Message received, dispatching to ${entry!.listeners.size} listeners:`, event.data);
         entry!.listeners.forEach(listener => {
           try {
             listener(event.data);
@@ -75,16 +73,12 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
   // Add this listener
   entry.listeners.add(onMessage);
   entry.refCount++;
-  console.log(`[BroadcastSync:${channelName}] Listener added, refCount=${entry.refCount}, listeners=${entry.listeners.size}`);
 
   const isSupported = entry.channel !== null;
   const currentEntry = entry;
 
   const send = (data: T) => {
-    console.log(`[BroadcastSync:${channelName}] Sending message:`, data);
-
     // Immediately dispatch to all listeners in the current window/tab
-    console.log(`[BroadcastSync:${channelName}] Dispatching locally to ${currentEntry.listeners.size} listeners`);
     currentEntry.listeners.forEach(listener => {
       try {
         listener(data);
@@ -97,7 +91,6 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
     if (currentEntry.channel) {
       try {
         currentEntry.channel.postMessage(data);
-        console.log(`[BroadcastSync:${channelName}] Message sent to other windows/tabs`);
       } catch (error) {
         if (error instanceof Error && !error.message.includes('closed')) {
           onError?.(error as Error);
@@ -111,11 +104,9 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
     // Remove this listener
     currentEntry.listeners.delete(onMessage);
     currentEntry.refCount--;
-    console.log(`[BroadcastSync:${channelName}] Listener removed, refCount=${currentEntry.refCount}, listeners=${currentEntry.listeners.size}`);
 
     // Only close channel when all references are gone
     if (currentEntry.refCount === 0 && currentEntry.channel) {
-      console.log(`[BroadcastSync:${channelName}] Last reference removed, closing singleton channel`);
       currentEntry.channel.close();
       channelRegistry.delete(channelName);
     }

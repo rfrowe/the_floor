@@ -41,12 +41,11 @@ export function useCategoryMetadata(): [CategoryMetadata[], { refresh: () => Pro
     void loadMetadata();
   }, [loadMetadata]);
 
-  // Listen for changes from other windows
+  // Listen for changes from other windows and same-tab updates
   useEffect(() => {
     const broadcast = createBroadcastSync<'reload'>({
       channelName: CHANNEL_NAME,
       onMessage: () => {
-        console.log('[useCategoryMetadata] Received reload broadcast, reloading metadata');
         void loadMetadata();
       },
     });
