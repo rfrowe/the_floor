@@ -15,18 +15,21 @@ import styles from '../CategoryImporter.module.css';
 
 interface SampleCategoryBrowserProps {
   onLoadCategories: (
-    categories: { name: string; category: Category; sizeBytes: number | undefined }[]
+    categories: { name: string; category: Category; sizeBytes: number | undefined }[],
+    selections: Set<string> // Pass back current selections
   ) => void | Promise<void>;
   initialContestantName?: string;
   onBack?: () => void;
+  initialSelections?: Set<string>; // Initialize with these selections
 }
 
 export function SampleCategoryBrowser({
   onLoadCategories,
   initialContestantName,
+  initialSelections,
 }: SampleCategoryBrowserProps) {
   const [sampleCategories, setSampleCategories] = useState<SampleCategoryMeta[]>([]);
-  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(new Set());
+  const [selectedSamples, setSelectedSamples] = useState<Set<string>>(initialSelections ?? new Set());
   const [isLoading, setIsLoading] = useState(false);
 
   // Load sample categories on mount
@@ -40,15 +43,13 @@ export function SampleCategoryBrowser({
   }, []);
 
   const toggleSampleSelection = (filename: string) => {
-    setSelectedSamples((prev) => {
-      const next = new Set(prev);
-      if (next.has(filename)) {
-        next.delete(filename);
-      } else {
-        next.add(filename);
-      }
-      return next;
-    });
+    const next = new Set(selectedSamples);
+    if (next.has(filename)) {
+      next.delete(filename);
+    } else {
+      next.add(filename);
+    }
+    setSelectedSamples(next);
   };
 
   const handleLoadSelectedSamples = async () => {
@@ -81,7 +82,7 @@ export function SampleCategoryBrowser({
       );
 
       if (loadedCategories.length > 0) {
-        await onLoadCategories(loadedCategories);
+        await onLoadCategories(loadedCategories, selectedSamples);
       }
     } catch (error) {
       console.error('Failed to load sample categories:', error);
