@@ -12,12 +12,18 @@ export class ImportCategoryCommand implements Command {
   private categoryId: string | null;
   private contestantId: string | null;
   private data: { name: string; category: Category };
-  private onImport: (data: { name: string; category: Category }) => Promise<{ categoryId: string; contestantId?: string }>;
+  private onImport: (data: {
+    name: string;
+    category: Category;
+  }) => Promise<{ categoryId: string; contestantId?: string }>;
   private onUndo: (categoryId: string, contestantId?: string) => Promise<void>;
 
   constructor(
     data: { name: string; category: Category },
-    onImport: (data: { name: string; category: Category }) => Promise<{ categoryId: string; contestantId?: string }>,
+    onImport: (data: {
+      name: string;
+      category: Category;
+    }) => Promise<{ categoryId: string; contestantId?: string }>,
     onUndo: (categoryId: string, contestantId?: string) => Promise<void>
   ) {
     this.categoryId = null;

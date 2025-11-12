@@ -16,7 +16,11 @@ interface DetailContentProps {
   setExpandedSlideIndex: (index: number | null | ((prev: number | null) => number | null)) => void;
 }
 
-export function DetailContent({ category, expandedSlideIndex, setExpandedSlideIndex }: DetailContentProps) {
+export function DetailContent({
+  category,
+  expandedSlideIndex,
+  setExpandedSlideIndex,
+}: DetailContentProps) {
   const [localCategory, setLocalCategory] = useState(category);
 
   const handleSlideAnswerChange = (slideIndex: number, newAnswer: string) => {
@@ -44,8 +48,12 @@ export function DetailContent({ category, expandedSlideIndex, setExpandedSlideIn
           slideNumber={index + 1}
           mode="edit"
           isExpanded={expandedSlideIndex === index}
-          onToggleExpand={() => toggleSlideExpanded(index)}
-          onAnswerChange={(newAnswer) => handleSlideAnswerChange(index, newAnswer)}
+          onToggleExpand={() => {
+            toggleSlideExpanded(index);
+          }}
+          onAnswerChange={(newAnswer) => {
+            handleSlideAnswerChange(index, newAnswer);
+          }}
         />
       ))}
     </div>

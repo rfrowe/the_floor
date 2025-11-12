@@ -21,9 +21,7 @@ export function calculateCategorySize(category: Category): number {
 /**
  * Calculate total storage used by categories based on their stored sizeInBytes
  */
-export function calculateTotalStorageUsed(
-  categories: Array<{ sizeInBytes?: number }>
-): number {
+export function calculateTotalStorageUsed(categories: { sizeInBytes?: number }[]): number {
   return categories.reduce((total, category) => total + (category.sizeInBytes ?? 0), 0);
 }
 

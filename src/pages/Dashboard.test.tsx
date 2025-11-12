@@ -102,6 +102,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -126,6 +127,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -149,6 +151,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -172,6 +175,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -204,6 +208,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -231,6 +236,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -258,6 +264,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -287,6 +294,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -316,6 +324,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -352,6 +361,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -391,6 +401,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemoveError,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -426,6 +437,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -448,6 +460,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -469,6 +482,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -491,6 +505,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -514,6 +529,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -542,6 +558,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -589,6 +606,7 @@ describe('Dashboard', () => {
         addBulk: mockAddBulk,
         remove: mockRemove,
         update: mockUpdate,
+        updateBulk: vi.fn(),
         refresh: mockRefresh,
       },
     ]);
@@ -618,6 +636,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -640,6 +659,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -670,6 +690,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -708,6 +729,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -748,6 +770,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -808,6 +831,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -855,6 +879,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
@@ -895,6 +920,7 @@ describe('Dashboard', () => {
           addBulk: mockAddBulk,
           remove: mockRemove,
           update: mockUpdate,
+          updateBulk: vi.fn(),
           refresh: mockRefresh,
         },
       ]);
