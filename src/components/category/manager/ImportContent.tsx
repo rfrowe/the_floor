@@ -47,7 +47,7 @@ export function ImportContent({}: ImportContentProps) {
     };
 
     await addCategory(storedCategory);
-    console.log('[ImportContent] Category added to IndexedDB, broadcast sent');
+    console.log(`📦 Category imported: ${data.category.name}`);
 
     let contestantId: string | undefined;
     if (data.name.trim()) {
@@ -61,7 +61,7 @@ export function ImportContent({}: ImportContentProps) {
       };
       await addContestant(newContestant);
       contestantId = newContestant.id;
-      console.log('[ImportContent] Contestant added to IndexedDB');
+      console.log(`👤 Contestant created: ${data.name}`);
     }
 
     // Note: No need to call refreshMetadata() here - the broadcast from addCategory()
@@ -100,14 +100,6 @@ export function ImportContent({}: ImportContentProps) {
     const isLastCategory = index === categories.length - 1;
     const categoryNumber = index + 1;
     const totalPopsToList = 1 + index + popsBeforeResult;
-
-    console.log('[ImportContent] createPreviewView', {
-      index,
-      categoryName: item.category.name,
-      isLastCategory,
-      totalPopsToList,
-      calculation: `1 (current) + ${index} (previous previews) + ${popsBeforeResult} (views before first preview)`,
-    });
 
     // Create command for this preview using local hook functions
     const command = new ImportCategoryCommand(
@@ -153,11 +145,6 @@ export function ImportContent({}: ImportContentProps) {
     categories: { name: string; category: Category }[],
     popsBeforeResult: number
   ) => {
-    console.log('[ImportContent] pushFirstPreview', {
-      categoryCount: categories.length,
-      popsBeforeResult,
-      categories: categories.map(c => c.category.name),
-    });
     const firstView = createPreviewView(categories, 0, popsBeforeResult);
     pushView(firstView);
   };
