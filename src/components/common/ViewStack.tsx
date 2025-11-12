@@ -22,20 +22,24 @@ import {
 } from 'react';
 import { Modal } from './Modal';
 
-export interface View {
+export interface View<TState = void, TResult = void> {
   id: string;
   title: string;
   content: ReactNode;
-  onEnter?: () => void; // Called when view is pushed (redo)
-  onExit?: () => void; // Called when view is popped (undo)
+  state?: TState; // View-specific state passed from parent
+  onEnter?: (state?: TState) => void; // Called when view is pushed (redo)
+  onExit?: (result?: TResult) => void; // Called when view is popped (undo)
+  onResult?: (result: TResult) => void; // Called when child view returns data
 }
 
 interface ViewStackContextValue {
-  pushView: (view: View) => void;
-  popView: () => void;
-  replaceView: (view: View) => void;
+  pushView: <TState = void, TResult = void>(view: View<TState, TResult>) => void;
+  popView: <TResult = void>(result?: TResult) => void;
+  replaceView: <TState = void, TResult = void>(view: View<TState, TResult>) => void;
   currentViewId: string;
   stackDepth: number;
+  getCurrentView: () => View | undefined;
+  updateCurrentView: (updater: (view: View) => View) => void;
 }
 
 const ViewStackContext = createContext<ViewStackContextValue | null>(null);
@@ -53,47 +57,81 @@ interface ViewStackProps {
   onClose: () => void;
   initialView: View;
   className?: string;
+  onComplete?: (result?: unknown) => void; // Called when root view completes
 }
 
-export function ViewStack({ isOpen, onClose, initialView, className }: ViewStackProps) {
+export function ViewStack({ isOpen, onClose, initialView, className, onComplete }: ViewStackProps) {
   const [viewStack, setViewStack] = useState<View[]>([initialView]);
 
   // Reset stack when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setViewStack([initialView]);
+      initialView.onEnter?.(initialView.state); // Call onEnter for initial view
+    } else {
+      // When closing, call onExit for all views in stack (cleanup)
+      viewStack.forEach((view) => view.onExit?.());
     }
+    // Note: viewStack deliberately omitted to avoid loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialView]);
 
   const currentView = viewStack[viewStack.length - 1];
   const showBackButton = viewStack.length > 1;
 
-  const pushView = useCallback((view: View) => {
-    // Call onEnter lifecycle hook (redo action)
-    view.onEnter?.();
-    setViewStack((prev) => [...prev, view]);
+  const pushView = useCallback(<TState = void, TResult = void>(view: View<TState, TResult>) => {
+    // Call onEnter with state (redo action)
+    view.onEnter?.(view.state);
+    // Type erasure: store as View (runtime types are preserved)
+    setViewStack((prev) => [...prev, view as unknown as View]);
   }, []);
 
-  const popView = useCallback(() => {
+  const popView = useCallback(<TResult = void>(result?: TResult) => {
     setViewStack((prev) => {
       if (prev.length <= 1) {
+        // Popping root view - call onComplete and don't pop
+        if (result !== undefined) {
+          onComplete?.(result);
+        }
         return prev;
       }
 
-      // Call onExit lifecycle hook on the view being popped (undo action)
+      // Call onExit on the view being popped (undo action)
       const poppingView = prev[prev.length - 1];
-      poppingView?.onExit?.();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (poppingView?.onExit as any)?.(result);
+
+      // Call onResult on the parent view (pass data up)
+      const parentView = prev[prev.length - 2];
+      if (result !== undefined && parentView?.onResult) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (parentView.onResult as any)(result);
+      }
 
       return prev.slice(0, -1);
     });
+  }, [onComplete]);
+
+  const getCurrentView = useCallback(() => {
+    return viewStack[viewStack.length - 1];
+  }, [viewStack]);
+
+  const updateCurrentView = useCallback((updater: (view: View) => View) => {
+    setViewStack((prev) => {
+      if (prev.length === 0) return prev;
+      const currentView = prev[prev.length - 1];
+      if (!currentView) return prev;
+      const updated = updater(currentView);
+      return [...prev.slice(0, -1), updated];
+    });
   }, []);
 
-  const replaceView = useCallback((view: View) => {
+  const replaceView = useCallback(<TState = void, TResult = void>(view: View<TState, TResult>) => {
     setViewStack((prev) => {
       if (prev.length === 0) {
-        return [view];
+        return [view as unknown as View];
       }
-      return [...prev.slice(0, -1), view];
+      return [...prev.slice(0, -1), view as unknown as View];
     });
   }, []);
 
@@ -108,8 +146,10 @@ export function ViewStack({ isOpen, onClose, initialView, className }: ViewStack
       replaceView,
       currentViewId: currentView?.id ?? '',
       stackDepth: viewStack.length,
+      getCurrentView,
+      updateCurrentView,
     }),
-    [pushView, popView, replaceView, currentView?.id, viewStack.length]
+    [pushView, popView, replaceView, currentView?.id, viewStack.length, getCurrentView, updateCurrentView]
   );
 
   return (
