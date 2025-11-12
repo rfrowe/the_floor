@@ -204,24 +204,15 @@ export function ViewStack<TState = void, TResult = void>({ isOpen, onClose, init
   const popView = useCallback(<TResult = void>(result?: TResult) => {
     const poppingView = viewStack[viewStack.length - 1];
 
-    console.log('[ViewStack] popView called', {
-      poppingViewId: poppingView?.id,
-      poppingViewTitle: poppingView?.title,
-      stackDepth: viewStack.length,
-      result,
-    });
-
     if (viewStack.length <= 1) {
       if (result !== undefined) {
         onComplete?.(result);
       }
-      console.log('[ViewStack] Stack depth <= 1, not popping');
       return;
     }
 
     // Check if this view is already being popped
     if (poppingView && poppingViewsRef.current.has(poppingView.id)) {
-      console.log(`[ViewStack] View ${poppingView.id} already being popped, skipping`);
       return;
     }
 
@@ -324,14 +315,9 @@ export function ViewStack<TState = void, TResult = void>({ isOpen, onClose, init
   }, []);
 
   const popMultiple = useCallback(async (count: number) => {
-    console.log(`[ViewStack] popMultiple called with count=${count}, current stack depth=${viewStack.length}`);
-
-    // Execute all pops at once by directly modifying the stack
     const popsNeeded = Math.min(count, viewStack.length - 1);
-    console.log(`[ViewStack] Will pop ${popsNeeded} views (requested ${count}, depth ${viewStack.length})`);
 
     if (popsNeeded <= 0) {
-      console.log('[ViewStack] No pops needed');
       return;
     }
 
@@ -342,24 +328,18 @@ export function ViewStack<TState = void, TResult = void>({ isOpen, onClose, init
 
       // Collect onLeave hooks
       if (viewToPop?.onLeave) {
-        console.log(`[ViewStack] Collecting onLeave for view ${i}: ${viewToPop.id}`);
         const hook = viewToPop.onLeave;
         operations.push(async () => {
-          console.log(`[ViewStack] Executing onLeave for ${viewToPop.id}`);
           await Promise.resolve(hook());
-          console.log(`[ViewStack] Completed onLeave for ${viewToPop.id}`);
         });
       }
 
       // Collect command executions (for the last view being popped)
       // Only execute commands that haven't been committed yet
       if (i === 0 && viewToPop?.command && !viewToPop.isCommitted) {
-        console.log(`[ViewStack] Collecting command.execute for view ${i}: ${viewToPop.id}`);
         const cmd = viewToPop.command;
         operations.push(async () => {
-          console.log(`[ViewStack] Executing command for ${viewToPop.id}`);
           await cmd.execute();
-          console.log(`[ViewStack] Completed command for ${viewToPop.id}`);
         });
       }
     }
@@ -370,10 +350,8 @@ export function ViewStack<TState = void, TResult = void>({ isOpen, onClose, init
     }
 
     // Now update state to pop all views at once
-    console.log(`[ViewStack] All onLeave hooks completed, updating state to pop ${popsNeeded} views`);
     setViewStack((prev) => {
       const newStack = prev.slice(0, -(popsNeeded));
-      console.log(`[ViewStack] Stack updated from ${prev.length} to ${newStack.length}`);
 
       // Call onEnter on the revealed view
       const revealedView = newStack[newStack.length - 1];
@@ -384,8 +362,6 @@ export function ViewStack<TState = void, TResult = void>({ isOpen, onClose, init
 
       return newStack;
     });
-
-    console.log(`[ViewStack] popMultiple completed`);
   }, [viewStack]);
 
   const handleBack = useCallback(() => {
