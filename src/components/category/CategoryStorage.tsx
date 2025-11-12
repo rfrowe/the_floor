@@ -20,9 +20,7 @@ export function CategoryStorage({ categories, onDeleteAll }: CategoryStorageProp
   const totalStorageUsed = calculateTotalStorageUsed(categories);
 
   const containerClass = styles['storage-container'] ?? '';
-  const headerClass = styles['storage-header'] ?? '';
   const titleClass = styles['storage-title'] ?? '';
-  const capacityClass = styles['capacity-display'] ?? '';
   const barContainerClass = styles['bar-container'] ?? '';
   const barFillClass = styles['bar-fill'] ?? '';
   const sizeTextClass = styles['size-text'] ?? '';
@@ -30,32 +28,36 @@ export function CategoryStorage({ categories, onDeleteAll }: CategoryStorageProp
 
   return (
     <div className={containerClass}>
-      <div className={headerClass}>
-        <h3 className={titleClass}>Storage Capacity</h3>
-        <button
-          type="button"
-          onClick={onDeleteAll}
-          className={deleteButtonClass}
-          aria-label="Delete all categories"
-        >
-          Delete All
-        </button>
+      <h3 className={titleClass}>Storage Capacity</h3>
+
+      <div className={barContainerClass}>
+        <div
+          className={barFillClass}
+          style={{ width: `${String(calculateStoragePercentage(totalStorageUsed))}%` }}
+          aria-label={`Storage usage: ${calculateStoragePercentage(totalStorageUsed).toFixed(1)}%`}
+        />
       </div>
 
-      <div className={capacityClass}>
-        <div className={barContainerClass}>
-          <div
-            className={barFillClass}
-            style={{ width: `${String(calculateStoragePercentage(totalStorageUsed))}%` }}
-            aria-label={`Storage usage: ${calculateStoragePercentage(totalStorageUsed).toFixed(1)}%`}
-          />
-        </div>
-        <p className={sizeTextClass}>
-          {formatBytes(totalStorageUsed)} used
-          {categoryCount > 0 &&
-            ` • ${String(categoryCount)} ${categoryCount === 1 ? 'category' : 'categories'} • ${String(totalSlides)} slides`}
-        </p>
-      </div>
+      <p className={sizeTextClass}>
+        {formatBytes(totalStorageUsed)} used
+        {categoryCount > 0 && (
+          <>
+            {' '}
+            <span style={{ whiteSpace: 'nowrap' }}>• {String(categoryCount)} {categoryCount === 1 ? 'category' : 'categories'}</span>
+            {' '}
+            <span style={{ whiteSpace: 'nowrap' }}>• {String(totalSlides)} slides</span>
+          </>
+        )}
+      </p>
+
+      <button
+        type="button"
+        onClick={onDeleteAll}
+        className={deleteButtonClass}
+        aria-label="Delete all categories"
+      >
+        Delete All
+      </button>
     </div>
   );
 }

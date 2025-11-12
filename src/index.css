@@ -56,4 +56,14 @@ button:focus-visible {
   outline: none;
 }
 
+/* Reusable hover lift animation */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
 /* Theme colors are now managed by theme.css and applied via [data-theme] attribute */
