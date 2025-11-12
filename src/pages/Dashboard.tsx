@@ -33,7 +33,6 @@ function Dashboard() {
   const [
     contestants,
     {
-      add: addContestant,
       addBulk: addContestantsBulk,
       remove: removeContestant,
       update: updateContestant,
@@ -117,22 +116,10 @@ function Dashboard() {
     setShowImporter(false);
   };
 
-  const handleCreateContestant = async (name: string, categoryId: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    if (!category) {
-      throw new Error('Category not found');
-    }
-
-    // Create contestant from the category
-    const categoryData: Category = {
-      name: category.name,
-      slides: category.slides,
-    };
-
-    const newContestant = createContestantFromCategory(categoryData, name);
-    newContestant.categoryId = categoryId;
-
-    await addContestant(newContestant);
+  const handleCreateContestant = (_contestants: Contestant[]) => {
+    // Contestants already created by ContestantCreator
+    // Just close the modal
+    setShowAddContestant(false);
   };
 
   const handleDeleteClick = (contestant: Contestant) => {
@@ -555,7 +542,6 @@ function Dashboard() {
           }}
           onCreate={handleCreateContestant}
           categories={categories}
-          onImport={handleImport}
         />
       )}
     </Container>
