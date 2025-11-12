@@ -15,7 +15,7 @@ import styles from '../CategoryImporter.module.css';
 
 interface SampleCategoryBrowserProps {
   onLoadCategories: (
-    categories: { name: string; category: Category; sizeBytes: number | undefined }[],
+    categories: { name: string; category: Category }[],
     selections: Set<string> // Pass back current selections
   ) => void | Promise<void>;
   initialContestantName?: string;
@@ -64,11 +64,10 @@ export function SampleCategoryBrowser({
       // Load all selected categories
       const categoryPromises = filenames.map(async (filename) => {
         try {
-          const { category, sizeBytes } = await fetchSampleCategory(filename);
+          const { category } = await fetchSampleCategory(filename);
           return {
             name: initialContestantName ?? '',
             category,
-            sizeBytes: sizeBytes as number | undefined,
           };
         } catch (error) {
           console.error(`Failed to load ${filename}:`, error);
@@ -78,7 +77,7 @@ export function SampleCategoryBrowser({
 
       const results = await Promise.all(categoryPromises);
       const loadedCategories = results.filter(
-        (c): c is { name: string; category: Category; sizeBytes: number | undefined } => c !== null
+        (c): c is { name: string; category: Category } => c !== null
       );
 
       if (loadedCategories.length > 0) {

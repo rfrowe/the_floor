@@ -2,110 +2,164 @@
  * ImportContent Component
  *
  * Import view content with sample browser navigation.
- * Manages nested navigation to sample browser view.
+ * Fully self-contained - uses hooks directly, no callbacks.
  */
 
 import { useState } from 'react';
-import type { Category } from '@types';
+import { nanoid } from 'nanoid';
+import type { Category, StoredCategory, Contestant } from '@types';
 import { useViewStack, type View } from '@components/common/ViewStack';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { SampleCategoryBrowser } from '../SampleCategoryBrowser';
 import { PreviewContent } from './PreviewContent';
 import { ImportCategoryCommand } from './ImportCategoryCommand';
+import { useCategories } from '@hooks/useCategories';
+import { useContestants } from '@hooks/useIndexedDB';
+import { calculateCategorySize } from '@utils/storageUtils';
 
 interface ImportResult {
   imported: { name: string; category: Category }[];
 }
 
 interface ImportContentProps {
-  onImportCategory?: (data: { name: string; category: Category }) => Promise<{ categoryId: string; contestantId?: string }>;
-  onUndoImport?: (categoryId: string, contestantId?: string) => Promise<void>;
+  // No callbacks needed - fully self-contained
 }
 
-export function ImportContent({ onImportCategory, onUndoImport }: ImportContentProps) {
-  const { pushView, popView, replaceView, updateCurrentView } = useViewStack();
+export function ImportContent({}: ImportContentProps) {
+  const { pushView, popView, replaceView } = useViewStack();
+  const [, { add: addCategory, remove: removeCategory }] = useCategories();
+  const [, { add: addContestant, remove: removeContestant }] = useContestants();
+
+  // Import function using hooks
+  const handleImportCategory = async (data: { name: string; category: Category }): Promise<{ categoryId: string; contestantId?: string }> => {
+    const categoryId = nanoid();
+    const firstSlide = data.category.slides[0];
+    const thumbnailUrl = firstSlide?.imageUrl ?? '';
+    const sizeInBytes = calculateCategorySize(data.category);
+
+    const storedCategory: StoredCategory = {
+      id: categoryId,
+      name: data.category.name,
+      slides: data.category.slides,
+      createdAt: new Date().toISOString(),
+      thumbnailUrl,
+      sizeInBytes,
+    };
+
+    await addCategory(storedCategory);
+    console.log('[ImportContent] Category added to IndexedDB, broadcast sent');
+
+    let contestantId: string | undefined;
+    if (data.name.trim()) {
+      const newContestant: Contestant = {
+        id: nanoid(),
+        name: data.name,
+        category: data.category,
+        categoryId,
+        wins: 0,
+        eliminated: false,
+      };
+      await addContestant(newContestant);
+      contestantId = newContestant.id;
+      console.log('[ImportContent] Contestant added to IndexedDB');
+    }
+
+    // Note: No need to call refreshMetadata() here - the broadcast from addCategory()
+    // will trigger all useCategoryMetadata hooks to reload automatically
+
+    const result: { categoryId: string; contestantId?: string } = { categoryId };
+    if (contestantId) {
+      result.contestantId = contestantId;
+    }
+    return result;
+  };
+
+  // Undo function using hooks
+  const handleUndoImport = async (categoryId: string, contestantId?: string): Promise<void> => {
+    await Promise.all([
+      removeCategory(categoryId),
+      contestantId ? removeContestant(contestantId) : Promise.resolve(),
+    ]);
+    // Note: No need to call refreshMetadata() - the broadcast from removeCategory()
+    // will trigger all useCategoryMetadata hooks to reload automatically
+  };
   // Preserve sample selections across navigation
   const [selectedSampleFilenames, setSelectedSampleFilenames] = useState<Set<string>>(new Set());
 
-  // Push preview views progressively using Command pattern
-  const pushFirstPreview = (
-    categories: { name: string; category: Category; sizeBytes: number | undefined }[],
-    popsBeforeResult: number,
-    onImportCategory: (data: { name: string; category: Category }) => Promise<{ categoryId: string; contestantId?: string }>,
-    onUndoImport: (categoryId: string, contestantId?: string) => Promise<void>,
-    updateCurrentView: (updater: (view: any) => any) => void
-  ) => {
-    const pushPreview = (index: number) => {
-      const item = categories[index];
-      if (!item) return;
+  // Create preview view factory - each view knows how to create the next one
+  const createPreviewView = (
+    categories: { name: string; category: Category }[],
+    index: number,
+    popsBeforeResult: number
+  ): View => {
+    const item = categories[index];
+    if (!item) {
+      throw new Error(`No category at index ${index}`);
+    }
 
-      const isLastCategory = index === categories.length - 1;
-      const categoryNumber = index + 1;
+    const isLastCategory = index === categories.length - 1;
+    const categoryNumber = index + 1;
+    const totalPopsToList = 1 + index + popsBeforeResult;
 
-      // Create command for this preview
-      const command = new ImportCategoryCommand(
-        { name: item.name, category: item.category },
-        onImportCategory,
-        onUndoImport
-      );
+    console.log('[ImportContent] createPreviewView', {
+      index,
+      categoryName: item.category.name,
+      isLastCategory,
+      totalPopsToList,
+      calculation: `1 (current) + ${index} (previous previews) + ${popsBeforeResult} (views before first preview)`,
+    });
 
-      const previewView: View = {
-        id: `import-preview-${index}`,
-        title: `${item.category.name} - Preview`,
-        content: (
-          <PreviewContent
-            category={item.category}
-            contestantName={item.name}
-            sizeBytes={item.sizeBytes}
-            categoryNumber={categoryNumber}
-            totalCategories={categories.length}
-            isSample={true}
-            fileName={item.category.name}
-            onImport={async (editedContestantName, editedCategoryName) => {
-              // Update command with edited values before execution
-              command.updateData(editedContestantName, editedCategoryName);
+    // Create command for this preview using local hook functions
+    const command = new ImportCategoryCommand(
+      { name: item.name, category: item.category },
+      handleImportCategory,
+      handleUndoImport
+    );
 
-              // Update current view with edited values so they're preserved on undo
-              updateCurrentView((view) => ({
-                ...view,
-                content: (
-                  <PreviewContent
-                    category={{ ...item.category, name: editedCategoryName }}
-                    contestantName={editedContestantName}
-                    sizeBytes={item.sizeBytes}
-                    categoryNumber={categoryNumber}
-                    totalCategories={categories.length}
-                    isSample={true}
-                    fileName={item.category.name}
-                    onImport={view.content.props.onImport}
-                  />
-                ),
-              }));
+    // Factory to create the next preview view (only if not last)
+    const createNextView: ((editedData: { contestantName: string; categoryName: string }) => View) | undefined =
+      isLastCategory
+        ? undefined
+        : () => createPreviewView(categories, index + 1, popsBeforeResult);
 
-              if (isLastCategory) {
-                // Last one - execute command, then pop all
-                await command.execute();
-                for (let i = 0; i <= index; i++) {
-                  popView();
-                }
-                for (let i = 0; i < popsBeforeResult; i++) {
-                  popView();
-                }
-                popView();
-              } else {
-                // Not last - just push next (ViewStack will execute command)
-                pushPreview(index + 1);
-              }
-            }}
-          />
-        ),
-        command, // ViewStack handles execute/undo automatically
-      };
-
-      pushView(previewView);
+    const previewView: View = {
+      id: `import-preview-${index}`,
+      title: `${item.category.name} - Preview`,
+      content: (
+        <PreviewContent
+          category={item.category}
+          contestantName={item.name}
+          categoryNumber={categoryNumber}
+          totalCategories={categories.length}
+          isSample={true}
+          fileName={item.category.name}
+          isLastCategory={isLastCategory}
+          totalPopsToList={totalPopsToList}
+          {...(createNextView ? { createNextView } : {})}
+          updateCommand={(contestantName, categoryName) => {
+            command.updateData(contestantName, categoryName);
+          }}
+        />
+      ),
+      // Attach command to view - ViewStack will execute on commit (forward) and undo on back
+      command,
     };
 
-    pushPreview(0);
+    return previewView;
+  };
+
+  // Push the first preview view to start the flow
+  const pushFirstPreview = (
+    categories: { name: string; category: Category }[],
+    popsBeforeResult: number
+  ) => {
+    console.log('[ImportContent] pushFirstPreview', {
+      categoryCount: categories.length,
+      popsBeforeResult,
+      categories: categories.map(c => c.category.name),
+    });
+    const firstView = createPreviewView(categories, 0, popsBeforeResult);
+    pushView(firstView);
   };
 
   // Create samples view with given selections
@@ -119,10 +173,9 @@ export function ImportContent({ onImportCategory, onUndoImport }: ImportContentP
           setSelectedSampleFilenames(currentSelections);
           const updatedSamplesView = createSamplesView(currentSelections);
           replaceView(updatedSamplesView);
-
-          if (onImportCategory && onUndoImport) {
-            pushFirstPreview(categories, 1, onImportCategory, onUndoImport, updateCurrentView);
-          }
+          // Stack at this point: [list, import, samples]
+          // popsBeforeResult = 2 (import + samples)
+          pushFirstPreview(categories, 2);
         }}
       />
     ),
@@ -133,10 +186,8 @@ export function ImportContent({ onImportCategory, onUndoImport }: ImportContentP
     pushView(samplesView);
   };
 
-  const handleFilesLoaded = (categories: { name: string; category: Category; sizeBytes: number | undefined }[]) => {
-    if (onImportCategory && onUndoImport) {
-      pushFirstPreview(categories, 0, onImportCategory, onUndoImport, updateCurrentView);
-    }
+  const handleFilesLoaded = (categories: { name: string; category: Category }[]) => {
+    pushFirstPreview(categories, 0);
   };
 
   return (

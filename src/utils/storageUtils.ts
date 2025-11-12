@@ -2,18 +2,16 @@
  * Storage utilities for calculating category storage capacity
  */
 
-import type { StoredCategory } from '@types';
+import sizeof from 'object-sizeof';
+import type { Category } from '@types';
 
 /**
- * Calculate the approximate size of a stored category in bytes
- * Estimates based on JSON serialization size
+ * Calculate the actual in-memory size of a category object in bytes
+ * Uses recursive traversal to measure all fields
  */
-export function calculateCategorySize(category: StoredCategory): number {
+export function calculateCategorySize(category: Category): number {
   try {
-    // Serialize the category to JSON to get approximate storage size
-    const json = JSON.stringify(category);
-    // Convert to bytes (each character is roughly 2 bytes in UTF-16)
-    return new Blob([json]).size;
+    return sizeof(category);
   } catch (error) {
     console.error('Error calculating category size:', error);
     return 0;
@@ -21,10 +19,12 @@ export function calculateCategorySize(category: StoredCategory): number {
 }
 
 /**
- * Calculate total storage used by all categories
+ * Calculate total storage used by categories based on their stored sizeInBytes
  */
-export function calculateTotalStorageUsed(categories: StoredCategory[]): number {
-  return categories.reduce((total, category) => total + calculateCategorySize(category), 0);
+export function calculateTotalStorageUsed(
+  categories: Array<{ sizeInBytes?: number }>
+): number {
+  return categories.reduce((total, category) => total + (category.sizeInBytes ?? 0), 0);
 }
 
 /**

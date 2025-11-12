@@ -46,6 +46,7 @@ export function useCategoryMetadata(): [CategoryMetadata[], { refresh: () => Pro
     const broadcast = createBroadcastSync<'reload'>({
       channelName: CHANNEL_NAME,
       onMessage: () => {
+        console.log('[useCategoryMetadata] Received reload broadcast, reloading metadata');
         void loadMetadata();
       },
     });

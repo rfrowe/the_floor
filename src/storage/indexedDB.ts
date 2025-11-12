@@ -304,6 +304,7 @@ export async function getAllCategoryMetadata(): Promise<
           slides: unknown[];
           thumbnailUrl: string;
           createdAt: string;
+          sizeInBytes?: number;
         }[];
 
         // Map to lightweight metadata (exclude slide data)
@@ -313,6 +314,7 @@ export async function getAllCategoryMetadata(): Promise<
           slideCount: cat.slides.length,
           thumbnailUrl: cat.thumbnailUrl,
           createdAt: cat.createdAt,
+          sizeInBytes: cat.sizeInBytes,
         }));
 
         resolve(metadata);

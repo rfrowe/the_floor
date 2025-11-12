@@ -9,33 +9,27 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { Contestant, Category } from '@types';
+import type { Contestant } from '@types';
 import { Modal } from '@components/common/Modal';
 import { ViewStack, type View } from '@components/common/ViewStack';
 import { ListContent } from './manager/ListContent';
 import { useCategoryMetadata } from '@hooks/useCategoryMetadata';
 import { useCategories } from '@hooks/useCategories';
-import { useContestants } from '@hooks/useIndexedDB';
 import styles from './CategoryManager.module.css';
 
 interface CategoryManagerProps {
   onClose: () => void;
   contestants: Contestant[];
-  onImport: (contestants: { name: string; category: Category }[]) => Promise<Array<{ categoryId: string; contestantId?: string }>>;
 }
 
-export function CategoryManager({ onClose, contestants, onImport }: CategoryManagerProps) {
+export function CategoryManager({ onClose, contestants }: CategoryManagerProps) {
   // Use metadata for fast list loading
-  const [categoryMetadata, { refresh: refreshMetadata }] = useCategoryMetadata();
+  const [categoryMetadata] = useCategoryMetadata();
   // Keep useCategories for delete operations
-  const [, { remove: removeCategory, removeAll: removeAllCategories }] = useCategories();
-  const [, { remove: removeContestant }] = useContestants();
+  const [, { removeAll: removeAllCategories }] = useCategories();
 
   const [deletingAllCategories, setDeletingAllCategories] = useState(false);
 
-  const handleDeleteCategory = useCallback(async (categoryId: string) => {
-    await removeCategory(categoryId);
-  }, [removeCategory]);
 
   const handleDeleteAllCategories = useCallback(() => {
     setDeletingAllCategories(true);
@@ -53,21 +47,6 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
 
   const categoryModalClass = styles['category-modal'];
 
-  // Simplified handlers for Command pattern
-  const handleImportCategory = useCallback(async (data: { name: string; category: Category }) => {
-    const results = await onImport([data]);
-    await refreshMetadata();
-    return results[0] ?? { categoryId: '' };
-  }, [onImport, refreshMetadata]);
-
-  const handleUndoImport = useCallback(async (categoryId: string, contestantId?: string) => {
-    await Promise.all([
-      removeCategory(categoryId),
-      contestantId ? removeContestant(contestantId) : Promise.resolve(),
-    ]);
-    await refreshMetadata();
-  }, [removeCategory, removeContestant, refreshMetadata]);
-
   const listView = {
     id: 'list',
     title: 'Manage Categories',
@@ -75,10 +54,7 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
       <ListContent
         categoryMetadata={categoryMetadata}
         contestants={contestants}
-        onDeleteCategory={handleDeleteCategory}
         onDeleteAllCategories={handleDeleteAllCategories}
-        onImportCategory={handleImportCategory}
-        onUndoImport={handleUndoImport}
       />
     ),
   } satisfies View;
@@ -92,7 +68,7 @@ export function CategoryManager({ onClose, contestants, onImport }: CategoryMana
         {...(categoryModalClass ? { className: categoryModalClass } : {})}
       />
 
-      {/* Delete all confirmation modal - separate from ViewStack */}
+      {/* Delete all confirmation modal - separate from ViewStack (allowed exception) */}
       {deletingAllCategories && (
         <Modal
           isOpen={true}

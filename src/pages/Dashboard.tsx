@@ -15,6 +15,7 @@ import { Modal } from '@components/common/Modal';
 import { ThemeToggle } from '@components/common/ThemeToggle';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { resetAppState } from '@utils/resetApp';
+import { calculateCategorySize } from '@utils/storageUtils';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useCategories } from '@hooks/useCategories';
 import { useContestantSelection } from '@hooks/useContestantSelection';
@@ -70,8 +71,8 @@ function Dashboard() {
         const firstSlide = category.slides[0];
         const thumbnailUrl = firstSlide?.imageUrl ?? '';
 
-        // Calculate approximate size from JSON stringification
-        const sizeInBytes = JSON.stringify(category).length;
+        // Calculate actual in-memory size
+        const sizeInBytes = calculateCategorySize(category);
 
         const storedCategory: StoredCategory = {
           id: categoryId,
@@ -543,7 +544,6 @@ function Dashboard() {
             setShowCategoryManager(false);
           }}
           contestants={contestants}
-          onImport={handleImport}
         />
       )}
 

@@ -6,11 +6,12 @@
  */
 
 import { useState, useMemo } from 'react';
-import type { Contestant, Category } from '@types';
+import type { Contestant } from '@types';
 import { useViewStack } from '@components/common/ViewStack';
 import { CategoryStorage } from '../CategoryStorage';
-import { DetailContent } from './DetailContent';
+import { DetailContentContainer } from './DetailContentContainer';
 import { ImportContent } from './ImportContent';
+import { DeleteConfirmationContent } from './DeleteConfirmationContent';
 import styles from '../CategoryManager.module.css';
 
 interface CategoryMetadata {
@@ -22,26 +23,16 @@ interface CategoryMetadata {
 interface ListContentProps {
   categoryMetadata: CategoryMetadata[];
   contestants: Contestant[];
-  onDeleteCategory: (categoryId: string) => Promise<void>;
   onDeleteAllCategories: () => void;
-  onImportCategory?: (data: { name: string; category: Category }) => Promise<{ categoryId: string; contestantId?: string }>;
-  onUndoImport?: (categoryId: string, contestantId?: string) => Promise<void>;
 }
 
 export function ListContent({
   categoryMetadata,
   contestants,
-  onDeleteCategory,
   onDeleteAllCategories,
-  onImportCategory,
-  onUndoImport,
 }: ListContentProps) {
   const { pushView } = useViewStack();
   const [searchQuery, setSearchQuery] = useState('');
-  const [deletingCategory, setDeletingCategory] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredDeleteButton, setHoveredDeleteButton] = useState<string | null>(null);
 
@@ -78,7 +69,7 @@ export function ListContent({
     pushView({
       id: `detail-${category.id}`,
       title: `${category.name} - ${String(category.slideCount)} slides`,
-      content: <DetailContent categoryId={category.id} />,
+      content: <DetailContentContainer categoryId={category.id} />,
     });
   };
 
@@ -86,12 +77,7 @@ export function ListContent({
     pushView({
       id: 'import',
       title: 'Import Category',
-      content: (
-        <ImportContent
-          {...(onImportCategory ? { onImportCategory } : {})}
-          {...(onUndoImport ? { onUndoImport } : {})}
-        />
-      ),
+      content: <ImportContent />,
     });
   };
 
@@ -101,18 +87,18 @@ export function ListContent({
     if (usedBy.length > 0) {
       return;
     }
-    setDeletingCategory(category);
-  };
 
-  const handleConfirmDelete = async () => {
-    if (!deletingCategory) return;
-    try {
-      await onDeleteCategory(deletingCategory.id);
-      setDeletingCategory(null);
-    } catch (error) {
-      console.error('Failed to delete category:', error);
-      alert(`Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // Push delete confirmation view (fully self-contained, no callbacks)
+    pushView({
+      id: `delete-confirm-${category.id}`,
+      title: 'Confirm Delete',
+      content: (
+        <DeleteConfirmationContent
+          categoryId={category.id}
+          categoryName={category.name}
+        />
+      ),
+    });
   };
 
   return (
@@ -247,27 +233,6 @@ export function ListContent({
             })}
           </div>
         </>
-      )}
-
-      {/* Delete confirmation overlay */}
-      {deletingCategory && (
-        <div className={styles['delete-confirmation']}>
-          <p>Are you sure you want to delete the category &quot;{deletingCategory.name}&quot;?</p>
-          <div className={styles['modal-footer']}>
-            <button
-              onClick={() => setDeletingCategory(null)}
-              className={styles['modal-button-secondary']}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => void handleConfirmDelete()}
-              className={styles['modal-button-danger']}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
       )}
     </>
   );

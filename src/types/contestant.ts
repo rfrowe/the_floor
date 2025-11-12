@@ -45,6 +45,7 @@ export interface CategoryReference {
   slideCount: number;
   thumbnailUrl: string;
   createdAt: string;
+  sizeInBytes?: number;
 }
 
 /**
