@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useDuelState } from '@hooks/useDuelState';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useAuthoritativeTimer } from '@hooks/useAuthoritativeTimer';
@@ -23,6 +24,7 @@ function AudienceView() {
     useContestantSelectionListener();
   const [slideTransitioning, setSlideTransitioning] = useState(false);
   const [displaySlide, setDisplaySlide] = useState<Slide | undefined>(undefined);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // Callbacks for authoritative timer
   const handlePlayerTimeout = useCallback((loser: 1 | 2) => {
@@ -50,8 +52,8 @@ function AudienceView() {
   // Listen for app reset from other windows
   useEffect(() => {
     const cleanup = onAppReset(() => {
-      // Stay on audience view - just reload to show waiting page
-      window.location.reload();
+      // Trigger redirect to same route to force remount and show waiting page
+      setShouldRedirect(true);
     });
 
     return cleanup;
@@ -169,6 +171,11 @@ function AudienceView() {
 
     return undefined;
   }, [duelState, displaySlide]);
+
+  // Handle redirect triggered by app reset
+  if (shouldRedirect) {
+    return <Navigate to="/audience" replace state={{ key: Date.now() }} />;
+  }
 
   // If no active duel, show grid view (or waiting screen if no contestants positioned)
   if (!duelState) {

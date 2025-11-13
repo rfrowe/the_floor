@@ -35,6 +35,7 @@ describe('App', () => {
         </Routes>
       </MemoryRouter>
     );
-    expect(screen.getByRole('button', { name: 'Open Audience View' })).toBeInTheDocument();
+    // Now using LinkButton which renders as <a> tag with role="link"
+    expect(screen.getByRole('link', { name: 'Open Audience View' })).toBeInTheDocument();
   });
 });
