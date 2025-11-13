@@ -35,6 +35,6 @@ describe('App', () => {
         </Routes>
       </MemoryRouter>
     );
-    expect(screen.getByRole('button', { name: 'Open Audience View' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Audience View' })).toBeInTheDocument();
   });
 });
