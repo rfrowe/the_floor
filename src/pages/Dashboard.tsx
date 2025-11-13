@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import type { Category, Contestant, StoredCategory } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
@@ -10,6 +10,7 @@ import { DuelSetup, type DuelConfig, type DuelSetupHandle } from '@components/du
 import { GridConfigurator } from '@components/dashboard/GridConfigurator';
 import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
+import { LinkButton } from '@components/common/LinkButton';
 import { Card } from '@components/common/Card';
 import { Modal } from '@components/common/Modal';
 import { ThemeToggle } from '@components/common/ThemeToggle';
@@ -50,6 +51,7 @@ function Dashboard() {
   const [selectedContestant1, selectedContestant2] = selected;
   const duelSetupRef = useRef<DuelSetupHandle>(null);
   const [duelState] = useDuelState();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const handleImport = async (
     contestants: { name: string; category: Category }[]
@@ -147,13 +149,6 @@ function Dashboard() {
     setContestantToDelete(null);
   };
 
-  const handleOpenAudienceView = () => {
-    // Construct full URL using current origin and router basename
-    const basename = import.meta.env.BASE_URL;
-    const audienceUrl = `${window.location.origin}${basename}audience`;
-    window.open(audienceUrl, '_blank', 'noopener,noreferrer');
-  };
-
   const handleResumeDuel = () => {
     void navigate('/master');
   };
@@ -205,8 +200,8 @@ function Dashboard() {
     try {
       await resetAppState();
       setShowResetConfirm(false);
-      // Reload the page to ensure clean state
-      window.location.reload();
+      // Trigger redirect to same route to force remount and ensure clean state
+      setShouldRedirect(true);
     } catch (error) {
       console.error('Failed to reset app:', error);
       alert(
@@ -287,6 +282,11 @@ function Dashboard() {
     (c) => !c.eliminated && c.controlledSquares && c.controlledSquares.length > 0
   );
 
+  // Handle redirect triggered by app reset
+  if (shouldRedirect) {
+    return <Navigate to="/" replace state={{ key: Date.now() }} />;
+  }
+
   const dashboardClass = styles['dashboard'] ?? '';
   const headerClass = styles['header'] ?? '';
   const titleClass = styles['title'] ?? '';
@@ -305,9 +305,9 @@ function Dashboard() {
               Resume Duel
             </Button>
           )}
-          <Button variant="secondary" onClick={handleOpenAudienceView}>
+          <LinkButton to="/audience" variant="secondary" target="_blank" rel="noopener noreferrer">
             Open Audience View
-          </Button>
+          </LinkButton>
           <Button
             variant="secondary"
             onClick={() => {

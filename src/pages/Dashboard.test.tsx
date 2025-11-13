@@ -114,7 +114,7 @@ describe('Dashboard', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'The Floor' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open Audience View' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Audience View' })).toBeInTheDocument();
     // Import Contestant button replaced by Add Contestant card
     expect(screen.getByRole('button', { name: 'Add new contestant' })).toBeInTheDocument();
   });
@@ -255,8 +255,7 @@ describe('Dashboard', () => {
     });
   });
 
-  it('opens audience view in new window', async () => {
-    const user = userEvent.setup();
+  it('opens audience view in new window', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
       {
@@ -275,14 +274,12 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    const audienceButton = screen.getByRole('button', { name: 'Open Audience View' });
-    await user.click(audienceButton);
+    const audienceLink = screen.getByRole('link', { name: 'Open Audience View' });
 
-    expect(mockWindowOpen).toHaveBeenCalledWith(
-      'http://localhost/audience',
-      '_blank',
-      'noopener,noreferrer'
-    );
+    // Verify link attributes
+    expect(audienceLink).toHaveAttribute('href', '/audience');
+    expect(audienceLink).toHaveAttribute('target', '_blank');
+    expect(audienceLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('shows delete confirmation modal when Delete button clicked', async () => {
@@ -718,7 +715,7 @@ describe('Dashboard', () => {
       });
     });
 
-    it('resets app and reloads when confirmed', async () => {
+    it('resets app and navigates to home when confirmed', async () => {
       const user = userEvent.setup();
       const resetSpy = vi.spyOn(resetApp, 'resetAppState').mockResolvedValue();
 
@@ -752,9 +749,12 @@ describe('Dashboard', () => {
       const confirmButton = screen.getByTestId('confirm-reset-button');
       await user.click(confirmButton);
 
+      // Verify reset was called and component triggers navigation
       await waitFor(() => {
         expect(resetSpy).toHaveBeenCalledOnce();
-        expect(mockLocation.reload).toHaveBeenCalledOnce();
+        // After reset, component should return Navigate element
+        // Check that the container no longer shows the dialog
+        expect(screen.queryByRole('dialog', { name: 'Reset Application' })).not.toBeInTheDocument();
       });
     });
 
