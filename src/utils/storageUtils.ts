@@ -3,7 +3,10 @@
  */
 
 import sizeof from 'object-sizeof';
+import { createLogger } from './logger';
 import type { Category } from '@types';
+
+const logger = createLogger('StorageUtils');
 
 /**
  * Calculate the actual in-memory size of a category object in bytes
@@ -13,7 +16,7 @@ export function calculateCategorySize(category: Category): number {
   try {
     return sizeof(category);
   } catch (error) {
-    console.error('Error calculating category size:', error);
+    logger.error('Error calculating category size:', error);
     return 0;
   }
 }

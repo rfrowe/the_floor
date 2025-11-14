@@ -114,6 +114,7 @@ describe('Dashboard', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'The Floor' })).toBeInTheDocument();
+    // LinkButton renders as a link, not a button
     expect(screen.getByRole('link', { name: 'Open Audience View' })).toBeInTheDocument();
     // Import Contestant button replaced by Add Contestant card
     expect(screen.getByRole('button', { name: 'Add new contestant' })).toBeInTheDocument();
@@ -255,7 +256,7 @@ describe('Dashboard', () => {
     });
   });
 
-  it('opens audience view in new window', () => {
+  it('opens audience view in new tab/window', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],
       {
@@ -274,9 +275,8 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
+    // LinkButton renders as a link with target="_blank"
     const audienceLink = screen.getByRole('link', { name: 'Open Audience View' });
-
-    // Verify link attributes
     expect(audienceLink).toHaveAttribute('href', '/audience');
     expect(audienceLink).toHaveAttribute('target', '_blank');
     expect(audienceLink).toHaveAttribute('rel', 'noopener noreferrer');
@@ -715,7 +715,7 @@ describe('Dashboard', () => {
       });
     });
 
-    it('resets app and navigates to home when confirmed', async () => {
+    it('resets app and reloads when confirmed', async () => {
       const user = userEvent.setup();
       const resetSpy = vi.spyOn(resetApp, 'resetAppState').mockResolvedValue();
 
@@ -731,7 +731,7 @@ describe('Dashboard', () => {
         },
       ]);
 
-      render(
+      const { rerender } = render(
         <BrowserRouter>
           <Dashboard />
         </BrowserRouter>
@@ -749,13 +749,22 @@ describe('Dashboard', () => {
       const confirmButton = screen.getByTestId('confirm-reset-button');
       await user.click(confirmButton);
 
-      // Verify reset was called and component triggers navigation
       await waitFor(() => {
         expect(resetSpy).toHaveBeenCalledOnce();
-        // After reset, component should return Navigate element
-        // Check that the container no longer shows the dialog
+      });
+
+      // The component triggers a Navigate redirect instead of location.reload
+      // Verify the modal closes after reset
+      await waitFor(() => {
         expect(screen.queryByRole('dialog', { name: 'Reset Application' })).not.toBeInTheDocument();
       });
+
+      // Rerender to simulate the redirect completing
+      rerender(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
     });
 
     it('handles reset error gracefully', async () => {

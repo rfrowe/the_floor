@@ -18,9 +18,9 @@ describe('colorUtils', () => {
   });
 
   describe('getContestantColor', () => {
-    it('returns dark gray for empty squares (undefined ID)', () => {
+    it('returns transparent for empty squares (undefined ID)', () => {
       const color = getContestantColor(undefined);
-      expect(color).toBe('#2a2a2a');
+      expect(color).toBe('transparent');
     });
 
     it('returns consistent color for same contestant ID', () => {
@@ -122,7 +122,8 @@ describe('colorUtils', () => {
 
     it('handles empty string contestant ID', () => {
       const color = getContestantColor('');
-      expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+      // Empty string is treated as empty square (falsy value)
+      expect(color).toBe('transparent');
     });
 
     it('handles very long contestant IDs', () => {

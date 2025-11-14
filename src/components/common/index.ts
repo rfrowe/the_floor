@@ -10,5 +10,18 @@ export type { CardProps } from './Card';
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 
+export { SlidingModal } from './SlidingModal';
+
 export { Spinner } from './Spinner';
 export type { SpinnerProps, SpinnerSize } from './Spinner';
+
+export { ThemeToggle } from './ThemeToggle';
+
+export { ViewStack, useViewStack, ViewStackContext } from './ViewStack';
+export type { View, ViewStackContextValue } from './ViewStack';
+
+export { MockViewStackProvider } from './MockViewStackProvider';
+
+export { ErrorBoundary } from './ErrorBoundary';
+
+export type { Command } from './Command';

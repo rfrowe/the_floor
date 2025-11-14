@@ -1,706 +1,488 @@
-import { useState, useEffect } from 'react';
-import { Container, Button, Card, Modal, Spinner } from '@components/common';
-import { ContestantCard } from '@components/contestant/ContestantCard';
-import { SlideViewer } from '@components/slide/SlideViewer';
-import { ClockBar } from '@components/duel/ClockBar';
-import type { Contestant, Slide } from '@types';
+import { useState, useEffect, useCallback } from 'react';
+import { ComponentToc, type TocSection } from './ComponentToc';
+import ContestantCardDemo from '@components/demo/ContestantCard';
+import ClockBarDemo from '@components/demo/ClockBar';
+import CategoryStorageDemo from '@components/demo/CategoryStorage';
+import AudienceViewDemo from '@components/demo/AudienceView';
+import DuelSetupDemo from '@components/demo/DuelSetup';
+import SlideViewerDemo from '@components/demo/SlideViewer';
+import ModalDemo from '@components/demo/Modal';
+import SlidingModalDemo from '@components/demo/SlidingModal';
+import SlidePreviewDemo from '@components/demo/SlidePreview';
+import SlideListDemo from '@components/demo/SlideList';
+import GridManagementDemo from '@components/demo/GridManagement';
+import CategoryManagerDemo from '@components/demo/CategoryManager';
+import ContestantCreatorDemo from '@components/demo/ContestantCreator';
+import ImportContentDemo from '@components/demo/ImportContent';
+import { Container, Button, Card, Spinner, ThemeToggle, ErrorBoundary } from '@components/common';
 import styles from './ComponentsDemo.module.css';
 
+// Section definitions for ToC and navigation
+const SECTIONS: TocSection[] = [
+  { id: 'container', label: 'Container' },
+  { id: 'button', label: 'Button' },
+  { id: 'card', label: 'Card' },
+  { id: 'spinner', label: 'Spinner' },
+  { id: 'modal', label: 'Modal' },
+  { id: 'sliding-modal', label: 'SlidingModal' },
+  { id: 'theme-toggle', label: 'ThemeToggle' },
+  { id: 'view-stack', label: 'ViewStack' },
+  { id: 'contestant-card', label: 'ContestantCard' },
+  {
+    id: 'contestant-creator',
+    label: 'ContestantCreator',
+    children: [
+      { id: 'contestant-creator-0', label: 'CreateContent' },
+      { id: 'contestant-creator-1', label: 'ImportContent' },
+    ],
+  },
+  {
+    id: 'category-manager',
+    label: 'CategoryManager',
+    children: [
+      { id: 'category-manager-0', label: 'ListContent' },
+      { id: 'category-manager-1', label: 'ImportContent' },
+      { id: 'category-manager-2', label: 'DeleteConfirmationContent' },
+    ],
+  },
+  {
+    id: 'import-content',
+    label: 'ImportContent',
+    children: [
+      { id: 'import-content-0', label: 'ImportContent' },
+      { id: 'import-content-1', label: 'SampleCategoryBrowser' },
+      { id: 'import-content-2', label: 'IndividualPreview 1 of N' },
+      { id: 'import-content-3', label: 'IndividualPreview JSON' },
+      { id: 'import-content-4', label: 'IndividualPreview N of N' },
+    ],
+  },
+  { id: 'category-storage', label: 'CategoryStorage' },
+  { id: 'slide-viewer', label: 'SlideViewer' },
+  { id: 'slide-preview', label: 'SlidePreview' },
+  { id: 'slide-list', label: 'SlideList' },
+  { id: 'censor-box', label: 'CensorBox' },
+  { id: 'clock-bar', label: 'ClockBar' },
+  { id: 'duel-setup', label: 'DuelSetup' },
+  {
+    id: 'audience-view',
+    label: 'AudienceView',
+    children: [
+      { id: 'audience-view', label: 'FloorGrid' },
+      { id: 'audience-view', label: 'GridSquare' },
+    ],
+  },
+  {
+    id: 'grid-management',
+    label: 'GridManagement',
+    children: [
+      { id: 'grid-management', label: 'GridInitializer' },
+      { id: 'grid-management', label: 'GridConfigurator' },
+    ],
+  },
+  { id: 'accessibility', label: 'Accessibility' },
+];
+
 export function ComponentsDemo() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [showSkipAnimation, setShowSkipAnimation] = useState(false);
-  const [clockActivePlayer, setClockActivePlayer] = useState<1 | 2>(1);
-  const [time1, setTime1] = useState(30);
-  const [time2, setTime2] = useState(30);
+  // State for vending machine - which section is active (empty = none)
+  const [activeSection, setActiveSection] = useState<string>('');
 
-  const handleLoadingDemo = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-  };
-
-  const handleSkipAnimationDemo = () => {
-    setShowSkipAnimation(true);
-    // Animation is exactly 3 seconds, reset after completion
-    setTimeout(() => {
-      setShowSkipAnimation(false);
-    }, 3000);
-  };
-
-  // Simulate clock countdown with 100ms updates for smooth millisecond display
+  // Sync with URL hash on mount
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (clockActivePlayer === 1 && time1 > 0) {
-        setTime1((t) => Math.max(0, t - 0.1));
-      } else if (clockActivePlayer === 2 && time2 > 0) {
-        setTime2((t) => Math.max(0, t - 0.1));
-      }
-    }, 100);
+    const hash = window.location.hash.slice(1);
+    if (hash && SECTIONS.some((s) => s.id === hash || s.children?.some((c) => c.id === hash))) {
+      setActiveSection(hash);
+    }
+  }, []);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [clockActivePlayer, time1, time2]);
-
-  const handleResetClock = () => {
-    setTime1(30);
-    setTime2(30);
-    setClockActivePlayer(1);
-  };
-
-  const handleSwitchPlayer = () => {
-    setClockActivePlayer(clockActivePlayer === 1 ? 2 : 1);
-  };
-
-  const handleTimeout = () => {
-    if (clockActivePlayer === 1) {
-      setTime1(0);
+  // Update URL hash when section changes
+  useEffect(() => {
+    if (activeSection) {
+      window.location.hash = activeSection;
     } else {
-      setTime2(0);
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, [activeSection]);
+
+  // Track carousel view indices
+  const [carouselViews, setCarouselViews] = useState<Record<string, number>>({});
+
+  // Navigation handler for ToC
+  const handleNavigate = useCallback((sectionId: string, viewIndex?: number) => {
+    // Extract parent section and view index from child IDs like "category-manager-0"
+    const match = /^(.+)-(\d+)$/.exec(sectionId);
+    if (match && viewIndex === undefined) {
+      const parentSection = match[1] ?? '';
+      const childIndex = parseInt(match[2] ?? '0', 10);
+      setActiveSection(sectionId);
+      if (parentSection) {
+        setCarouselViews((prev) => ({ ...prev, [parentSection]: childIndex }));
+      }
+    } else {
+      setActiveSection(sectionId);
+      // Store view index for carousel-based sections
+      if (viewIndex !== undefined) {
+        setCarouselViews((prev) => ({ ...prev, [sectionId]: viewIndex }));
+      }
+    }
+
+    // Scroll to the vended section
+    setTimeout(() => {
+      const element = document.getElementById('vended-section');
+      element?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }, []);
+
+  // Render vended section content
+  const renderVendedSection = () => {
+    if (!activeSection) {
+      return null;
+    }
+
+    // Render specific section based on activeSection
+    switch (activeSection) {
+      case 'theme-toggle':
+        return (
+          <section className={styles['section']} id="theme-toggle">
+            <Card header="🌓 Theme Toggle">
+              <p style={{ marginBottom: '1rem' }}>
+                The ThemeToggle is now in the page header (top-right). Switch between light and dark
+                modes. The theme preference is persisted to localStorage and affects the entire
+                application.
+              </p>
+              <div className={styles['highlight']}>
+                <p>
+                  <strong>Features:</strong> Persistent theme across page reloads, accessible with
+                  proper ARIA labels, smooth transitions between themes.
+                </p>
+              </div>
+            </Card>
+          </section>
+        );
+
+      case 'container':
+        return (
+          <section className={styles['section']} id="container">
+            <h2>
+              <code>&lt;Container /&gt;</code>
+            </h2>
+            <p>
+              The Container component provides consistent max-width and padding, centers content on
+              large screens, and has responsive behavior.
+            </p>
+            <div className={styles['highlight']}>
+              <p>This entire page is wrapped in a Container component!</p>
+            </div>
+          </section>
+        );
+
+      case 'button':
+        return (
+          <section className={styles['section']} id="button">
+            <h2>
+              <code>&lt;Button /&gt;</code>
+            </h2>
+            <div className={styles['componentGrid']}>
+              <div>
+                <h3>Variants</h3>
+                <div className={styles['buttonGroup']}>
+                  <Button variant="primary">Primary</Button>
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="danger">Danger</Button>
+                  <Button variant="ghost">Ghost</Button>
+                </div>
+              </div>
+
+              <div>
+                <h3>Sizes</h3>
+                <div className={styles['buttonGroup']}>
+                  <Button size="small">Small</Button>
+                  <Button size="medium">Medium</Button>
+                  <Button size="large">Large</Button>
+                </div>
+              </div>
+
+              <div>
+                <h3>States</h3>
+                <div className={styles['buttonGroup']}>
+                  <Button disabled>Disabled</Button>
+                  <Button>Normal</Button>
+                </div>
+              </div>
+
+              <div>
+                <h3>With Icons</h3>
+                <div className={styles['buttonGroup']}>
+                  <Button icon="➕">Add Item</Button>
+                  <Button variant="danger" icon="🗑️">
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'card':
+        return (
+          <section className={styles['section']} id="card">
+            <h2>
+              <code>&lt;Card /&gt;</code>
+            </h2>
+            <div className={styles['cardGrid']}>
+              <Card>
+                <h3>Basic Card</h3>
+                <p>This is a simple card with just body content.</p>
+              </Card>
+
+              <Card header="Card with Header">
+                <p>This card has a header section.</p>
+              </Card>
+
+              <Card
+                header="Full Featured Card"
+                footer={
+                  <Button size="small" variant="primary">
+                    Action
+                  </Button>
+                }
+              >
+                <p>This card has a header, body, and footer sections.</p>
+              </Card>
+
+              <Card interactive header="Interactive Card">
+                <p>Hover over this card to see the interactive effect!</p>
+              </Card>
+            </div>
+          </section>
+        );
+
+      case 'spinner':
+        return (
+          <section className={styles['section']} id="spinner">
+            <h2>
+              <code>&lt;Spinner /&gt;</code>
+            </h2>
+            <div className={styles['componentGrid']}>
+              <div>
+                <h3>Sizes</h3>
+                <div className={styles['spinnerGroup']}>
+                  <Spinner size="small" />
+                  <Spinner size="medium" />
+                  <Spinner size="large" />
+                </div>
+              </div>
+
+              <div>
+                <h3>With Label</h3>
+                <Spinner size="medium" label="Loading data..." />
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'contestant-card':
+        return <ContestantCardDemo />;
+
+      case 'clock-bar':
+        return <ClockBarDemo />;
+
+      case 'slide-viewer':
+        return <SlideViewerDemo />;
+
+      case 'category-storage':
+        return <CategoryStorageDemo />;
+
+      case 'audience-view':
+        return <AudienceViewDemo />;
+
+      case 'duel-setup':
+        return <DuelSetupDemo />;
+
+      case 'modal':
+        return <ModalDemo />;
+
+      case 'sliding-modal':
+        return <SlidingModalDemo />;
+
+      case 'slide-preview':
+        return <SlidePreviewDemo />;
+
+      case 'slide-list':
+        return <SlideListDemo />;
+
+      case 'grid-management':
+        return <GridManagementDemo />;
+
+      case 'category-manager':
+      case 'category-manager-0':
+      case 'category-manager-1':
+      case 'category-manager-2': {
+        const match = /^category-manager-(\d+)$/.exec(activeSection);
+        const viewIndex = match
+          ? parseInt(match[1] ?? '0', 10)
+          : (carouselViews['category-manager'] ?? 0);
+        return (
+          <CategoryManagerDemo
+            initialView={viewIndex}
+            onViewChange={(newIndex) => {
+              setCarouselViews((prev) => ({ ...prev, 'category-manager': newIndex }));
+              setActiveSection(`category-manager-${String(newIndex)}`);
+            }}
+          />
+        );
+      }
+
+      case 'contestant-creator':
+      case 'contestant-creator-0':
+      case 'contestant-creator-1': {
+        const match = /^contestant-creator-(\d+)$/.exec(activeSection);
+        const viewIndex = match
+          ? parseInt(match[1] ?? '0', 10)
+          : (carouselViews['contestant-creator'] ?? 0);
+        return (
+          <ContestantCreatorDemo
+            initialView={viewIndex}
+            onViewChange={(newIndex) => {
+              setCarouselViews((prev) => ({ ...prev, 'contestant-creator': newIndex }));
+              setActiveSection(`contestant-creator-${String(newIndex)}`);
+            }}
+          />
+        );
+      }
+
+      case 'import-content':
+      case 'import-content-0':
+      case 'import-content-1':
+      case 'import-content-2':
+      case 'import-content-3':
+      case 'import-content-4': {
+        const match = /^import-content-(\d+)$/.exec(activeSection);
+        const viewIndex = match
+          ? parseInt(match[1] ?? '0', 10)
+          : (carouselViews['import-content'] ?? 0);
+        return (
+          <ImportContentDemo
+            initialView={viewIndex}
+            onViewChange={(newIndex) => {
+              setCarouselViews((prev) => ({ ...prev, 'import-content': newIndex }));
+              setActiveSection(`import-content-${String(newIndex)}`);
+            }}
+          />
+        );
+      }
+
+      case 'view-stack':
+        return (
+          <section className={styles['section']} id="view-stack">
+            <h2>
+              <code>&lt;ViewStack /&gt;</code>
+            </h2>
+            <p>
+              ViewStack provides navigation between views with undo/redo support. It&apos;s used
+              throughout the application for workflows like CategoryManager and ContestantCreator.
+            </p>
+            <div className={styles['highlight']}>
+              <p>
+                <strong>Features:</strong> Stack-based navigation, undo/redo commands, view history
+                management. See CategoryManager and ContestantCreator sections for examples in
+                action.
+              </p>
+            </div>
+          </section>
+        );
+
+      case 'censor-box':
+        return (
+          <section className={styles['section']} id="censor-box">
+            <h2>
+              <code>&lt;CensorBox /&gt;</code>
+            </h2>
+            <p>
+              The CensorBox component is used internally by SlideViewer to render censorship
+              overlays. It handles positioning, sizing, and show/hide animations.
+            </p>
+            <div className={styles['highlight']}>
+              <p>
+                <strong>Note:</strong> This is an internal component. See the SlideViewer section
+                for interactive demonstrations of censor boxes in action.
+              </p>
+            </div>
+          </section>
+        );
+
+      case 'accessibility':
+        return (
+          <section className={styles['section']}>
+            <Card header="Accessibility Features">
+              <ul>
+                <li>All buttons have proper focus states and keyboard navigation</li>
+                <li>Modal has focus trap and restores focus on close</li>
+                <li>Spinner has proper ARIA roles and screen reader text</li>
+                <li>ContestantCard supports keyboard interaction (Enter/Space) and ARIA labels</li>
+                <li>All components support custom className for styling</li>
+                <li>Interactive elements have appropriate ARIA labels</li>
+                <li>ThemeToggle provides theme context with accessible toggle</li>
+                <li>FloorGrid includes proper grid roles and aria-labels</li>
+              </ul>
+            </Card>
+          </section>
+        );
+
+      default:
+        return (
+          <div>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Section content not yet migrated. Check back soon!
+            </p>
+          </div>
+        );
     }
   };
-  // Mock contestants for demo
-  const mockContestants: Contestant[] = [
-    {
-      id: 'demo-contestant-1',
-      name: 'Alice Johnson',
-      category: { name: '80s Movies', slides: [] },
-      wins: 8,
-      eliminated: false,
-    },
-    {
-      id: 'demo-contestant-2',
-      name: 'Bob Smith',
-      category: { name: 'State Capitals', slides: [] },
-      wins: 3,
-      eliminated: false,
-    },
-    {
-      id: 'demo-contestant-3',
-      name: 'Carol Davis',
-      category: { name: 'World History', slides: [] },
-      wins: 5,
-      eliminated: true,
-    },
-    {
-      id: 'demo-contestant-4',
-      name: 'David Lee',
-      category: { name: 'Science Facts', slides: [] },
-      wins: 0,
-      eliminated: false,
-    },
-  ];
-
-  // Sample slide data for demo
-  const demoSlide: Slide = {
-    imageUrl:
-      'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%234a90a4"/%3E%3Ctext x="400" y="150" font-family="Arial" font-size="48" fill="white" text-anchor="middle"%3ESample Slide Image%3C/text%3E%3Ctext x="200" y="400" font-family="Arial" font-size="32" fill="%23ffd700"%3ECensored Content%3C/text%3E%3Ctext x="600" y="200" font-family="Arial" font-size="32" fill="%23ffd700"%3EHidden Text%3C/text%3E%3C/svg%3E',
-    answer: 'Sample Answer',
-    censorBoxes: [
-      {
-        x: 15,
-        y: 60,
-        width: 35,
-        height: 15,
-        color: '#000000',
-      },
-      {
-        x: 65,
-        y: 25,
-        width: 25,
-        height: 12,
-        color: 'rgba(0, 0, 0, 0.9)',
-      },
-    ],
-  };
-
-  // Sample slides with quadrant censor boxes for testing positioning
-  const quadrantTestSlides: Slide[] = [
-    {
-      imageUrl:
-        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23ffffff"/%3E%3Crect x="0" y="0" width="400" height="300" fill="%23ffeeee" stroke="%23999" stroke-width="2"/%3E%3Crect x="400" y="0" width="400" height="300" fill="%23eeffee" stroke="%23999" stroke-width="2"/%3E%3Crect x="0" y="300" width="400" height="300" fill="%23eeeeff" stroke="%23999" stroke-width="2"/%3E%3Crect x="400" y="300" width="400" height="300" fill="%23ffffee" stroke="%23999" stroke-width="2"/%3E%3Ctext x="200" y="150" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ETop Left%3C/text%3E%3Ctext x="600" y="150" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ETop Right%3C/text%3E%3Ctext x="200" y="450" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3EBottom Left%3C/text%3E%3Ctext x="600" y="450" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3EBottom Right%3C/text%3E%3C/svg%3E',
-      answer: 'Quadrant Test',
-      censorBoxes: [
-        // Top-left quadrant box
-        {
-          x: 5,
-          y: 5,
-          width: 40,
-          height: 40,
-          color: 'rgba(255, 0, 0, 0.5)',
-        },
-        // Top-right quadrant box
-        {
-          x: 55,
-          y: 5,
-          width: 40,
-          height: 40,
-          color: 'rgba(0, 255, 0, 0.5)',
-        },
-        // Bottom-left quadrant box
-        {
-          x: 5,
-          y: 55,
-          width: 40,
-          height: 40,
-          color: 'rgba(0, 0, 255, 0.5)',
-        },
-        // Bottom-right quadrant box
-        {
-          x: 55,
-          y: 55,
-          width: 40,
-          height: 40,
-          color: 'rgba(255, 255, 0, 0.5)',
-        },
-      ],
-    },
-    {
-      imageUrl:
-        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23f0f0f0"/%3E%3Cline x1="400" y1="0" x2="400" y2="600" stroke="%23333" stroke-width="2" stroke-dasharray="5,5"/%3E%3Cline x1="0" y1="300" x2="800" y2="300" stroke="%23333" stroke-width="2" stroke-dasharray="5,5"/%3E%3Ctext x="400" y="50" font-family="Arial" font-size="24" fill="%23333" text-anchor="middle"%3ECorner Boxes Test%3C/text%3E%3Ctext x="100" y="100" font-family="Arial" font-size="18" fill="%23000"%3ETL Corner%3C/text%3E%3Ctext x="700" y="100" font-family="Arial" font-size="18" fill="%23000" text-anchor="end"%3ETR Corner%3C/text%3E%3Ctext x="100" y="500" font-family="Arial" font-size="18" fill="%23000"%3EBL Corner%3C/text%3E%3Ctext x="700" y="500" font-family="Arial" font-size="18" fill="%23000" text-anchor="end"%3EBR Corner%3C/text%3E%3Ctext x="400" y="300" font-family="Arial" font-size="18" fill="%23000" text-anchor="middle"%3ECenter%3C/text%3E%3C/svg%3E',
-      answer: 'Corner Boxes',
-      censorBoxes: [
-        // Top-left corner
-        {
-          x: 2,
-          y: 10,
-          width: 20,
-          height: 10,
-          color: '#ff0000',
-        },
-        // Top-right corner
-        {
-          x: 78,
-          y: 10,
-          width: 20,
-          height: 10,
-          color: '#00ff00',
-        },
-        // Bottom-left corner
-        {
-          x: 2,
-          y: 78,
-          width: 20,
-          height: 10,
-          color: '#0000ff',
-        },
-        // Bottom-right corner
-        {
-          x: 78,
-          y: 78,
-          width: 20,
-          height: 10,
-          color: '#ff00ff',
-        },
-        // Center
-        {
-          x: 40,
-          y: 45,
-          width: 20,
-          height: 10,
-          color: '#000000',
-        },
-      ],
-    },
-    {
-      imageUrl:
-        'data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="800" height="600" fill="%23e0f0ff"/%3E%3Ctext x="400" y="100" font-family="Arial" font-size="36" fill="%23000" text-anchor="middle"%3EEdge Cases Test%3C/text%3E%3Ctext x="50" y="300" font-family="Arial" font-size="20" fill="%23000"%3ELeft%3C/text%3E%3Ctext x="750" y="300" font-family="Arial" font-size="20" fill="%23000" text-anchor="end"%3ERight%3C/text%3E%3Ctext x="400" y="50" font-family="Arial" font-size="20" fill="%23000" text-anchor="middle"%3ETop%3C/text%3E%3Ctext x="400" y="580" font-family="Arial" font-size="20" fill="%23000" text-anchor="middle"%3EBottom%3C/text%3E%3C/svg%3E',
-      answer: 'Edge Cases',
-      censorBoxes: [
-        // Full width top
-        {
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 10,
-          color: 'rgba(128, 0, 0, 0.3)',
-        },
-        // Full width bottom
-        {
-          x: 0,
-          y: 90,
-          width: 100,
-          height: 10,
-          color: 'rgba(0, 128, 0, 0.3)',
-        },
-        // Left edge
-        {
-          x: 0,
-          y: 45,
-          width: 10,
-          height: 10,
-          color: 'rgba(0, 0, 128, 0.5)',
-        },
-        // Right edge
-        {
-          x: 90,
-          y: 45,
-          width: 10,
-          height: 10,
-          color: 'rgba(128, 128, 0, 0.5)',
-        },
-      ],
-    },
-  ];
-
-  const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null);
-  const currentTestSlide =
-    selectedSlideIndex !== null ? quadrantTestSlides[selectedSlideIndex] : null;
 
   return (
     <Container>
       <div className={styles['demo']}>
-        <h1>Layout Components Demo</h1>
-
-        {/* Container Demo */}
-        <section className={styles['section']}>
-          <h2>Container</h2>
-          <p>
-            The Container component provides consistent max-width and padding, centers content on
-            large screens, and has responsive behavior.
-          </p>
-          <div className={styles['highlight']}>
-            <p>This entire page is wrapped in a Container component!</p>
-          </div>
-        </section>
-
-        {/* Button Demo */}
-        <section className={styles['section']}>
-          <h2>Button</h2>
-          <div className={styles['componentGrid']}>
-            <div>
-              <h3>Variants</h3>
-              <div className={styles['buttonGroup']}>
-                <Button variant="primary">Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="danger">Danger</Button>
-                <Button variant="ghost">Ghost</Button>
-              </div>
-            </div>
-
-            <div>
-              <h3>Sizes</h3>
-              <div className={styles['buttonGroup']}>
-                <Button size="small">Small</Button>
-                <Button size="medium">Medium</Button>
-                <Button size="large">Large</Button>
-              </div>
-            </div>
-
-            <div>
-              <h3>States</h3>
-              <div className={styles['buttonGroup']}>
-                <Button disabled>Disabled</Button>
-                <Button loading={isLoading} onClick={handleLoadingDemo}>
-                  Click to Load
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <h3>With Icons</h3>
-              <div className={styles['buttonGroup']}>
-                <Button icon="➕">Add Item</Button>
-                <Button variant="danger" icon="🗑️">
-                  Delete
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Card Demo */}
-        <section className={styles['section']}>
-          <h2>Card</h2>
-          <div className={styles['cardGrid']}>
-            <Card>
-              <h3>Basic Card</h3>
-              <p>This is a simple card with just body content.</p>
-            </Card>
-
-            <Card header="Card with Header">
-              <p>This card has a header section.</p>
-            </Card>
-
-            <Card
-              header="Full Featured Card"
-              footer={
-                <Button size="small" variant="primary">
-                  Action
-                </Button>
-              }
+        {/* Header with theme toggle */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '2rem',
+          }}
+        >
+          <div>
+            <h1>Complete Component Showcase</h1>
+            <p
+              style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0' }}
             >
-              <p>This card has a header, body, and footer sections.</p>
-            </Card>
-
-            <Card interactive header="Interactive Card">
-              <p>Hover over this card to see the interactive effect!</p>
-            </Card>
-          </div>
-        </section>
-
-        {/* Spinner Demo */}
-        <section className={styles['section']}>
-          <h2>Spinner</h2>
-          <div className={styles['componentGrid']}>
-            <div>
-              <h3>Sizes</h3>
-              <div className={styles['spinnerGroup']}>
-                <Spinner size="small" />
-                <Spinner size="medium" />
-                <Spinner size="large" />
-              </div>
-            </div>
-
-            <div>
-              <h3>With Label</h3>
-              <Spinner size="medium" label="Loading data..." />
-            </div>
-          </div>
-        </section>
-
-        {/* ContestantCard Demo */}
-        <section className={styles['section']}>
-          <h2>Contestant Card</h2>
-          <div className={styles['cardGrid']}>
-            {mockContestants.map((contestant) => {
-              const maxWins = Math.max(...mockContestants.map((c) => c.wins));
-              const hasTopWins = contestant.wins === maxWins && maxWins > 0;
-              return (
-                <ContestantCard
-                  key={contestant.name}
-                  contestant={contestant}
-                  isSelected={selectedContestant === contestant.name}
-                  onSelect={(c) => {
-                    setSelectedContestant(c.name === selectedContestant ? null : c.name);
-                  }}
-                  hasTopWins={hasTopWins}
-                />
-              );
-            })}
-          </div>
-          <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
-            <p>
-              <strong>Features:</strong> Click cards to select/deselect. Notice the eliminated
-              contestant (Carol) is greyed out. Alice has a crown for having the most wins (8). Win
-              counts are displayed as badges.
+              Interactive demonstrations of all components. Click any component to view its demo.
             </p>
           </div>
-        </section>
+          <div style={{ marginLeft: '2rem' }}>
+            <ThemeToggle />
+          </div>
+        </div>
 
-        {/* Modal Demo */}
-        <section className={styles['section']}>
-          <h2>Modal</h2>
-          <div className={styles['buttonGroup']}>
-            <Button
-              onClick={() => {
-                setIsModalOpen(true);
+        {/* Table of Contents - Always visible */}
+        <ComponentToc
+          sections={SECTIONS}
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
+
+        {/* Vended Section - Shows selected component */}
+        {activeSection && (
+          <div id="vended-section" style={{ marginTop: '3rem' }}>
+            <ErrorBoundary
+              onReset={() => {
+                setActiveSection('');
               }}
             >
-              Open Modal
-            </Button>
+              {renderVendedSection()}
+            </ErrorBoundary>
           </div>
-
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-            }}
-            title="Demo Modal"
-            footer={
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                  }}
-                >
-                  Confirm
-                </Button>
-              </>
-            }
-          >
-            <p>
-              This is a modal dialog. It has focus trapping, click-outside to close, and escape key
-              handling.
-            </p>
-            <p>Try pressing the Tab key to cycle through the focusable elements!</p>
-          </Modal>
-        </section>
-
-        {/* ClockBar Demo */}
-        <section className={styles['section']}>
-          <h2>ClockBar</h2>
-          <p>
-            The ClockBar component displays both players&apos; names, remaining time, and active
-            player indicator for the audience view during duels.
-          </p>
-          <div style={{ marginBottom: '1rem' }}>
-            {mockContestants[0] && mockContestants[1] && (
-              <ClockBar
-                contestant1={mockContestants[0]}
-                contestant2={mockContestants[1]}
-                timeRemaining1={time1}
-                timeRemaining2={time2}
-                activePlayer={clockActivePlayer}
-                categoryName="80s Movies"
-              />
-            )}
-          </div>
-          <div className={styles['buttonGroup']}>
-            <Button size="small" onClick={handleSwitchPlayer}>
-              Switch Active Player
-            </Button>
-            <Button size="small" variant="danger" onClick={handleTimeout}>
-              Trigger Timeout (Active Player)
-            </Button>
-            <Button size="small" variant="secondary" onClick={handleResetClock}>
-              Reset Clock
-            </Button>
-          </div>
-          <div className={styles['highlight']}>
-            <p>
-              <strong>Features:</strong>
-            </p>
-            <ul>
-              <li>Real-time countdown display for both players</li>
-              <li>Clear visual indicator of active player</li>
-              <li>Low time warning (orange) at &lt; 10 seconds</li>
-              <li>Critical time warning (red, pulsing) at &lt; 5 seconds</li>
-              <li>Smooth animations when switching active player</li>
-              <li>Responsive design with viewport-based text sizing</li>
-              <li>Handles long names with ellipsis truncation</li>
-              <li>Category name display</li>
-            </ul>
-          </div>
-        </section>
-
-        {/* SlideViewer Demo */}
-        <section className={styles['section']}>
-          <h2>SlideViewer</h2>
-          <p>
-            The SlideViewer component displays slide images with censorship boxes overlaid at
-            precise positions. It handles aspect ratio preservation with letterboxing.
-          </p>
-          <div className={styles['componentGrid']}>
-            <div>
-              <h3>Basic Usage</h3>
-              <div style={{ height: '400px', border: '1px solid #ccc' }}>
-                <SlideViewer slide={demoSlide} />
-              </div>
-            </div>
-
-            <div>
-              <h3>With Show Answer</h3>
-              <div style={{ marginBottom: '1rem' }}>
-                <Button
-                  onClick={() => {
-                    setShowAnswer(!showAnswer);
-                  }}
-                  size="small"
-                >
-                  {showAnswer ? 'Hide Answer' : 'Show Answer'}
-                </Button>
-              </div>
-              <div style={{ height: '400px', border: '1px solid #ccc' }}>
-                <SlideViewer slide={demoSlide} showAnswer={showAnswer} />
-              </div>
-            </div>
-          </div>
-          <div className={styles['highlight']}>
-            <p>
-              <strong>Features:</strong>
-            </p>
-            <ul>
-              <li>Maintains image aspect ratio with letterboxing</li>
-              <li>Precisely positioned censorship boxes using percentage coordinates</li>
-              <li>White background for transparent images</li>
-              <li>Smooth transitions when hiding/showing boxes</li>
-              <li>Loading and error states</li>
-              <li>Responsive sizing to fit any container</li>
-            </ul>
-          </div>
-
-          {/* Quadrant Censor Box Testing */}
-          <div
-            style={{
-              marginTop: '3rem',
-              padding: '2rem',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '8px',
-            }}
-          >
-            <h3>Censor Box Positioning Test</h3>
-            <p style={{ marginBottom: '1rem' }}>
-              Test slides with quadrant and edge case censor boxes to verify proper positioning:
-            </p>
-            <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {quadrantTestSlides.map((testSlide, index) => (
-                <Button
-                  key={index}
-                  variant={selectedSlideIndex === index ? 'primary' : 'secondary'}
-                  size="small"
-                  onClick={() => {
-                    setSelectedSlideIndex(index);
-                  }}
-                >
-                  {testSlide.answer}
-                </Button>
-              ))}
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                gap: '1rem',
-                marginTop: '1rem',
-              }}
-            >
-              <div>
-                <h4 style={{ marginBottom: '0.5rem' }}>SlideViewer (like Audience View)</h4>
-                <div
-                  style={{
-                    height: '450px',
-                    border: '2px solid var(--border-default)',
-                    backgroundColor: '#1e3a5f',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {currentTestSlide ? (
-                    <SlideViewer slide={currentTestSlide} showAnswer={showAnswer} />
-                  ) : (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
-                      Select a test slide above
-                    </p>
-                  )}
-                </div>
-                {currentTestSlide && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <Button
-                      onClick={() => {
-                        setShowAnswer(!showAnswer);
-                      }}
-                      size="small"
-                    >
-                      {showAnswer ? 'Show Boxes' : 'Hide Boxes'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h4 style={{ marginBottom: '0.5rem' }}>Expected Box Positions</h4>
-                <div
-                  style={{
-                    padding: '1rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    border: '2px solid var(--border-default)',
-                    borderRadius: '4px',
-                    minHeight: '150px',
-                  }}
-                >
-                  {currentTestSlide ? (
-                    <>
-                      <p>
-                        <strong>{currentTestSlide.answer}</strong>
-                      </p>
-                      <ul style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                        {currentTestSlide.censorBoxes.map((box, i) => (
-                          <li key={i}>
-                            Box {i + 1}:
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                width: '20px',
-                                height: '12px',
-                                backgroundColor: box.color,
-                                marginLeft: '0.5rem',
-                                marginRight: '0.5rem',
-                                verticalAlign: 'middle',
-                                border: '1px solid #333',
-                              }}
-                            ></span>
-                            Position: ({box.x}%, {box.y}%) | Size: {box.width}% × {box.height}%
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <p style={{ color: 'var(--text-secondary)' }}>
-                      Select a test slide to see box details
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Skip Animation Demo */}
-        <section className={styles['section']}>
-          <h2>Skip Animation (Audience View)</h2>
-          <p>
-            When a player skips a question, the answer is displayed in the center of the clock bar
-            for exactly 3 seconds with fade in/out transitions.
-          </p>
-          <div style={{ marginBottom: '1rem' }}>
-            <Button onClick={handleSkipAnimationDemo} disabled={showSkipAnimation}>
-              {showSkipAnimation ? 'Animation Playing...' : 'Trigger Skip Animation'}
-            </Button>
-          </div>
-          {mockContestants[0] && mockContestants[1] && (
-            <ClockBar
-              contestant1={mockContestants[0]}
-              contestant2={mockContestants[1]}
-              timeRemaining1={25}
-              timeRemaining2={30}
-              activePlayer={1}
-              categoryName="World Landmarks"
-              {...(showSkipAnimation && { skipAnswer: 'The Eiffel Tower' })}
-            />
-          )}
-          <div className={styles['highlight']} style={{ marginTop: '1rem' }}>
-            <p>
-              <strong>Features:</strong>
-            </p>
-            <ul>
-              <li>
-                Exactly 3 seconds total duration (200ms fade in + 2600ms hold + 200ms fade out)
-              </li>
-              <li>Bright yellow text on dark background for high visibility</li>
-              <li>Smooth scale and fade transitions</li>
-              <li>Centered overlay that doesn&apos;t interfere with other UI elements</li>
-              <li>Answer text or &quot;Skipped&quot; fallback when no answer available</li>
-            </ul>
-          </div>
-        </section>
-
-        {/* Accessibility Notes */}
-        <section className={styles['section']}>
-          <Card header="Accessibility Features">
-            <ul>
-              <li>All buttons have proper focus states and keyboard navigation</li>
-              <li>Modal has focus trap and restores focus on close</li>
-              <li>Spinner has proper ARIA roles and screen reader text</li>
-              <li>ContestantCard supports keyboard interaction (Enter/Space) and ARIA labels</li>
-              <li>All components support custom className for styling</li>
-              <li>Interactive elements have appropriate ARIA labels</li>
-            </ul>
-          </Card>
-        </section>
+        )}
       </div>
     </Container>
   );

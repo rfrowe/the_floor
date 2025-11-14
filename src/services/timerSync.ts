@@ -8,7 +8,10 @@
  * Based on Task 28.1 requirements.
  */
 
+import { createLogger } from '@/utils/logger';
+
 const TIMER_CHANNEL_NAME = 'the-floor:timer-sync';
+const log = createLogger('TimerSync');
 const HEARTBEAT_INTERVAL = 1000; // 1 second
 const CONNECTION_TIMEOUT = 3000; // 3 seconds
 
@@ -74,16 +77,16 @@ class TimerSyncService {
           try {
             handler(message);
           } catch (error) {
-            console.error('[TimerSync] Error in message handler:', error);
+            log.error('Error in message handler:', error);
           }
         });
       };
 
       this.channel.onmessageerror = (error: MessageEvent) => {
-        console.error('[TimerSync] BroadcastChannel message error:', error);
+        log.error('BroadcastChannel message error:', error);
       };
     } catch (error) {
-      console.error('[TimerSync] Failed to initialize BroadcastChannel:', error);
+      log.error('Failed to initialize BroadcastChannel:', error);
     }
   }
 
@@ -104,14 +107,14 @@ class TimerSyncService {
    */
   private send(message: TimerMessage): void {
     if (!this.channel) {
-      console.warn('[TimerSync] Cannot send message - channel not initialized');
+      log.warn('Cannot send message - channel not initialized');
       return;
     }
 
     try {
       this.channel.postMessage(message);
     } catch (error) {
-      console.error('[TimerSync] Failed to send message:', error);
+      log.error('Failed to send message:', error);
     }
   }
 
@@ -269,7 +272,7 @@ class TimerSyncService {
       try {
         callback();
       } catch (error) {
-        console.error('[TimerSync] Error in connection change callback:', error);
+        log.error('Error in connection change callback:', error);
       }
     });
   }

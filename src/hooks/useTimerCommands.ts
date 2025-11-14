@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import timerSyncService, { type TimerMessage } from '@services/timerSync';
+import { createLogger } from '@/utils/logger';
 
 export interface TimerCommandsOptions {
   /** Callback when a player's time expires (from Audience broadcast) */
@@ -56,6 +57,8 @@ export interface TimerCommandsReturn {
   sendDuelEnd: () => void;
 }
 
+const log = createLogger('TimerCommands');
+
 /**
  * Timer commands hook for Master View
  * Sends commands and displays state received from Audience View
@@ -91,7 +94,7 @@ export function useTimerCommands(options: TimerCommandsOptions = {}): TimerComma
         break;
 
       case 'SKIP_END':
-        console.log('[TimerCommands] Skip ended, switching to player', message.switchToPlayer);
+        log.debug('Skip ended, switching to player', message.switchToPlayer);
         setIsSkipActive(false);
         setCurrentActivePlayer(message.switchToPlayer);
 
@@ -102,7 +105,7 @@ export function useTimerCommands(options: TimerCommandsOptions = {}): TimerComma
         break;
 
       case 'PLAYER_TIMEOUT':
-        console.log('[TimerCommands] Player timeout:', message.loser);
+        log.debug('Player timeout:', message.loser);
 
         // Notify callback
         if (onPlayerTimeoutRef.current) {
@@ -117,7 +120,7 @@ export function useTimerCommands(options: TimerCommandsOptions = {}): TimerComma
   // ============================================================================
 
   useEffect(() => {
-    console.log('[TimerCommands] Setting up message listener');
+    log.debug('Setting up message listener');
 
     const cleanup = timerSyncService.onMessage(handleMessage);
 
@@ -131,7 +134,7 @@ export function useTimerCommands(options: TimerCommandsOptions = {}): TimerComma
   // ============================================================================
 
   const sendStart = useCallback((player1Time: number, player2Time: number, activePlayer: 1 | 2) => {
-    console.log('[TimerCommands] Sending START command', {
+    log.debug('Sending START command', {
       player1Time,
       player2Time,
       activePlayer,
@@ -148,30 +151,30 @@ export function useTimerCommands(options: TimerCommandsOptions = {}): TimerComma
   }, []);
 
   const sendPause = useCallback(() => {
-    console.log('[TimerCommands] Sending PAUSE command');
+    log.debug('Sending PAUSE command');
     timerSyncService.sendPause();
   }, []);
 
   const sendResume = useCallback((activePlayer: 1 | 2) => {
-    console.log('[TimerCommands] Sending RESUME command', { activePlayer });
+    log.debug('Sending RESUME command', { activePlayer });
     setCurrentActivePlayer(activePlayer);
     timerSyncService.sendResume(activePlayer);
   }, []);
 
   const sendSwitch = useCallback((activePlayer: 1 | 2) => {
-    console.log('[TimerCommands] Sending SWITCH command', { activePlayer });
+    log.debug('Sending SWITCH command', { activePlayer });
     setCurrentActivePlayer(activePlayer);
     timerSyncService.sendSwitch(activePlayer);
   }, []);
 
   const sendSkipStart = useCallback((answer: string, activePlayer: 1 | 2) => {
-    console.log('[TimerCommands] Sending SKIP_START command', { answer, activePlayer });
+    log.debug('Sending SKIP_START command', { answer, activePlayer });
     setIsSkipActive(true);
     timerSyncService.sendSkipStart(answer, activePlayer);
   }, []);
 
   const sendDuelEnd = useCallback(() => {
-    console.log('[TimerCommands] Sending DUEL_END command');
+    log.debug('Sending DUEL_END command');
     setIsSkipActive(false);
     timerSyncService.sendDuelEnd();
   }, []);

@@ -18,7 +18,10 @@ import {
   type SampleCategoryMeta,
 } from '@utils/sampleCategories';
 import { ImportContent } from '@components/category/manager/ImportContent';
+import { createLogger } from '@/utils/logger';
 import styles from '../ContestantCreator.module.css';
+
+const log = createLogger('CreateContent');
 
 interface CreateContentProps {
   categories: StoredCategory[];
@@ -33,7 +36,7 @@ export function CreateContent({
   selectedCategoryId: propsSelectedCategoryId,
   onStateChange,
 }: CreateContentProps) {
-  const { pushView, popView } = useViewStack();
+  const { commitAndPushView, popView } = useViewStack();
   const [, { add: addContestant }] = useContestants();
   const [, { add: addCategory }] = useCategories();
 
@@ -48,7 +51,7 @@ export function CreateContent({
       const samples = getSampleCategories();
       setSampleCategories(samples);
     } catch (error) {
-      console.error('Failed to load sample categories:', error);
+      log.error('Failed to load sample categories:', error);
     }
   }, []);
 
@@ -131,7 +134,7 @@ export function CreateContent({
         popView({ created: [newContestant] });
       }
     } catch (error) {
-      console.error('Failed to create contestant:', error);
+      log.error('Failed to create contestant:', error);
       alert(
         `Failed to create contestant: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -141,7 +144,7 @@ export function CreateContent({
 
   const handleImportClick = () => {
     // State already managed by parent, just push
-    pushView({
+    void commitAndPushView({
       id: 'import',
       title: 'Import Category',
       content: <ImportContent initialContestantName={contestantName} />,

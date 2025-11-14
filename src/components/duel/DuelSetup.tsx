@@ -5,10 +5,12 @@ import { useDuelState } from '@hooks/useDuelState';
 import { useAudienceConnection } from '@hooks/useAudienceConnection';
 import timerSyncService from '@services/timerSync';
 import { createBroadcastSync } from '@/utils/broadcastSync';
+import { createLogger } from '@/utils/logger';
 import { Button } from '@components/common/Button';
 import styles from './DuelSetup.module.css';
 
 const CATEGORY_SELECTION_CHANNEL = 'the_floor_category_selection';
+const log = createLogger('DuelSetup');
 
 /**
  * Configuration for starting a duel
@@ -40,6 +42,12 @@ export interface DuelSetupProps {
 
   /** Whether random select is available (i.e., there are contestants on the grid) */
   canRandomSelect?: boolean;
+
+  /** Whether audience view is watching/connected */
+  isAudienceWatching?: boolean;
+
+  /** Demo mode: disables real state/broadcast connections (default: false) */
+  demoMode?: boolean;
 }
 
 /**
@@ -61,11 +69,25 @@ export interface DuelSetupHandle {
  * - Information about winner receiving unplayed category
  */
 export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function DuelSetup(
-  { contestant1, contestant2, onClear, onStartDuel, onRandomSelect, canRandomSelect = true },
+  {
+    contestant1,
+    contestant2,
+    onClear,
+    onStartDuel,
+    onRandomSelect,
+    canRandomSelect = true,
+    isAudienceWatching,
+    demoMode = false,
+  },
   ref
 ) {
   const navigate = useNavigate();
-  const [, setDuelState] = useDuelState();
+  const hookDuelState = useDuelState();
+  const setDuelState = demoMode
+    ? () => {
+        /* demo mode - no-op */
+      }
+    : hookDuelState[1];
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const broadcastRef = useRef<ReturnType<typeof createBroadcastSync<string | null>> | null>(null);
 
@@ -91,22 +113,24 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
     broadcastRef.current?.send(selectedCategory?.name ?? null);
   }, [selectedCategory]);
 
-  // Check for audience connection
-  const { isConnected: audienceConnected } = useAudienceConnection();
+  // Check for audience connection - use prop if provided, otherwise check real connection
+  const hookConnectionState = useAudienceConnection();
+  const audienceConnected =
+    isAudienceWatching ?? (demoMode ? false : hookConnectionState.isConnected);
 
-  // Determine if we can start the duel
+  // Determine if we can start the duel (only check UI state, not game rules)
   const canStartDuel =
     contestant1 !== null && contestant2 !== null && selectedCategory !== null && audienceConnected;
 
   const handleStartDuel = useCallback(() => {
-    console.log('🎮 Start Duel clicked!');
-    console.log('Contestant 1:', contestant1?.name);
-    console.log('Contestant 2:', contestant2?.name);
-    console.log('Selected Category:', selectedCategory?.name);
+    log.debug('🎮 Start Duel clicked!');
+    log.debug('Contestant 1:', contestant1?.name);
+    log.debug('Contestant 2:', contestant2?.name);
+    log.debug('Selected Category:', selectedCategory?.name);
 
     // Triple-check validation before starting
     if (!contestant1 || !contestant2 || !selectedCategory) {
-      console.log('❌ Validation failed - missing data');
+      log.debug('❌ Validation failed - missing data');
       return;
     }
 
@@ -122,20 +146,25 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
       isSkipAnimationActive: false,
     };
 
-    console.log('💾 Saving duel state via hook (will store as reference)');
+    // Skip real state operations in demo mode
+    if (!demoMode) {
+      log.debug('💾 Saving duel state via hook (will store as reference)');
 
-    // Save via hook - it will convert to reference and store in localStorage
-    setDuelState(initialDuelState);
+      // Save via hook - it will convert to reference and store in localStorage
+      setDuelState(initialDuelState);
 
-    console.log('✅ Saved!');
+      log.debug('✅ Saved!');
 
-    // Send TIMER_START command to Audience View
-    console.log('📡 Sending TIMER_START command to Audience View');
-    timerSyncService.sendStart(
-      DEFAULT_GAME_CONFIG.timePerPlayer,
-      DEFAULT_GAME_CONFIG.timePerPlayer,
-      1
-    );
+      // Send TIMER_START command to Audience View
+      log.debug('📡 Sending TIMER_START command to Audience View');
+      timerSyncService.sendStart(
+        DEFAULT_GAME_CONFIG.timePerPlayer,
+        DEFAULT_GAME_CONFIG.timePerPlayer,
+        1
+      );
+    } else {
+      log.debug('Demo mode: skipping state save and timer sync');
+    }
 
     // Call parent callback
     onStartDuel({
@@ -146,7 +175,7 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
 
     // Navigate to master view
     void navigate('/master');
-  }, [contestant1, contestant2, selectedCategory, setDuelState, onStartDuel, navigate]);
+  }, [contestant1, contestant2, selectedCategory, setDuelState, onStartDuel, navigate, demoMode]);
 
   // Expose startDuel method via ref
   useImperativeHandle(
@@ -157,7 +186,7 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
     [handleStartDuel]
   );
 
-  // Get validation messages
+  // Get validation messages (only validate UI state, not game rules)
   const getValidationMessage = (): string | null => {
     if (!contestant1 || !contestant2) {
       return 'Select 2 contestants to set up a duel';

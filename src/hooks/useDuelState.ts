@@ -6,6 +6,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DuelState, DuelStateReference, Contestant } from '@types';
 import { getContestantById } from '@storage/indexedDB';
+import { createLogger } from '@/utils/logger';
+
+const log = createLogger('DuelState');
 
 const STORAGE_KEY = 'duel';
 
@@ -34,7 +37,7 @@ async function hydrateReference(ref: DuelStateReference): Promise<DuelState | nu
     const contestant2 = await getContestantById<Contestant>(ref.contestant2Id);
 
     if (!contestant1 || !contestant2) {
-      console.error('Failed to hydrate duel state: contestants not found in IndexedDB');
+      log.error('Failed to hydrate duel state: contestants not found in IndexedDB');
       return null;
     }
 
@@ -55,7 +58,7 @@ async function hydrateReference(ref: DuelStateReference): Promise<DuelState | nu
       isSkipAnimationActive: ref.isSkipAnimationActive,
     };
   } catch (error) {
-    console.error('Error hydrating duel state:', error);
+    log.error('Error hydrating duel state:', error);
     return null;
   }
 }
@@ -83,7 +86,7 @@ export function useDuelState(): [
           setDuelState(hydrated);
         }
       } catch (error) {
-        console.error('Failed to load duel state:', error);
+        log.error('Failed to load duel state:', error);
       } finally {
         setIsLoading(false);
       }
@@ -102,7 +105,7 @@ export function useDuelState(): [
             }
           });
         } catch (error) {
-          console.error('Failed to sync duel state from storage event:', error);
+          log.error('Failed to sync duel state from storage event:', error);
         }
       } else if (event.key === STORAGE_KEY && event.newValue === null) {
         // Duel was cleared in another window
@@ -132,7 +135,7 @@ export function useDuelState(): [
             localStorage.setItem(STORAGE_KEY, JSON.stringify(reference));
           }
         } catch (error) {
-          console.error('Failed to save duel state:', error);
+          log.error('Failed to save duel state:', error);
         }
 
         return newState;

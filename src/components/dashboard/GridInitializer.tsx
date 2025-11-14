@@ -6,27 +6,31 @@ import { useState } from 'react';
 import type { Contestant } from '@types';
 import { initializeContestantPositions } from '@utils/gridUtils';
 import { Button } from '@components/common/Button';
+import { createLogger } from '@/utils/logger';
 import styles from './GridInitializer.module.css';
+
+const log = createLogger('GridInitializer');
 
 interface GridInitializerProps {
   contestants: Contestant[];
   onUpdate: (contestants: Contestant[]) => Promise<void>;
+  gridConfig?: { rows: number; cols: number }; // Optional: for demo mode
 }
 
 /**
  * Component for initializing grid positions for contestants.
  * Provides an "Auto-Position" button to automatically assign grid positions.
  */
-export function GridInitializer({ contestants, onUpdate }: GridInitializerProps) {
+export function GridInitializer({ contestants, onUpdate, gridConfig }: GridInitializerProps) {
   const [isPositioning, setIsPositioning] = useState(false);
 
   const handleAutoPosition = async () => {
     setIsPositioning(true);
     try {
-      const positioned = initializeContestantPositions(contestants);
+      const positioned = initializeContestantPositions(contestants, gridConfig);
       await onUpdate(positioned);
     } catch (error) {
-      console.error('Failed to position contestants:', error);
+      log.error('Failed to position contestants:', error);
       alert(
         `Failed to position contestants: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

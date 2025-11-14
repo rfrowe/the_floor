@@ -4,10 +4,13 @@
  * Broadcasts reset event to all windows/tabs
  */
 
+import { createLogger } from './logger';
 import { clearAllContestants, clearAllCategories } from '@/storage/indexedDB';
 import { clear as clearLocalStorage } from '@/storage/localStorage';
 import { clearTimerState } from '@/storage/timerState';
 import { resetColorAssignments } from '@/utils/colorUtils';
+
+const logger = createLogger('ResetApp');
 
 const RESET_CHANNEL_NAME = 'the_floor_app_reset';
 
@@ -49,12 +52,12 @@ export async function resetAppState(): Promise<void> {
       channel.postMessage('reset');
       channel.close();
     } catch (error) {
-      console.warn('BroadcastChannel not supported for app reset:', error);
+      logger.warn('BroadcastChannel not supported for app reset:', error);
     }
 
     // Note: 'theme' key is preserved (not prefixed, not explicitly removed)
   } catch (error) {
-    console.error('Error resetting app state:', error);
+    logger.error('Error resetting app state:', error);
     throw new Error(
       `Failed to reset application state: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
@@ -77,7 +80,7 @@ export function onAppReset(callback: () => void): () => void {
       channel.close();
     };
   } catch (error) {
-    console.warn('BroadcastChannel not supported for reset listener:', error);
+    logger.warn('BroadcastChannel not supported for reset listener:', error);
     return () => {
       // No-op cleanup
     };

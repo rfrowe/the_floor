@@ -8,21 +8,40 @@ import { useGridConfig } from '@hooks/useGridConfig';
 import type { Contestant } from '@types';
 import { Button } from '@components/common/Button';
 import { getContestantColor } from '@utils/colorUtils';
+import { createLogger } from '@utils/logger';
 import styles from './GridConfigurator.module.css';
+
+const log = createLogger('GridConfigurator');
 
 interface GridConfiguratorProps {
   contestants: Contestant[];
   onUpdateContestants: (contestants: Contestant[]) => Promise<void>;
+  /** Optional: provide [gridConfig, setGridConfig] tuple for demo mode (bypasses useGridConfig hook) */
+  gridConfigState?: [
+    { rows: number; cols: number },
+    (config: { rows: number; cols: number }) => void,
+  ];
 }
 
-export function GridConfigurator({ contestants, onUpdateContestants }: GridConfiguratorProps) {
-  const [gridConfig, setGridConfig] = useGridConfig();
+export function GridConfigurator({
+  contestants,
+  onUpdateContestants,
+  gridConfigState,
+}: GridConfiguratorProps) {
+  const hookGridConfigState = useGridConfig();
+  const [gridConfig, setGridConfig] = gridConfigState ?? hookGridConfigState;
   const [tempRows, setTempRows] = useState(gridConfig.rows);
   const [tempCols, setTempCols] = useState(gridConfig.cols);
   const [draggedContestant, setDraggedContestant] = useState<Contestant | null>(null);
   const [isEditingGrid, setIsEditingGrid] = useState(false);
   const [touchTarget, setTouchTarget] = useState<{ row: number; col: number } | null>(null);
   const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Sync temp dimensions when gridConfig changes externally (e.g., from demo controls)
+  useEffect(() => {
+    setTempRows(gridConfig.rows);
+    setTempCols(gridConfig.cols);
+  }, [gridConfig.rows, gridConfig.cols]);
 
   // Define handleDrop early so it can be used in useEffect
   const handleDrop = useCallback(
@@ -63,31 +82,31 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
   useEffect(() => {
     if (!draggedContestant) return;
 
-    console.log('[Touch] Setting up document listeners');
+    log.debug('[Touch] Setting up document listeners');
 
     const handleDocumentTouchMove = (e: TouchEvent) => {
-      console.log('[Touch] Document move');
+      log.debug('[Touch] Document move');
       e.preventDefault();
 
       const touch = e.touches[0];
       if (!touch) return;
 
-      console.log('[Touch] Move at:', touch.clientX, touch.clientY);
+      log.debug('[Touch] Move at:', { x: touch.clientX, y: touch.clientY });
 
       // Update touch position for visual feedback
       setTouchPosition({ x: touch.clientX, y: touch.clientY });
 
       // Find which grid square is under the touch
       const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      console.log('[Touch] Element under finger:', element?.className);
+      log.debug('[Touch] Element under finger:', element?.className);
 
       const square = element?.closest('[data-grid-square]');
-      console.log('[Touch] Closest square:', square ? 'found' : 'not found');
+      log.debug('[Touch] Closest square:', square ? 'found' : 'not found');
 
       if (square) {
         const row = parseInt(square.getAttribute('data-row') ?? '-1', 10);
         const col = parseInt(square.getAttribute('data-col') ?? '-1', 10);
-        console.log('[Touch] Target square:', row, col);
+        log.debug('[Touch] Target square:', { row, col });
         if (row >= 0 && col >= 0) {
           setTouchTarget({ row, col });
         }
@@ -97,19 +116,17 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
     };
 
     const handleDocumentTouchEnd = () => {
-      console.log(
-        '[Touch] Document end - draggedContestant:',
-        draggedContestant.name,
-        'touchTarget:',
-        touchTarget
-      );
+      log.debug('[Touch] Document end', {
+        draggedContestant: draggedContestant.name,
+        touchTarget,
+      });
 
       if (touchTarget) {
-        console.log('[Touch] Dropping at:', touchTarget.row, touchTarget.col);
+        log.debug('[Touch] Dropping at:', { row: touchTarget.row, col: touchTarget.col });
         void handleDrop(touchTarget.row, touchTarget.col);
       }
 
-      console.log('[Touch] Cleaning up');
+      log.debug('[Touch] Cleaning up');
       setDraggedContestant(null);
       setTouchTarget(null);
       setTouchPosition(null);
@@ -120,7 +137,7 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
     document.addEventListener('touchend', handleDocumentTouchEnd);
 
     return () => {
-      console.log('[Touch] Removing document listeners');
+      log.debug('[Touch] Removing document listeners');
       document.removeEventListener('touchmove', handleDocumentTouchMove);
       document.removeEventListener('touchend', handleDocumentTouchEnd);
     };
@@ -211,10 +228,10 @@ export function GridConfigurator({ contestants, onUpdateContestants }: GridConfi
 
   const handleTouchStart = (contestant: Contestant, e: React.TouchEvent) => {
     if (!canRemoveFromGrid(contestant)) {
-      console.log('[Touch] Cannot drag - contestant has won territory');
+      log.debug('[Touch] Cannot drag - contestant has won territory');
       return;
     }
-    console.log('[Touch] Start dragging:', contestant.name);
+    log.debug('[Touch] Start dragging:', contestant.name);
 
     const touch = e.touches[0];
     if (touch) {

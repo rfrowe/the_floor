@@ -8,6 +8,7 @@
 import { useState, useMemo } from 'react';
 import type { Contestant } from '@types';
 import { useViewStack } from '@components/common/ViewStack';
+import { BOOKMARK } from '@components/common/BookmarkCommand';
 import { CategoryStorage } from '../CategoryStorage';
 import { DetailContentContainer } from './DetailContentContainer';
 import { ImportContent } from './ImportContent';
@@ -31,7 +32,7 @@ export function ListContent({
   contestants,
   onDeleteAllCategories,
 }: ListContentProps) {
-  const { pushView } = useViewStack();
+  const { commitAndPushView } = useViewStack();
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredDeleteButton, setHoveredDeleteButton] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export function ListContent({
   };
 
   const handleViewClick = (category: CategoryMetadata) => {
-    pushView({
+    void commitAndPushView({
       id: `detail-${category.id}`,
       title: `${category.name} - ${String(category.slideCount)} slides`,
       content: <DetailContentContainer categoryId={category.id} />,
@@ -74,11 +75,14 @@ export function ListContent({
   };
 
   const handleGoToImport = () => {
-    pushView({
-      id: 'import',
-      title: 'Import Category',
-      content: <ImportContent />,
-    });
+    void commitAndPushView(
+      {
+        id: 'import',
+        title: 'Import Category',
+        content: <ImportContent />,
+      },
+      { commands: [BOOKMARK] }
+    );
   };
 
   const handleDeleteClick = (e: React.MouseEvent, category: CategoryMetadata) => {
@@ -89,7 +93,7 @@ export function ListContent({
     }
 
     // Push delete confirmation view (fully self-contained, no callbacks)
-    pushView({
+    void commitAndPushView({
       id: `delete-confirm-${category.id}`,
       title: 'Confirm Delete',
       content: <DeleteConfirmationContent categoryId={category.id} categoryName={category.name} />,

@@ -4,15 +4,37 @@
  *
  * IndexedDB supports much larger storage limits than localStorage (typically 50MB-1GB+)
  *
+ * All mutation operations automatically broadcast changes for same-tab and cross-tab sync.
+ *
  * Schema Version History:
  * - v1: Initial schema with contestants store (embedded categories)
  * - v2: Added categories store, contestants now reference categories by ID
  */
 
+import { createBroadcastSync } from '@/utils/broadcastSync';
+import { loggers } from '@/utils/logger';
+
 const DB_NAME = 'the-floor';
 const DB_VERSION = 2;
 const CONTESTANT_STORE = 'contestants';
 const CATEGORY_STORE = 'categories';
+
+const log = loggers.indexedDB;
+
+// Broadcast channels for synchronization
+const contestantBroadcast = createBroadcastSync<'reload'>({
+  channelName: 'the_floor_contestants',
+  onMessage: () => {
+    // No-op - only used for sending
+  },
+});
+
+const categoryBroadcast = createBroadcastSync<'reload'>({
+  channelName: 'the_floor_categories',
+  onMessage: () => {
+    // No-op - only used for sending
+  },
+});
 
 /**
  * Initialize the IndexedDB database
@@ -78,7 +100,7 @@ export async function getAllContestants<T>(): Promise<T[]> {
       };
     });
   } catch (error) {
-    console.error('Error getting contestants from IndexedDB:', error);
+    log.error('Error getting contestants from IndexedDB:', error);
     return [];
   }
 }
@@ -103,7 +125,7 @@ export async function getContestantById<T>(id: string): Promise<T | null> {
       };
     });
   } catch (error) {
-    console.error('Error getting contestant from IndexedDB:', error);
+    log.error('Error getting contestant from IndexedDB:', error);
     return null;
   }
 }
@@ -127,8 +149,13 @@ export async function addContestant<T extends { id: string }>(contestant: T): Pr
         reject(new Error('Failed to add contestant to IndexedDB'));
       };
     });
+
+    log.dbAdd('contestant', contestant.id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error adding contestant to IndexedDB:', error);
+    log.asyncError('addContestant', error);
     throw error;
   }
 }
@@ -167,8 +194,13 @@ export async function addContestants<T extends { id: string }>(contestants: T[])
         resolve();
       }
     });
+
+    log.success(`Bulk added ${String(contestants.length)} contestants`);
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error bulk adding contestants to IndexedDB:', error);
+    log.asyncError('addContestants', error);
     throw error;
   }
 }
@@ -192,8 +224,16 @@ export async function updateContestant<T extends { id: string }>(contestant: T):
         reject(new Error('Failed to update contestant in IndexedDB'));
       };
     });
+
+    // Small delay to ensure transaction is committed before broadcasting
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    log.dbUpdate('contestant', contestant.id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error updating contestant in IndexedDB:', error);
+    log.asyncError('updateContestant', error);
     throw error;
   }
 }
@@ -237,8 +277,16 @@ export async function updateContestantsBulk<T extends { id: string }>(
         };
       });
     });
+
+    // Small delay to ensure transaction is committed before broadcasting
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    log.success(`Bulk updated ${String(contestants.length)} contestants`);
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error bulk updating contestants in IndexedDB:', error);
+    log.asyncError('updateContestantsBulk', error);
     throw error;
   }
 }
@@ -262,8 +310,13 @@ export async function deleteContestant(id: string): Promise<void> {
         reject(new Error('Failed to delete contestant from IndexedDB'));
       };
     });
+
+    log.dbDelete('contestant', id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error deleting contestant from IndexedDB:', error);
+    log.asyncError('deleteContestant', error);
     throw error;
   }
 }
@@ -287,8 +340,13 @@ export async function clearAllContestants(): Promise<void> {
         reject(new Error('Failed to clear contestants from IndexedDB'));
       };
     });
+
+    log.dbClear('contestants');
+
+    // Broadcast change for same-tab and cross-tab sync
+    contestantBroadcast.send('reload');
   } catch (error) {
-    console.error('Error clearing contestants from IndexedDB:', error);
+    log.asyncError('clearAllContestants', error);
     throw error;
   }
 }
@@ -317,7 +375,7 @@ export async function getAllCategories<T>(): Promise<T[]> {
       };
     });
   } catch (error) {
-    console.error('Error getting categories from IndexedDB:', error);
+    log.error('Error getting categories from IndexedDB:', error);
     return [];
   }
 }
@@ -370,7 +428,7 @@ export async function getAllCategoryMetadata(): Promise<
       };
     });
   } catch (error) {
-    console.error('Error getting category metadata from IndexedDB:', error);
+    log.error('Error getting category metadata from IndexedDB:', error);
     return [];
   }
 }
@@ -395,7 +453,7 @@ export async function getCategoryById<T>(id: string): Promise<T | null> {
       };
     });
   } catch (error) {
-    console.error('Error getting category from IndexedDB:', error);
+    log.error('Error getting category from IndexedDB:', error);
     return null;
   }
 }
@@ -421,7 +479,7 @@ export async function getCategoriesByName<T>(name: string): Promise<T[]> {
       };
     });
   } catch (error) {
-    console.error('Error getting categories by name from IndexedDB:', error);
+    log.error('Error getting categories by name from IndexedDB:', error);
     return [];
   }
 }
@@ -445,8 +503,13 @@ export async function addCategory<T extends { id: string }>(category: T): Promis
         reject(new Error('Failed to add category to IndexedDB'));
       };
     });
+
+    log.dbAdd('category', category.id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    categoryBroadcast.send('reload');
   } catch (error) {
-    console.error('Error adding category to IndexedDB:', error);
+    log.asyncError('addCategory', error);
     throw error;
   }
 }
@@ -485,8 +548,13 @@ export async function addCategories<T extends { id: string }>(categories: T[]): 
         resolve();
       }
     });
+
+    log.success(`Bulk added ${String(categories.length)} categories`);
+
+    // Broadcast change for same-tab and cross-tab sync
+    categoryBroadcast.send('reload');
   } catch (error) {
-    console.error('Error bulk adding categories to IndexedDB:', error);
+    log.asyncError('addCategories', error);
     throw error;
   }
 }
@@ -510,8 +578,13 @@ export async function updateCategory<T extends { id: string }>(category: T): Pro
         reject(new Error('Failed to update category in IndexedDB'));
       };
     });
+
+    log.dbUpdate('category', category.id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    categoryBroadcast.send('reload');
   } catch (error) {
-    console.error('Error updating category in IndexedDB:', error);
+    log.asyncError('updateCategory', error);
     throw error;
   }
 }
@@ -535,8 +608,13 @@ export async function deleteCategory(id: string): Promise<void> {
         reject(new Error('Failed to delete category from IndexedDB'));
       };
     });
+
+    log.dbDelete('category', id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    categoryBroadcast.send('reload');
   } catch (error) {
-    console.error('Error deleting category from IndexedDB:', error);
+    log.asyncError('deleteCategory', error);
     throw error;
   }
 }
@@ -560,8 +638,13 @@ export async function clearAllCategories(): Promise<void> {
         reject(new Error('Failed to clear categories from IndexedDB'));
       };
     });
+
+    log.dbClear('categories');
+
+    // Broadcast change for same-tab and cross-tab sync
+    categoryBroadcast.send('reload');
   } catch (error) {
-    console.error('Error clearing categories from IndexedDB:', error);
+    log.asyncError('clearAllCategories', error);
     throw error;
   }
 }
@@ -581,7 +664,7 @@ export async function getStorageEstimate(): Promise<{ usage: number; quota: numb
     }
     return { usage: 0, quota: 0 };
   } catch (error) {
-    console.error('Error getting storage estimate:', error);
+    log.error('Error getting storage estimate:', error);
     return { usage: 0, quota: 0 };
   }
 }

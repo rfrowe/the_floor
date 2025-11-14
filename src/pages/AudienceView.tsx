@@ -9,6 +9,7 @@ import { ClockBar } from '@components/duel/ClockBar';
 import { FloorGrid } from '@components/floor/FloorGrid';
 import { loadTimerState } from '@storage/timerState';
 import { onAppReset } from '@utils/resetApp';
+import { createLogger } from '@/utils/logger';
 import type { Slide } from '@types';
 import styles from './AudienceView.module.css';
 
@@ -18,6 +19,7 @@ import styles from './AudienceView.module.css';
  * This view is the AUTHORITATIVE source for game timing.
  */
 function AudienceView() {
+  const log = createLogger('AudienceView');
   const [duelState] = useDuelState();
   const [contestants] = useContestants();
   const { selectedIds: selectedContestantIds, selectedCategoryName } =
@@ -28,13 +30,15 @@ function AudienceView() {
 
   // Callbacks for authoritative timer
   const handlePlayerTimeout = useCallback((loser: 1 | 2) => {
-    console.log('[AudienceView] Player timeout:', loser);
+    log.debug('Player timeout:', loser);
     // Timeout is broadcast to Master View, which handles duel end
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSkipEnd = useCallback((switchToPlayer: 1 | 2) => {
-    console.log('[AudienceView] Skip ended, switched to player:', switchToPlayer);
+    log.debug('Skip ended, switched to player:', switchToPlayer);
     // Skip end is broadcast to Master View
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize authoritative timer
@@ -52,7 +56,7 @@ function AudienceView() {
   // Listen for app reset from other windows
   useEffect(() => {
     const cleanup = onAppReset(() => {
-      // Trigger redirect to same route to force remount and show waiting page
+      // Trigger redirect to same route to force remount and show waiting page.
       setShouldRedirect(true);
     });
 
@@ -61,39 +65,39 @@ function AudienceView() {
 
   // Resume duel if opening mid-game (Case 8: Audience View Opens Mid-Duel)
   useEffect(() => {
-    console.log('[AudienceView] Resume effect triggered', {
+    log.debug('Resume effect triggered', {
       hasDuelState: !!duelState,
       hasResumed: hasResumedRef.current,
     });
 
     if (!duelState) {
-      console.log('[AudienceView] No duel state, skipping resume');
+      log.debug('No duel state, skipping resume');
       return;
     }
 
     if (hasResumedRef.current) {
-      console.log('[AudienceView] Already resumed, skipping');
+      log.debug('Already resumed, skipping');
       return;
     }
 
     // Check if there's a timer state from a running duel
     const timerState = loadTimerState();
-    console.log('[AudienceView] Loaded timer state:', timerState);
+    log.debug('Loaded timer state:', timerState);
 
     if (timerState) {
-      console.log('[AudienceView] Resuming duel with timer state:', timerState);
+      log.debug('Resuming duel with timer state:', timerState);
 
       // IMPORTANT: Do NOT subtract elapsed time!
       // When Audience View is closed, contestants can't see slides, so time shouldn't advance.
       // Resume from exactly where we left off for fair gameplay.
-      console.log('[AudienceView] Resuming from saved times (no time subtraction for fairness):', {
+      log.debug('Resuming from saved times (no time subtraction for fairness):', {
         time1: timerState.timeRemaining1,
         time2: timerState.timeRemaining2,
         activePlayer: timerState.activePlayer,
       });
 
       // Start timer directly (can't use BroadcastChannel to send to self)
-      console.log('[AudienceView] Calling startTimer directly');
+      log.debug('Calling startTimer directly');
       authTimer.startTimer(
         timerState.timeRemaining1,
         timerState.timeRemaining2,
@@ -102,6 +106,7 @@ function AudienceView() {
 
       hasResumedRef.current = true;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duelState, authTimer]);
 
   // Handle Escape key to exit fullscreen (browser fullscreen API support)
@@ -109,7 +114,7 @@ function AudienceView() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && document.fullscreenElement) {
         document.exitFullscreen().catch((err: unknown) => {
-          console.error('Error exiting fullscreen:', err);
+          log.error('Error exiting fullscreen:', err);
         });
       }
     };
@@ -118,6 +123,7 @@ function AudienceView() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Preload next slide image for smooth transitions
@@ -172,7 +178,6 @@ function AudienceView() {
     return undefined;
   }, [duelState, displaySlide]);
 
-  // Handle redirect triggered by app reset
   if (shouldRedirect) {
     return <Navigate to="/audience" replace state={{ key: Date.now() }} />;
   }

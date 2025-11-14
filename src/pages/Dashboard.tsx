@@ -21,7 +21,10 @@ import { useContestants } from '@hooks/useIndexedDB';
 import { useCategories } from '@hooks/useCategories';
 import { useContestantSelection } from '@hooks/useContestantSelection';
 import { useDuelState } from '@hooks/useDuelState';
+import { createLogger } from '@/utils/logger';
 import styles from './Dashboard.module.css';
+
+const log = createLogger('Dashboard');
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -109,7 +112,7 @@ function Dashboard() {
       setShowImporter(false);
       return importResults;
     } catch (error) {
-      console.error('Failed to import:', error);
+      log.error('Failed to import:', error);
       alert(`Failed to import: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     } finally {
@@ -137,7 +140,7 @@ function Dashboard() {
         await removeContestant(contestantToDelete.id);
         setContestantToDelete(null);
       } catch (error) {
-        console.error('Failed to delete contestant:', error);
+        log.error('Failed to delete contestant:', error);
         alert(
           `Failed to delete contestant: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
@@ -203,12 +206,19 @@ function Dashboard() {
       // Trigger redirect to same route to force remount and ensure clean state
       setShouldRedirect(true);
     } catch (error) {
-      console.error('Failed to reset app:', error);
+      log.error('Failed to reset app:', error);
       alert(
         `Failed to reset application: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   };
+
+  // Reset redirect flag after redirect completes to prevent infinite loop
+  useEffect(() => {
+    if (shouldRedirect) {
+      setShouldRedirect(false);
+    }
+  }, [shouldRedirect]);
 
   const handleCancelReset = () => {
     setShowResetConfirm(false);
@@ -284,7 +294,7 @@ function Dashboard() {
 
   // Handle redirect triggered by app reset
   if (shouldRedirect) {
-    return <Navigate to="/" replace state={{ key: Date.now() }} />;
+    return <Navigate to="/" replace />;
   }
 
   const dashboardClass = styles['dashboard'] ?? '';

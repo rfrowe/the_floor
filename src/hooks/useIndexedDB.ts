@@ -15,8 +15,10 @@ import {
 } from '@storage/indexedDB';
 import type { Contestant } from '@types';
 import { createBroadcastSync } from '@/utils/broadcastSync';
+import { createLogger } from '@/utils/logger';
 
 const CHANNEL_NAME = 'the_floor_contestants';
+const log = createLogger('useContestants');
 
 /**
  * Custom hook for managing contestants with IndexedDB persistence
@@ -48,7 +50,7 @@ export function useContestants(): [
           setContestants(loaded);
         }
       } catch (error) {
-        console.error('Error loading contestants:', error);
+        log.error('Error loading contestants', error);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -74,7 +76,7 @@ export function useContestants(): [
             const loaded = await getAllContestants<Contestant>();
             setContestants(loaded);
           } catch (error) {
-            console.error('Error reloading contestants:', error);
+            log.error('Error reloading contestants', error);
           }
         })();
       },
@@ -92,10 +94,8 @@ export function useContestants(): [
     try {
       await addContestant(contestant);
       setContestants((prev) => [...prev, contestant]);
-      // Broadcast change to other windows/tabs
-      broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error adding contestant:', error);
+      log.error('Error adding contestant', error);
       throw error;
     }
   }, []);
@@ -105,10 +105,8 @@ export function useContestants(): [
     try {
       await addContestants(newContestants);
       setContestants((prev) => [...prev, ...newContestants]);
-      // Broadcast change to other windows/tabs
-      broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error bulk adding contestants:', error);
+      log.error('Error bulk adding contestants', error);
       throw error;
     }
   }, []);
@@ -118,14 +116,8 @@ export function useContestants(): [
     try {
       await updateContestant(contestant);
       setContestants((prev) => prev.map((c) => (c.id === contestant.id ? contestant : c)));
-
-      // Small delay to ensure IndexedDB transaction is fully committed before broadcasting
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // Broadcast change to other windows/tabs
-      broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error updating contestant:', error);
+      log.error('Error updating contestant', error);
       throw error;
     }
   }, []);
@@ -140,14 +132,8 @@ export function useContestants(): [
 
       // Single setState call with all updates
       setContestants((prev) => prev.map((c) => updatedMap.get(c.id) ?? c));
-
-      // Small delay to ensure IndexedDB transaction is fully committed before broadcasting
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // Broadcast change to other windows/tabs
-      broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error bulk updating contestants:', error);
+      log.error('Error bulk updating contestants', error);
       throw error;
     }
   }, []);
@@ -157,10 +143,8 @@ export function useContestants(): [
     try {
       await deleteContestant(id);
       setContestants((prev) => prev.filter((c) => c.id !== id));
-      // Broadcast change to other windows/tabs
-      broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error removing contestant:', error);
+      log.error('Error removing contestant', error);
       throw error;
     }
   }, []);
@@ -171,7 +155,7 @@ export function useContestants(): [
       const loaded = await getAllContestants<Contestant>();
       setContestants(loaded);
     } catch (error) {
-      console.error('Error loading contestants:', error);
+      log.error('Error loading contestants', error);
     }
   }, []);
 
