@@ -143,14 +143,87 @@ describe('SlideViewer', () => {
       backgroundColor: '#FF0000',
     });
 
-    // Check second box positioning
+    // Check second box positioning (note: rgba converted to rgb by ensureOpaqueColor)
     expect(secondBox).toHaveStyle({
       left: '50%',
       top: '60%',
       width: '20%',
       height: '15%',
-      backgroundColor: 'rgba(0, 0, 255, 0.8)',
+      backgroundColor: 'rgb(0, 0, 255)',
     });
+  });
+
+  it('ensures censor boxes are always opaque via CensorBox component', async () => {
+    const slideWithTransparentBoxes: Slide = {
+      imageUrl: mockSlide.imageUrl,
+      answer: 'Test',
+      censorBoxes: [
+        {
+          x: 10,
+          y: 10,
+          width: 20,
+          height: 20,
+          color: 'rgba(255, 0, 0, 0.5)',
+        },
+        {
+          x: 40,
+          y: 40,
+          width: 20,
+          height: 20,
+          color: 'rgba(0, 255, 0, 0.3)',
+        },
+        {
+          x: 70,
+          y: 70,
+          width: 20,
+          height: 20,
+          color: '#0000FF80',
+        },
+      ],
+    };
+
+    const { container } = render(<SlideViewer slide={slideWithTransparentBoxes} />);
+
+    const img = screen.getByAltText('Slide content');
+
+    Object.defineProperty(img, 'naturalWidth', {
+      get: () => 800,
+      configurable: true,
+    });
+    Object.defineProperty(img, 'naturalHeight', {
+      get: () => 600,
+      configurable: true,
+    });
+
+    act(() => {
+      img.dispatchEvent(new Event('load'));
+    });
+
+    await waitFor(() => {
+      const censorBoxes = container.querySelectorAll('[aria-hidden="true"]');
+      expect(censorBoxes.length).toBe(3);
+    });
+
+    const censorBoxes = container.querySelectorAll('[aria-hidden="true"]');
+
+    // Verify CensorBox component strips alpha (delegated to CensorBox tests)
+    const box1 = censorBoxes[0] as HTMLElement;
+    expect(box1).toHaveStyle({
+      backgroundColor: 'rgb(255, 0, 0)',
+    });
+    expect(box1.style.backgroundColor).not.toContain('rgba');
+
+    const box2 = censorBoxes[1] as HTMLElement;
+    expect(box2).toHaveStyle({
+      backgroundColor: 'rgb(0, 255, 0)',
+    });
+    expect(box2.style.backgroundColor).not.toContain('rgba');
+
+    const box3 = censorBoxes[2] as HTMLElement;
+    expect(box3).toHaveStyle({
+      backgroundColor: '#0000FF',
+    });
+    expect(box3.style.backgroundColor).not.toContain('80');
   });
 
   it('handles slide with no censorship boxes', async () => {

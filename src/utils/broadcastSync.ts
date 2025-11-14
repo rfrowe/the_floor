@@ -6,6 +6,8 @@
  * preventing channel closure issues when components unmount.
  */
 
+import { createLogger } from '@/utils/logger';
+
 export interface BroadcastSyncOptions<T> {
   channelName: string;
   onMessage: (data: T) => void;
@@ -33,6 +35,7 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
   isSupported: boolean;
 } {
   const { channelName, onMessage, onError } = options;
+  const log = createLogger(`BroadcastSync:${channelName}`);
 
   // Get or create singleton entry
   let entry = channelRegistry.get(channelName);
@@ -54,18 +57,18 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
           try {
             listener(event.data);
           } catch (error) {
-            console.error(`[BroadcastSync:${channelName}] Error in listener:`, error);
+            log.error('Error in listener:', error);
           }
         });
       };
 
       channel.onmessageerror = (error: MessageEvent) => {
-        console.error(`[BroadcastSync:${channelName}] Message error:`, error);
+        log.error('Message error:', error);
       };
 
       channelRegistry.set(channelName, entry);
     } catch (error) {
-      console.warn(`[BroadcastSync:${channelName}] Not supported:`, error);
+      log.warn('Not supported:', error);
       entry = {
         channel: null,
         listeners: new Set(),
@@ -88,7 +91,7 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
       try {
         listener(data);
       } catch (error) {
-        console.error(`[BroadcastSync:${channelName}] Error in local listener:`, error);
+        log.error('Error in local listener:', error);
       }
     });
 
@@ -99,7 +102,7 @@ export function createBroadcastSync<T>(options: BroadcastSyncOptions<T>): {
       } catch (error) {
         if (error instanceof Error && !error.message.includes('closed')) {
           onError?.(error);
-          console.error(`[BroadcastSync:${channelName}] Failed to send:`, error);
+          log.error('Failed to send:', error);
         }
       }
     }

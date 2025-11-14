@@ -7,10 +7,10 @@
  * 3. Optionally importing a new category
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { StoredCategory, Contestant } from '@types';
-import { ViewStack, type View } from '@components/common/ViewStack';
-import { CreateContent } from './creator/CreateContent';
+import { ViewStack } from '@components/common/ViewStack';
+import { CreateContentView } from './creator/CreateContentView';
 
 interface ContestantCreatorProps {
   onClose: () => void;
@@ -19,42 +19,31 @@ interface ContestantCreatorProps {
 }
 
 export function ContestantCreator({ onClose, onCreate, categories }: ContestantCreatorProps) {
-  // Lift form state to this level for proper preservation across navigation
   const [formState, setFormState] = useState({
     contestantName: '',
     selectedCategoryId: '',
   });
 
-  // Recreate view whenever formState changes (ensures latest state on back navigation)
-  const createView = useMemo(
-    () =>
-      ({
-        id: 'create',
-        title: 'Add Contestant',
-        content: (
-          <CreateContent
-            categories={categories}
-            contestantName={formState.contestantName}
-            selectedCategoryId={formState.selectedCategoryId}
-            onStateChange={setFormState}
-          />
-        ),
-      }) satisfies View,
-    [formState, categories]
-  );
-
   return (
     <ViewStack
       isOpen={true}
       onClose={onClose}
-      initialView={createView}
       onComplete={(result?: unknown) => {
-        // Handle created contestants
         if (result && typeof result === 'object' && 'created' in result) {
           const typedResult = result as { created: Contestant[] };
           onCreate(typedResult.created);
         }
+        onClose();
       }}
-    />
+    >
+      <CreateContentView
+        viewId="create"
+        viewTitle="Add Contestant"
+        categories={categories}
+        contestantName={formState.contestantName}
+        selectedCategoryId={formState.selectedCategoryId}
+        onStateChange={setFormState}
+      />
+    </ViewStack>
   );
 }

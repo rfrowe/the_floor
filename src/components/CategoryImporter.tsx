@@ -10,7 +10,10 @@ import { useState, useEffect } from 'react';
 import type { Category } from '@types';
 import { loadCategoryJSON, JSONImportError } from '@utils/jsonImport';
 import { SlidePreview } from '@components/slide/SlidePreview';
+import { createLogger } from '@/utils/logger';
 import styles from './CategoryImporter.module.css';
+
+const log = createLogger('CategoryImporter');
 
 interface ContestantData {
   file: File | null; // null for sample categories
@@ -117,7 +120,7 @@ export function CategoryImporter({
 
     // If onFilesLoaded callback provided, call it instead of showing preview internally
     if (onFilesLoaded) {
-      console.log('[CategoryImporter] Calling onFilesLoaded with parsed files');
+      log.debug('Calling onFilesLoaded with parsed files');
       const loadedCategories = contestants
         .filter((c) => c.error === null)
         .map((c) => ({

@@ -174,4 +174,27 @@ describe('FloorGrid', () => {
 
     expect(screen.queryByText('Bob')).not.toBeInTheDocument();
   });
+
+  it('accepts defaultConfig prop to override global grid configuration', () => {
+    const contestants: Contestant[] = [
+      {
+        id: '1',
+        name: 'Alice',
+        category: { name: 'Math', slides: [] },
+        wins: 0,
+        eliminated: false,
+        controlledSquares: ['0-0'],
+      },
+    ];
+
+    // Override with 3x3 grid (9 squares)
+    const customConfig = { rows: 3, cols: 3 };
+    render(<FloorGrid contestants={contestants} defaultConfig={customConfig} />);
+
+    const gridCells = screen.getAllByRole('gridcell');
+    expect(gridCells).toHaveLength(9); // 3 rows × 3 cols
+
+    const rows = screen.getAllByRole('row');
+    expect(rows).toHaveLength(3);
+  });
 });

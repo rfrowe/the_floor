@@ -109,28 +109,6 @@ describe('GridConfigurator', () => {
     expect(screen.getByText('Charlie')).toBeInTheDocument();
   });
 
-  it.skip('validates grid dimensions are between 1 and 20 - validation not implemented', () => {
-    const contestants: Contestant[] = [];
-    const onUpdate = vi.fn();
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {
-      // Mock implementation
-    });
-
-    render(<GridConfigurator contestants={contestants} onUpdateContestants={onUpdate} />);
-
-    const editButton = screen.getByRole('button', { name: /Edit Dimensions/ });
-    fireEvent.click(editButton);
-
-    const rowsInput = screen.getByLabelText(/Rows:/);
-    fireEvent.change(rowsInput, { target: { value: '25' } });
-
-    const applyButton = screen.getByRole('button', { name: /Apply/ });
-    fireEvent.click(applyButton);
-
-    expect(alertMock).toHaveBeenCalledWith('Grid dimensions must be between 1 and 20');
-    alertMock.mockRestore();
-  });
-
   it('validates grid has enough space for positioned contestants', () => {
     const contestants: Contestant[] = [
       createMockContestant('1', 'Alice', ['0-0']),

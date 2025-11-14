@@ -47,15 +47,14 @@ describe('GridSquare', () => {
 
   it('displays name only in centroid square for multi-square territory', () => {
     // Alice controls a 2x2 square (0-0, 0-1, 1-0, 1-1)
+    // Centroid is at (1.0, 1.0) which is in square (1, 1)
     const owner = createMockContestant('1', 'Alice', ['0-0', '0-1', '1-0', '1-1']);
 
-    // Render all squares
+    // Render square 0-0 - should NOT show name (not the centroid square)
     const { rerender } = render(<GridSquare squareId="0-0" row={0} col={0} owner={owner} />);
+    expect(screen.queryByText('Alice')).not.toBeInTheDocument();
 
-    // Square 0-0 should show name (closest to centroid 0.5, 0.5)
-    expect(screen.queryByText('Alice')).toBeInTheDocument();
-
-    // Square 1-1 should also show name (equidistant to centroid)
+    // Square 1-1 should show name (contains centroid)
     rerender(<GridSquare squareId="1-1" row={1} col={1} owner={owner} />);
     expect(screen.queryByText('Alice')).toBeInTheDocument();
   });

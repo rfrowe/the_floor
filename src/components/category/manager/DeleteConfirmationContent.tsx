@@ -8,7 +8,10 @@
 
 import { useViewStack } from '@components/common/ViewStack';
 import { useCategories } from '@hooks/useCategories';
+import { createLogger } from '@/utils/logger';
 import styles from '../CategoryManager.module.css';
+
+const log = createLogger('DeleteConfirmationContent');
 
 interface DeleteConfirmationContentProps {
   categoryId: string;
@@ -27,7 +30,7 @@ export function DeleteConfirmationContent({
       await removeCategory(categoryId);
       popView(); // Close confirmation view after delete
     } catch (error) {
-      console.error('Failed to delete category:', error);
+      log.error('Failed to delete category:', error);
       alert(
         `Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

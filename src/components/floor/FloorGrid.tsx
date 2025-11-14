@@ -3,13 +3,18 @@
  */
 
 import type { Contestant } from '@types';
+import type { GridConfig } from '@/storage/gridConfig';
 import { useGridConfig } from '@hooks/useGridConfig';
 import { GridSquare } from './GridSquare';
+import { createLogger } from '@utils/logger';
 import styles from './FloorGrid.module.css';
+
+const logger = createLogger('FloorGrid');
 
 interface FloorGridProps {
   contestants: Contestant[];
   selectedContestantIds?: string[]; // IDs of contestants selected for duel
+  defaultConfig?: GridConfig; // Optional override for demos (bypasses global state)
 }
 
 /**
@@ -18,18 +23,33 @@ interface FloorGridProps {
  * Replaces the waiting view on the Audience display when no duel is active.
  * Optionally highlights selected contestants (for duel preview).
  */
-export function FloorGrid({ contestants, selectedContestantIds = [] }: FloorGridProps) {
+export function FloorGrid({
+  contestants,
+  selectedContestantIds = [],
+  defaultConfig,
+}: FloorGridProps) {
   const [gridConfig] = useGridConfig();
-  const { rows, cols } = gridConfig;
+  const { rows, cols } = defaultConfig ?? gridConfig;
 
   // Calculate aspect ratio dynamically based on grid dimensions
   const aspectRatio = cols / rows;
 
   // Create map of square ID to contestant owner
   // Recalculated on every render to ensure borders update after territory changes
+  // Validate that no squares overlap
   const squareOwnership = new Map<string, Contestant>();
   contestants.forEach((contestant) => {
     contestant.controlledSquares?.forEach((squareId) => {
+      const existingOwner = squareOwnership.get(squareId);
+      if (existingOwner) {
+        const error = `Square ${squareId} is claimed by both "${existingOwner.name}" (${existingOwner.id}) and "${contestant.name}" (${contestant.id})`;
+        logger.error('GRID OVERLAP ERROR', {
+          squareId,
+          owner1: { id: existingOwner.id, name: existingOwner.name },
+          owner2: { id: contestant.id, name: contestant.name },
+        });
+        throw new Error(`GRID OVERLAP ERROR: ${error}`);
+      }
       squareOwnership.set(squareId, contestant);
     });
   });
@@ -45,8 +65,7 @@ export function FloorGrid({ contestants, selectedContestantIds = [] }: FloorGrid
         role="grid"
         aria-label="The Floor game board"
         style={{
-          maxWidth: `calc(100vh * ${String(aspectRatio)})`,
-          maxHeight: `calc(100vw / ${String(aspectRatio)})`,
+          aspectRatio: String(aspectRatio),
         }}
       >
         {Array.from({ length: rows }).map((_, row) => (

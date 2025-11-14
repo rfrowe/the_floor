@@ -845,12 +845,15 @@ describe('AudienceView', () => {
       const event = new KeyboardEvent('keydown', { key: 'Escape' });
       document.dispatchEvent(event);
 
-      // Wait for promise rejection handling
+      // Wait for promise rejection handling - logger formats the error differently
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'Error exiting fullscreen:',
-          expect.any(Error)
+        expect(consoleErrorSpy).toHaveBeenCalled();
+        const calls = consoleErrorSpy.mock.calls;
+        const errorCall = calls.find(
+          (call: unknown[]) =>
+            typeof call[0] === 'string' && call[0].includes('Error exiting fullscreen')
         );
+        expect(errorCall).toBeTruthy();
       });
 
       consoleErrorSpy.mockRestore();

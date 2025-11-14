@@ -6,8 +6,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAllCategoryMetadata } from '@storage/indexedDB';
 import { createBroadcastSync } from '@/utils/broadcastSync';
+import { createLogger } from '@/utils/logger';
 
 const CHANNEL_NAME = 'the_floor_categories';
+const log = createLogger('useCategoryMetadata');
 
 export interface CategoryMetadata {
   id: string;
@@ -30,7 +32,7 @@ export function useCategoryMetadata(): [CategoryMetadata[], { refresh: () => Pro
       const loaded = await getAllCategoryMetadata();
       setMetadata(loaded);
     } catch (error) {
-      console.error('Error loading category metadata:', error);
+      log.error('Error loading category metadata', error);
     } finally {
       setIsLoading(false);
     }

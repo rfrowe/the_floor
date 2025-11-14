@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Slide } from '@types';
+import { CensorBox } from './CensorBox';
 import styles from './SlideViewer.module.css';
 
 export interface SlideViewerProps {
@@ -11,6 +12,7 @@ export interface SlideViewerProps {
 /**
  * SlideViewer component displays slide images with censorship boxes overlaid
  * at precise positions. Handles aspect ratio preservation with letterboxing.
+ * Censor boxes are always rendered fully opaque (handled by CensorBox component).
  */
 export function SlideViewer({ slide, showAnswer = false, className = '' }: SlideViewerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -133,17 +135,10 @@ export function SlideViewer({ slide, showAnswer = false, className = '' }: Slide
             }}
           >
             {slide.censorBoxes.map((box, index) => (
-              <div
+              <CensorBox
                 key={index}
+                box={box}
                 className={`${censorBoxClass} ${hiddenClass}`.trim()}
-                style={{
-                  left: `${String(box.x)}%`,
-                  top: `${String(box.y)}%`,
-                  width: `${String(box.width)}%`,
-                  height: `${String(box.height)}%`,
-                  backgroundColor: box.color,
-                }}
-                aria-hidden="true"
               />
             ))}
           </div>

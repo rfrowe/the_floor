@@ -1,0 +1,150 @@
+/* Workflow Demo Styles */
+/* Styling for CategoryManager and ContestantCreator workflow carousels */
+
+.workflow-carousel-nav {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.workflow-carousel-arrows {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Responsive layout for medium to narrow screens */
+@media (max-width: 1023px) {
+  .workflow-carousel-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workflow-carousel-nav > button {
+    width: 100%;
+  }
+
+  .workflow-carousel-arrows {
+    margin-left: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .workflow-carousel-arrows > button {
+    width: 100%;
+  }
+}
+
+.workflow-view-container {
+  max-height: 600px;
+  overflow: auto;
+}
+
+/* Smaller container for ContestantCreator (simpler workflow) */
+.workflow-view-container-small {
+  max-height: 500px;
+  overflow: auto;
+}
+
+/* Responsive card wrapper with width restrictions */
+.workflow-card-wrapper {
+  margin: 0 auto;
+  /* Mobile: 95vw */
+  max-width: 95vw;
+}
+
+@media (min-width: 640px) {
+  .workflow-card-wrapper {
+    /* Small tablets: 90vw, max 600px */
+    max-width: min(90vw, 600px);
+  }
+}
+
+@media (min-width: 768px) {
+  .workflow-card-wrapper {
+    /* Tablets: 85vw, max 700px */
+    max-width: min(85vw, 700px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .workflow-card-wrapper {
+    /* Desktop: 80vw, max 800px */
+    max-width: min(80vw, 800px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .workflow-card-wrapper {
+    /* Large desktop: fixed 800px */
+    max-width: 800px;
+  }
+}
+
+/* Smaller card wrapper for ContestantCreator */
+.workflow-card-wrapper-small {
+  margin: 0 auto;
+  max-width: 95vw;
+}
+
+@media (min-width: 640px) {
+  .workflow-card-wrapper-small {
+    max-width: min(90vw, 550px);
+  }
+}
+
+@media (min-width: 768px) {
+  .workflow-card-wrapper-small {
+    max-width: min(85vw, 650px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .workflow-card-wrapper-small {
+    max-width: min(80vw, 700px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .workflow-card-wrapper-small {
+    max-width: 700px;
+  }
+}
+
+/* Loading state */
+.workflow-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* Demo view wrapper - fully interactive with subtle visual indicator */
+.workflow-demo-view {
+  /* Keep all interactions enabled - hover, typing, clicking all work */
+  /* MockViewStackProvider makes navigation buttons no-ops */
+  position: relative;
+}
+
+/* Add subtle border to indicate demo mode */
+.workflow-demo-view::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed var(--color-primary, #3b82f6);
+  opacity: 0.2;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Active view (fully interactive) */
+.workflow-demo-view-interactive {
+  position: relative;
+}
+

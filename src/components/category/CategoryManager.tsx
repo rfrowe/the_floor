@@ -11,11 +11,14 @@
 import { useState, useCallback } from 'react';
 import type { Contestant } from '@types';
 import { Modal } from '@components/common/Modal';
-import { ViewStack, type View } from '@components/common/ViewStack';
-import { ListContent } from './manager/ListContent';
+import { ViewStack } from '@components/common/ViewStack';
+import { ListContentView } from './manager/ListContentView';
 import { useCategoryMetadata } from '@hooks/useCategoryMetadata';
 import { useCategories } from '@hooks/useCategories';
+import { createLogger } from '@/utils/logger';
 import styles from './CategoryManager.module.css';
+
+const log = createLogger('CategoryManager');
 
 interface CategoryManagerProps {
   onClose: () => void;
@@ -24,7 +27,7 @@ interface CategoryManagerProps {
 
 export function CategoryManager({ onClose, contestants }: CategoryManagerProps) {
   // Use metadata for fast list loading
-  const [categoryMetadata] = useCategoryMetadata();
+  const [categoryMetadata, { refresh: refreshMetadata }] = useCategoryMetadata();
   // Keep useCategories for delete operations
   const [, { removeAll: removeAllCategories }] = useCategories();
 
@@ -39,7 +42,7 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
       await removeAllCategories();
       setDeletingAllCategories(false);
     } catch (error) {
-      console.error('Failed to delete all categories:', error);
+      log.error('Failed to delete all categories:', error);
       alert(
         `Failed to delete all categories: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -48,26 +51,25 @@ export function CategoryManager({ onClose, contestants }: CategoryManagerProps) 
 
   const categoryModalClass = styles['category-modal'];
 
-  const listView = {
-    id: 'list',
-    title: 'Manage Categories',
-    content: (
-      <ListContent
-        categoryMetadata={categoryMetadata}
-        contestants={contestants}
-        onDeleteAllCategories={handleDeleteAllCategories}
-      />
-    ),
-  } satisfies View;
-
   return (
     <>
       <ViewStack
         isOpen={true}
         onClose={onClose}
-        initialView={listView}
+        onComplete={onClose}
         {...(categoryModalClass ? { className: categoryModalClass } : {})}
-      />
+      >
+        <ListContentView
+          viewId="list"
+          viewTitle="Manage Categories"
+          categoryMetadata={categoryMetadata}
+          contestants={contestants}
+          onDeleteAllCategories={handleDeleteAllCategories}
+          onViewLoad={async () => {
+            await refreshMetadata();
+          }}
+        />
+      </ViewStack>
 
       {/* Delete all confirmation modal - separate from ViewStack (allowed exception) */}
       {deletingAllCategories && (

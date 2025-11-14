@@ -3,6 +3,9 @@
  * Provides a clean API over browser's localStorage with fallback to in-memory storage
  */
 
+import { createLogger } from '@/utils/logger';
+
+const log = createLogger('LocalStorage');
 const STORAGE_PREFIX = 'the-floor:';
 
 /**
@@ -56,7 +59,7 @@ export function getItem<T>(key: string, defaultValue: T): T {
       return JSON.parse(item) as T;
     }
   } catch (error) {
-    console.warn(`Error reading storage key "${key}":`, error);
+    log.warn(`Error reading storage key "${key}":`, error);
     return defaultValue;
   }
 }
@@ -80,9 +83,9 @@ export function setItem<T>(key: string, value: T): void {
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'QuotaExceededError') {
-      console.error('Storage quota exceeded. Consider clearing old data.');
+      log.error('Storage quota exceeded. Consider clearing old data.');
     } else {
-      console.error(`Error setting storage key "${key}":`, error);
+      log.error(`Error setting storage key "${key}":`, error);
     }
     throw error;
   }
@@ -102,7 +105,7 @@ export function removeItem(key: string): void {
       memoryStorage.delete(fullKey);
     }
   } catch (error) {
-    console.warn(`Error removing storage key "${key}":`, error);
+    log.warn(`Error removing storage key "${key}":`, error);
   }
 }
 
@@ -136,6 +139,6 @@ export function clear(): void {
       });
     }
   } catch (error) {
-    console.error('Error clearing storage:', error);
+    log.error('Error clearing storage:', error);
   }
 }

@@ -18,8 +18,11 @@ import { formatTime } from '@utils/time';
 import { clearTimerState } from '@/storage/timerState';
 import { consolidateTerritories } from '@utils/territoryConsolidation';
 import { onAppReset } from '@utils/resetApp';
+import { createLogger } from '@/utils/logger';
 import type { Contestant } from '@types';
 import styles from './MasterView.module.css';
+
+const log = createLogger('MasterView');
 
 function MasterView() {
   const navigate = useNavigate();
@@ -64,7 +67,7 @@ function MasterView() {
 
       // Ensure duelState exists
       if (!duelState) {
-        console.error('Cannot end duel: duelState is null');
+        log.error('Cannot end duel: duelState is null');
         return;
       }
 
@@ -111,7 +114,7 @@ function MasterView() {
         // Show completion message
         alert(`${winner.name} wins! They inherit "${inheritedCategory.name}" from ${loser.name}`);
       } catch (error) {
-        console.error('Error ending duel:', error);
+        log.error('Error ending duel:', error);
         alert('Error ending duel. Check console for details.');
       }
     },

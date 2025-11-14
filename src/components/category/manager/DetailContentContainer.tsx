@@ -8,7 +8,10 @@
 import { useState } from 'react';
 import type { StoredCategory } from '@types';
 import { getCategoryById } from '@storage/indexedDB';
+import { createLogger } from '@/utils/logger';
 import { DetailContent } from './DetailContent';
+
+const log = createLogger('DetailContentContainer');
 
 interface DetailContentContainerProps {
   categoryId: string;
@@ -25,7 +28,7 @@ export function DetailContentContainer({ categoryId }: DetailContentContainerPro
       const fullCategory = await getCategoryById<StoredCategory>(categoryId);
       setCategory(fullCategory);
     } catch (error) {
-      console.error('Failed to load category:', error);
+      log.error('Failed to load category:', error);
       alert('Failed to load category details');
     } finally {
       setIsLoading(false);

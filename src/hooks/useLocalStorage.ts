@@ -5,6 +5,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getItem, setItem } from '@storage/localStorage';
+import { createLogger } from '@/utils/logger';
+
+const log = createLogger('useLocalStorage');
 
 /**
  * Custom hook for managing state with localStorage persistence
@@ -32,7 +35,7 @@ export function useLocalStorage<T>(
           // Update localStorage
           setItem(key, valueToStore);
         } catch (error) {
-          console.error(`Error setting localStorage key "${key}":`, error);
+          log.error(`Error setting localStorage key "${key}":`, error);
         }
 
         return valueToStore;
@@ -49,7 +52,7 @@ export function useLocalStorage<T>(
           const newValue = JSON.parse(e.newValue) as T;
           setStoredValue(newValue);
         } catch (error) {
-          console.warn(`Error parsing storage event for key "${key}":`, error);
+          log.warn(`Error parsing storage event for key "${key}":`, error);
         }
       }
     };

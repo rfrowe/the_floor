@@ -3,7 +3,10 @@
  * Stores the game floor grid dimensions in localStorage
  */
 
+import { createLogger } from '@/utils/logger';
+
 const GRID_CONFIG_KEY = 'the_floor_grid_config';
+const log = createLogger('GridConfig');
 
 export interface GridConfig {
   rows: number;
@@ -52,7 +55,7 @@ export function saveGridConfig(config: GridConfig): void {
   try {
     localStorage.setItem(GRID_CONFIG_KEY, JSON.stringify(config));
   } catch (error) {
-    console.error('Failed to save grid config:', error);
+    log.error('Failed to save grid config:', error);
   }
 }
 

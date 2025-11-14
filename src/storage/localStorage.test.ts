@@ -98,7 +98,15 @@ describe('localStorage utilities', () => {
       expect(() => {
         setItem('test', 'value');
       }).toThrow('QuotaExceededError');
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Storage quota exceeded'));
+      // Logger formats the message, so check console.error was called with message containing the text
+      expect(console.error).toHaveBeenCalled();
+      const errorSpy = console.error as unknown as { mock: { calls: unknown[][] } };
+      const calls = errorSpy.mock.calls;
+      const quotaCall = calls.find(
+        (call: unknown[]) =>
+          typeof call[0] === 'string' && call[0].includes('Storage quota exceeded')
+      );
+      expect(quotaCall).toBeTruthy();
 
       // Restore original
       setItemSpy.mockRestore();

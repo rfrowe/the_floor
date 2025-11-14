@@ -3,6 +3,7 @@
  * Populates the categories store with categories from existing contestants
  */
 
+import { createLogger } from './logger';
 import {
   getAllContestants,
   updateContestant,
@@ -11,6 +12,8 @@ import {
 } from '@storage/indexedDB';
 import type { Contestant, StoredCategory } from '@types';
 import { nanoid } from 'nanoid';
+
+const logger = createLogger('MigrateCategories');
 
 /**
  * Result of migration operation
@@ -91,7 +94,7 @@ export async function populateCategoriesStore(): Promise<MigrationResult> {
         result.categoriesCreated++;
       } catch (error) {
         const errorMsg = `Failed to add category "${category.name}": ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error(errorMsg);
+        logger.error(errorMsg);
         result.errors.push(errorMsg);
         result.success = false;
       }
@@ -104,7 +107,7 @@ export async function populateCategoriesStore(): Promise<MigrationResult> {
 
         if (!categoryId) {
           const errorMsg = `Could not find category ID for contestant "${contestant.name}"`;
-          console.error(errorMsg);
+          logger.error(errorMsg);
           result.errors.push(errorMsg);
           result.success = false;
           continue;
@@ -120,7 +123,7 @@ export async function populateCategoriesStore(): Promise<MigrationResult> {
         result.contestantsUpdated++;
       } catch (error) {
         const errorMsg = `Failed to update contestant "${contestant.name}": ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error(errorMsg);
+        logger.error(errorMsg);
         result.errors.push(errorMsg);
         result.success = false;
       }
@@ -129,7 +132,7 @@ export async function populateCategoriesStore(): Promise<MigrationResult> {
     return result;
   } catch (error) {
     const errorMsg = `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    console.error(errorMsg);
+    logger.error(errorMsg);
     result.errors.push(errorMsg);
     result.success = false;
     return result;
@@ -144,7 +147,7 @@ export async function checkMigrationNeeded(): Promise<boolean> {
     const allContestants = await getAllContestants<Contestant>();
     return allContestants.some((c) => !c.categoryId);
   } catch (error) {
-    console.error('Error checking migration status:', error);
+    logger.error('Error checking migration status:', error);
     return false;
   }
 }

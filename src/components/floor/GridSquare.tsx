@@ -5,7 +5,7 @@
 import { memo } from 'react';
 import type { Contestant } from '@types';
 import { getContestantColor } from '@utils/colorUtils';
-import { shouldDisplayName } from '@utils/gridUtils';
+import { getNameDisplayInfo } from '@utils/gridUtils';
 import styles from './GridSquare.module.css';
 
 interface GridSquareProps {
@@ -38,7 +38,7 @@ export const GridSquare = memo(
     perimeterBorders,
   }: GridSquareProps) {
     const backgroundColor = getContestantColor(owner?.id);
-    const displayName = owner && shouldDisplayName(owner, row, col);
+    const nameInfo = owner ? getNameDisplayInfo(owner, row, col) : { shouldDisplay: false };
 
     const squareClass = styles['grid-square'] ?? '';
     const selectedClass = isSelected ? (styles['selected'] ?? '') : '';
@@ -61,6 +61,9 @@ export const GridSquare = memo(
     const borderStyle: React.CSSProperties = {};
     if (shadows.length > 0) {
       borderStyle.boxShadow = shadows.join(', ');
+    } else if (!owner) {
+      // Add subtle border to empty squares to show grid structure
+      borderStyle.border = '1px solid rgba(255, 255, 255, 0.2)';
     }
 
     return (
@@ -73,8 +76,19 @@ export const GridSquare = memo(
         aria-label={`Square ${String(row)}-${String(col)} owned by ${owner?.name ?? 'empty'}${isSelected ? ' - selected for duel' : ''}`}
       >
         {/* Show sword icon, name, and category on centroid square only */}
-        {displayName && (
-          <div className={labelClass}>
+        {nameInfo.shouldDisplay && nameInfo.offset && owner && (
+          <div
+            className={labelClass}
+            style={{
+              position: 'absolute',
+              // Center of square is 50%, add offset to get centroid position
+              // Offset range is -0.5 to 0.5, so multiply by 100 to get percentage
+              left: `${(50 + nameInfo.offset.x * 100).toFixed(2)}%`,
+              top: `${(50 + nameInfo.offset.y * 100).toFixed(2)}%`,
+              // Center the text element on that point
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
             {isSelected && <span className={styles['duel-icon'] ?? ''}>⚔️</span>}
             <span>{owner.name}</span>
             <span style={{ fontSize: '0.8em', opacity: 0.9 }}>{owner.category.name}</span>
@@ -84,9 +98,19 @@ export const GridSquare = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Re-render if owner or selection status changes
+    // Re-render if owner, selection status, position, or perimeter borders change
+    // Also check controlledSquares length - when territory merges, this changes
+    // and affects centroid calculations for ALL squares owned by that contestant
     return (
-      prevProps.owner?.id === nextProps.owner?.id && prevProps.isSelected === nextProps.isSelected
+      prevProps.row === nextProps.row &&
+      prevProps.col === nextProps.col &&
+      prevProps.owner?.id === nextProps.owner?.id &&
+      prevProps.isSelected === nextProps.isSelected &&
+      prevProps.perimeterBorders?.top === nextProps.perimeterBorders?.top &&
+      prevProps.perimeterBorders?.right === nextProps.perimeterBorders?.right &&
+      prevProps.perimeterBorders?.bottom === nextProps.perimeterBorders?.bottom &&
+      prevProps.perimeterBorders?.left === nextProps.perimeterBorders?.left &&
+      prevProps.owner?.controlledSquares?.length === nextProps.owner?.controlledSquares?.length
     );
   }
 );

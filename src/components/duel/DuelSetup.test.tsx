@@ -47,6 +47,7 @@ describe('DuelSetup', () => {
     },
     wins: 2,
     eliminated: false,
+    controlledSquares: ['0-0', '0-1'],
   };
 
   const mockContestant2: Contestant = {
@@ -64,6 +65,7 @@ describe('DuelSetup', () => {
     },
     wins: 1,
     eliminated: false,
+    controlledSquares: ['1-0', '1-1'],
   };
 
   const defaultProps: DuelSetupProps = {
@@ -223,10 +225,11 @@ describe('DuelSetup', () => {
       expect(screen.queryByText('Select a category for the duel')).not.toBeInTheDocument();
     });
 
-    it('should enable Start Duel button after selecting category', async () => {
+    it('should enable Start Duel button after selecting category (with audience watching)', async () => {
       const user = userEvent.setup();
       renderDuelSetup({
         contestant1: mockContestant1,
+        isAudienceWatching: true,
         contestant2: mockContestant2,
       });
 
@@ -376,6 +379,84 @@ describe('DuelSetup', () => {
 
       expect(onStartDuel).not.toHaveBeenCalled();
       expect(mockNavigate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Audience Watching Control', () => {
+    it('should disable Start Duel button when isAudienceWatching is false', async () => {
+      const user = userEvent.setup();
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        isAudienceWatching: false,
+      });
+
+      const categorySelect = screen.getByLabelText(/duel category/i);
+      await user.selectOptions(categorySelect, 'Math');
+
+      const startButton = screen.getByRole('button', { name: /start duel/i });
+      expect(startButton).toBeDisabled();
+    });
+
+    it('should enable Start Duel button when isAudienceWatching is true with all requirements met', async () => {
+      const user = userEvent.setup();
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        isAudienceWatching: true,
+      });
+
+      const categorySelect = screen.getByLabelText(/duel category/i);
+      await user.selectOptions(categorySelect, 'Math');
+
+      const startButton = screen.getByRole('button', { name: /start duel/i });
+      expect(startButton).not.toBeDisabled();
+    });
+
+    it('should show "No Audience View detected" message when isAudienceWatching is false', async () => {
+      const user = userEvent.setup();
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        isAudienceWatching: false,
+      });
+
+      // Select a category first so we can see the audience validation message
+      const categorySelect = screen.getByLabelText(/duel category/i);
+      await user.selectOptions(categorySelect, 'Math');
+
+      expect(
+        screen.getByText(
+          /No Audience View detected. Open Audience View in a new window to begin duel./i
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('should not show audience message when isAudienceWatching is true', () => {
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        isAudienceWatching: true,
+      });
+
+      expect(screen.queryByText(/No Audience View detected/i)).not.toBeInTheDocument();
+    });
+
+    it('should fall back to useAudienceConnection hook when isAudienceWatching is undefined', async () => {
+      const user = userEvent.setup();
+      // Mock returns isConnected: true
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        // isAudienceWatching not provided, should use hook
+      });
+
+      const categorySelect = screen.getByLabelText(/duel category/i);
+      await user.selectOptions(categorySelect, 'Math');
+
+      const startButton = screen.getByRole('button', { name: /start duel/i });
+      // Should be enabled because mock hook returns isConnected: true
+      expect(startButton).not.toBeDisabled();
     });
   });
 });

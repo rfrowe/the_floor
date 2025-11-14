@@ -3,7 +3,10 @@
  * without triggering React re-renders of game components
  */
 
+import { createLogger } from '@/utils/logger';
+
 const TIMER_STATE_KEY = 'the-floor:timerState';
+const log = createLogger('TimerState');
 
 export interface TimerState {
   timeRemaining1: number;
@@ -20,7 +23,7 @@ export function saveTimerState(state: TimerState): void {
   try {
     localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.warn('Failed to save timer state:', error);
+    log.warn('Failed to save timer state:', error);
   }
 }
 
@@ -36,7 +39,7 @@ export function loadTimerState(): TimerState | null {
     }
     return JSON.parse(stored) as TimerState;
   } catch (error) {
-    console.warn('Failed to load timer state:', error);
+    log.warn('Failed to load timer state:', error);
     return null;
   }
 }
@@ -49,6 +52,6 @@ export function clearTimerState(): void {
   try {
     localStorage.removeItem(TIMER_STATE_KEY);
   } catch (error) {
-    console.warn('Failed to clear timer state:', error);
+    log.warn('Failed to clear timer state:', error);
   }
 }

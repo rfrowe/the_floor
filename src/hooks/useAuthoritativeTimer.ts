@@ -17,10 +17,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import timerSyncService, { type TimerMessage } from '@services/timerSync';
 import { saveTimerState } from '@storage/timerState';
+import { createLogger } from '@/utils/logger';
 
 const UPDATE_INTERVAL = 100; // 100ms = 0.1s display precision
 const SKIP_DURATION = 3.0; // 3.0 seconds for skip animation
 const PERSIST_INTERVAL_BROADCASTS = 10; // Save to localStorage every 10 broadcasts (1 second)
+const log = createLogger('AuthTimer');
 
 export interface AuthoritativeTimerOptions {
   /** Initial time for player 1 in seconds */
@@ -112,7 +114,7 @@ export function useAuthoritativeTimer(
    * Handle time expiration for a player
    */
   const handleTimeout = useCallback((player: 1 | 2) => {
-    console.log('[AuthTimer] Player timeout:', player);
+    log.debug('Player timeout:', player);
 
     // Stop timer
     setIsRunning(false);
@@ -128,7 +130,7 @@ export function useAuthoritativeTimer(
    * Handle skip animation end
    */
   const handleSkipComplete = useCallback(() => {
-    console.log('[AuthTimer] Skip animation complete');
+    log.debug('Skip animation complete');
 
     // Get current times
     const currentTime1 = time1;
@@ -170,8 +172,8 @@ export function useAuthoritativeTimer(
     (message: TimerMessage) => {
       switch (message.type) {
         case 'TIMER_START':
-          console.log('[AuthTimer] START command', message);
-          console.log('[AuthTimer] Setting times:', {
+          log.debug('START command', message);
+          log.debug('Setting times:', {
             time1: message.player1Time,
             time2: message.player2Time,
             activePlayer: message.activePlayer,
@@ -181,29 +183,29 @@ export function useAuthoritativeTimer(
           setActivePlayer(message.activePlayer);
           setIsRunning(true);
           lastUpdateRef.current = Date.now();
-          console.log('[AuthTimer] Timer started, isRunning should now be true');
+          log.debug('Timer started, isRunning should now be true');
           break;
 
         case 'TIMER_PAUSE':
-          console.log('[AuthTimer] PAUSE command');
+          log.debug('PAUSE command');
           setIsRunning(false);
           break;
 
         case 'TIMER_RESUME':
-          console.log('[AuthTimer] RESUME command', message);
+          log.debug('RESUME command', message);
           setActivePlayer(message.activePlayer);
           setIsRunning(true);
           lastUpdateRef.current = Date.now();
           break;
 
         case 'TIMER_SWITCH':
-          console.log('[AuthTimer] SWITCH command', message);
+          log.debug('SWITCH command', message);
           setActivePlayer(message.activePlayer);
           lastUpdateRef.current = Date.now();
           break;
 
         case 'SKIP_START':
-          console.log('[AuthTimer] SKIP_START command', message);
+          log.debug('SKIP_START command', message);
           setIsSkipActive(true);
           setSkipAnswer(message.answer);
           skipStartTimeRef.current = Date.now();
@@ -222,7 +224,7 @@ export function useAuthoritativeTimer(
           break;
 
         case 'DUEL_END':
-          console.log('[AuthTimer] DUEL_END command');
+          log.debug('DUEL_END command');
           setIsRunning(false);
           setIsSkipActive(false);
           setSkipAnswer(null);
@@ -246,7 +248,7 @@ export function useAuthoritativeTimer(
   // ============================================================================
 
   useEffect(() => {
-    console.log('[AuthTimer] Setting up message listener');
+    log.debug('Setting up message listener');
 
     const cleanup = timerSyncService.onMessage(handleCommand);
 
@@ -262,7 +264,7 @@ export function useAuthoritativeTimer(
   // ============================================================================
 
   useEffect(() => {
-    console.log('[AuthTimer] Starting heartbeat');
+    log.debug('Starting heartbeat');
 
     timerSyncService.startAudienceHeartbeat();
 
@@ -280,7 +282,7 @@ export function useAuthoritativeTimer(
       return;
     }
 
-    console.log('[AuthTimer] Starting countdown loop');
+    log.debug('Starting countdown loop');
 
     lastUpdateRef.current = Date.now();
 
@@ -377,7 +379,7 @@ export function useAuthoritativeTimer(
    */
   const startTimer = useCallback(
     (player1Time: number, player2Time: number, newActivePlayer: 1 | 2) => {
-      console.log('[AuthTimer] Manual start called', {
+      log.debug('Manual start called', {
         player1Time,
         player2Time,
         activePlayer: newActivePlayer,

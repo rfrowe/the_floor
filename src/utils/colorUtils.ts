@@ -3,7 +3,10 @@
  * Uses BroadcastChannel for cross-window sync
  */
 
+import { createLogger } from './logger';
 import { createBroadcastSync } from './broadcastSync';
+
+const logger = createLogger('ColorUtils');
 
 const COLOR_CHANNEL_NAME = 'the_floor_color_assignments';
 
@@ -54,7 +57,7 @@ function loadColorAssignments(): Map<string, string> {
       return new Map(Object.entries(obj));
     }
   } catch (error) {
-    console.warn('Failed to load color assignments:', error);
+    logger.warn('Failed to load color assignments:', error);
   }
   return new Map();
 }
@@ -67,7 +70,7 @@ function saveColorAssignments(assignments: Map<string, string>): void {
     const obj = Object.fromEntries(assignments);
     localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(obj));
   } catch (error) {
-    console.warn('Failed to save color assignments:', error);
+    logger.warn('Failed to save color assignments:', error);
   }
 }
 
@@ -137,7 +140,7 @@ function generateRandomColor(): string {
  */
 export function getContestantColor(contestantId?: string): string {
   if (!contestantId) {
-    return '#2a2a2a'; // Dark gray for empty squares
+    return 'transparent'; // Transparent for empty squares to show background
   }
 
   // Return existing assignment if contestant already has a color
@@ -173,7 +176,7 @@ export function resetColorAssignments(): void {
   try {
     localStorage.removeItem(COLOR_STORAGE_KEY);
   } catch (error) {
-    console.warn('Failed to clear color assignments:', error);
+    logger.warn('Failed to clear color assignments:', error);
   }
 
   // Broadcast reset to other windows

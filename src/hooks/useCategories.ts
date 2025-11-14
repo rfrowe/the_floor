@@ -15,8 +15,10 @@ import {
 } from '@storage/indexedDB';
 import type { StoredCategory } from '@types';
 import { createBroadcastSync } from '@/utils/broadcastSync';
+import { createLogger } from '@/utils/logger';
 
 const CHANNEL_NAME = 'the_floor_categories';
+const log = createLogger('useCategories');
 
 /**
  * Custom hook for managing categories with IndexedDB persistence
@@ -48,7 +50,7 @@ export function useCategories(): [
           setCategories(loaded);
         }
       } catch (error) {
-        console.error('Error loading categories:', error);
+        log.error('Error loading categories', error);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -74,7 +76,7 @@ export function useCategories(): [
             const loaded = await getAllCategories<StoredCategory>();
             setCategories(loaded);
           } catch (error) {
-            console.error('Error reloading categories:', error);
+            log.error('Error reloading categories', error);
           }
         })();
       },
@@ -95,7 +97,7 @@ export function useCategories(): [
       // Broadcast change to other windows/tabs and current tab
       broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error adding category:', error);
+      log.error('Error adding category', error);
       throw error;
     }
   }, []);
@@ -108,7 +110,7 @@ export function useCategories(): [
       // Broadcast change to other windows/tabs
       broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error bulk adding categories:', error);
+      log.error('Error bulk adding categories', error);
       throw error;
     }
   }, []);
@@ -125,7 +127,7 @@ export function useCategories(): [
       // Broadcast change to other windows/tabs
       broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error updating category:', error);
+      log.error('Error updating category', error);
       throw error;
     }
   }, []);
@@ -138,7 +140,7 @@ export function useCategories(): [
       // Broadcast change to other windows/tabs
       broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error removing category:', error);
+      log.error('Error removing category', error);
       throw error;
     }
   }, []);
@@ -151,7 +153,7 @@ export function useCategories(): [
       // Broadcast change to other windows/tabs
       broadcastRef.current?.send('reload');
     } catch (error) {
-      console.error('Error removing all categories:', error);
+      log.error('Error removing all categories', error);
       throw error;
     }
   }, []);
@@ -162,7 +164,7 @@ export function useCategories(): [
       const loaded = await getAllCategories<StoredCategory>();
       setCategories(loaded);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      log.error('Error loading categories:', error);
     }
   }, []);
 

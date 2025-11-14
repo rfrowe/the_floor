@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Slide } from '@types';
+import { CensorBox } from './CensorBox';
 import styles from './SlidePreview.module.css';
 
 interface SlidePreviewProps {
@@ -19,6 +20,7 @@ interface SlidePreviewProps {
   onAnswerChange?: (newAnswer: string) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  showAnswer?: boolean; // External control for answer visibility
 }
 
 export function SlidePreview({
@@ -28,13 +30,16 @@ export function SlidePreview({
   onAnswerChange,
   isExpanded = false,
   onToggleExpand,
+  showAnswer = false,
 }: SlidePreviewProps) {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+  const [isImageRevealed, setIsImageRevealed] = useState(false);
 
-  // Reset answer revealed state when slide collapses
+  // Reset revealed states when slide collapses
   useEffect(() => {
     if (!isExpanded) {
       setIsAnswerRevealed(false);
+      setIsImageRevealed(false);
     }
   }, [isExpanded]);
 
@@ -53,20 +58,36 @@ export function SlidePreview({
     }
   };
 
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsImageRevealed(true);
+  };
+
+  const handleImageMouseLeave = () => {
+    setIsImageRevealed(false);
+  };
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // Click outside the image but inside expanded area - hide image reveal
+    if (e.target === e.currentTarget) {
+      setIsImageRevealed(false);
+    }
+  };
+
   const formatCensoredAnswer = (answer: string) => {
     return '█'.repeat(Math.max(8, Math.ceil(answer.length / 2)));
   };
 
   const containerClass = styles['slide-preview'] ?? '';
-  const clickableClass = mode === 'edit' ? (styles['clickable'] ?? '') : '';
+  const clickableClass = onToggleExpand ? (styles['clickable'] ?? '') : '';
   const expandedClass = isExpanded ? (styles['expanded'] ?? '') : '';
 
   return (
     <div
       className={`${containerClass} ${clickableClass} ${expandedClass}`.trim()}
-      onClick={mode === 'edit' && onToggleExpand ? onToggleExpand : undefined}
+      onClick={onToggleExpand}
       onKeyDown={
-        mode === 'edit' && onToggleExpand
+        onToggleExpand
           ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -75,43 +96,58 @@ export function SlidePreview({
             }
           : undefined
       }
-      role={mode === 'edit' ? 'button' : undefined}
-      tabIndex={mode === 'edit' ? 0 : undefined}
+      role={onToggleExpand ? 'button' : undefined}
+      tabIndex={onToggleExpand ? 0 : undefined}
     >
       <div className={styles['slide-header-container'] ?? ''}>
         <h4 className={styles['slide-header'] ?? ''}>Slide {slideNumber}</h4>
-        {mode === 'edit' && (
+        {onToggleExpand && (
           <span className={styles['expand-indicator'] ?? ''}>{isExpanded ? '▼' : '▶'}</span>
         )}
       </div>
 
       {isExpanded && (
-        <>
-          <div className={styles['image-container'] ?? ''}>
+        <div
+          onClick={handleContainerClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleContainerClick(e as unknown as React.MouseEvent);
+            }
+          }}
+          role="button"
+          tabIndex={-1}
+          aria-label="Slide content container"
+        >
+          <div
+            className={`${styles['image-container'] ?? ''} ${styles['interactive'] ?? ''}`.trim()}
+            onClick={handleImageClick}
+            onMouseLeave={handleImageMouseLeave}
+            style={{ cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-label="Click to reveal slide"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleImageClick(e as unknown as React.MouseEvent);
+              }
+            }}
+          >
             <img
               src={slide.imageUrl}
               alt={`Slide ${String(slideNumber)}`}
               className={styles['slide-image'] ?? ''}
             />
-            {slide.censorBoxes.map((box, boxIndex) => (
-              <div
-                key={boxIndex}
-                className={styles['censor-box'] ?? ''}
-                style={{
-                  position: 'absolute',
-                  left: `${String(box.x)}%`,
-                  top: `${String(box.y)}%`,
-                  width: `${String(box.width)}%`,
-                  height: `${String(box.height)}%`,
-                  backgroundColor: box.color,
-                }}
-              />
-            ))}
+            {!isImageRevealed &&
+              slide.censorBoxes.map((box, boxIndex) => (
+                <CensorBox key={boxIndex} box={box} className={styles['censor-box'] ?? ''} />
+              ))}
           </div>
 
           <div className={styles['answer-section'] ?? ''}>
             <strong>Answer:</strong>
-            {isAnswerRevealed && mode === 'edit' ? (
+            {(showAnswer || isAnswerRevealed) && mode === 'edit' ? (
               <input
                 type="text"
                 value={slide.answer}
@@ -138,7 +174,7 @@ export function SlidePreview({
                 tabIndex={0}
                 aria-label="Click to reveal answer"
               >
-                {isAnswerRevealed && mode === 'readonly' ? (
+                {(showAnswer || isAnswerRevealed) && mode === 'readonly' ? (
                   slide.answer || '(no answer)'
                 ) : (
                   <span className={styles['censored-answer'] ?? ''}>
@@ -167,7 +203,7 @@ export function SlidePreview({
               </ul>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import type { StoredCategory } from '@types';
-import { SlidePreview } from '@components/slide/SlidePreview';
+import { SlideList } from '@components/slide/SlideList';
 import styles from '../CategoryManager.module.css';
 
 interface DetailContentProps {
@@ -41,21 +41,13 @@ export function DetailContent({
 
   return (
     <div className={styles['slides-viewer']}>
-      {localCategory.slides.map((slide, index) => (
-        <SlidePreview
-          key={index}
-          slide={slide}
-          slideNumber={index + 1}
-          mode="edit"
-          isExpanded={expandedSlideIndex === index}
-          onToggleExpand={() => {
-            toggleSlideExpanded(index);
-          }}
-          onAnswerChange={(newAnswer) => {
-            handleSlideAnswerChange(index, newAnswer);
-          }}
-        />
-      ))}
+      <SlideList
+        slides={localCategory.slides}
+        expandedSlideIndex={expandedSlideIndex}
+        onToggleExpand={toggleSlideExpanded}
+        onAnswerChange={handleSlideAnswerChange}
+        mode="edit"
+      />
     </div>
   );
 }

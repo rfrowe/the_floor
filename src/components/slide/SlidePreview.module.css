@@ -50,9 +50,23 @@
 
 .image-container {
   position: relative;
-  display: block;
-  width: 100%;
+  display: inline-block;
+  max-width: 100%;
   margin-bottom: 1rem;
+}
+
+/* Interactive effects only in edit mode */
+.image-container.interactive {
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.image-container.interactive:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.image-container.interactive:active {
+  transform: scale(0.99);
 }
 
 .slide-image {
@@ -109,12 +123,14 @@
 
 .answer-input {
   width: 100%;
+  max-width: 800px; /* Match typical slide width */
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid var(--border-default);
   border-radius: 4px;
   background: var(--bg-primary);
   color: var(--text-primary);
+  box-sizing: border-box;
 }
 
 .answer-input:focus {
