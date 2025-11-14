@@ -133,23 +133,20 @@ export default function CategoryStorageDemo() {
         description={
           <DemoDescription>
             <p>
-              Adjust storage parameters to see how the progress bar responds. Storage limit is 500
-              MB matching the IndexedDB quota. Randomize creates varied configurations.
+              Displays IndexedDB storage usage with a visual progress bar. Storage limit is 500 MB
+              matching the IndexedDB quota. Used throughout the app to help users manage category
+              storage.
             </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Interactive Controls:">
-            - Storage slider: 0-500 MB (matches quota from storageUtils)
-            <br />
-            - Category count: 0-20 categories
-            <br />
-            - Slides per category: 1-50 slides
-            <br />
-            - Randomize adjusts all three parameters at once
-            <br />
-            - Delete All button resets controls to zero
-            <br />- Progress bar updates in real-time
+          <DemoHighlights title="Try These Controls:">
+            - <strong>Storage slider:</strong> Adjust used storage (0-500 MB)
+            <br />- <strong>Category count:</strong> Change number of categories (0-20)
+            <br />- <strong>Slides per category:</strong> Adjust slide count (1-50)
+            <br />- <strong>Randomize:</strong> Creates varied configurations
+            <br />- <strong>Delete All:</strong> Resets all values to zero
+            <br />- Watch the progress bar update in real-time as you adjust values
           </DemoHighlights>
         }
       />

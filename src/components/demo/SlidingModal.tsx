@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SlidingModal, Button } from '@components/common';
 import { ComponentController } from '@pages/ComponentController';
+import { DemoDescription, DemoHighlights } from '@pages/DemoControlsContent';
 import styles from '@pages/ComponentsDemo.module.css';
 
 export default function SlidingModalDemo() {
@@ -29,6 +30,24 @@ export default function SlidingModalDemo() {
             variant: 'primary',
           },
         ]}
+        description={
+          <DemoDescription>
+            <p>
+              Modal with sliding panel animations for navigating between multiple views. Includes
+              back button support and smooth left/right transitions. Extends the base Modal
+              component with view management capabilities.
+            </p>
+          </DemoDescription>
+        }
+        highlights={
+          <DemoHighlights title="Try These Features:">
+            - <strong>Open Modal button:</strong> Launch the sliding modal
+            <br />- <strong>Go to Secondary View:</strong> Slide to the next panel
+            <br />- <strong>Back button:</strong> Return to previous view with slide animation
+            <br />- <strong>Escape key:</strong> Close modal from any view
+            <br />- Watch the smooth left/right slide transitions
+          </DemoHighlights>
+        }
       />
 
       <SlidingModal

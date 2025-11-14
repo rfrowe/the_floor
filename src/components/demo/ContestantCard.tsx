@@ -202,24 +202,20 @@ export default function ContestantCardDemo() {
         description={
           <DemoDescription>
             <p>
-              Click cards to select a contestant. The wins slider adjusts the selected
-              contestant&apos;s score. Buttons are context-aware and enable/disable based on
-              selection and contestant state.
+              Displays contestant information including name, category, wins, and state (active or
+              eliminated). Cards show visual indicators for selection, top scorer (crown), and
+              elimination status. Used on the Dashboard for contestant management.
             </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Interactive Features:">
-            - Click cards to select/deselect contestants
-            <br />
-            - Wins slider affects crown display (highest wins gets crown)
-            <br />
-            - Eliminate button greys out selected contestant
-            <br />
-            - 🍄 1UP All revives all eliminated contestants at once
-            <br />
-            - Add creates random contestants with random names/categories
-            <br />- Delete removes selected contestant
+          <DemoHighlights title="Try These Interactions:">
+            - <strong>Click cards</strong> to select/deselect contestants
+            <br />- <strong>Wins slider:</strong> Adjust score (highest wins gets crown 👑)
+            <br />- <strong>Eliminate button:</strong> Grey out selected contestant
+            <br />- <strong>🍄 1UP All:</strong> Revive all eliminated contestants at once
+            <br />- <strong>Add button:</strong> Create random contestants
+            <br />- <strong>Delete button:</strong> Remove selected contestant
           </DemoHighlights>
         }
       />

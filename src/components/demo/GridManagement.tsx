@@ -3,6 +3,7 @@ import { GridInitializer } from '@components/dashboard/GridInitializer';
 import { GridConfigurator } from '@components/dashboard/GridConfigurator';
 import { FloorGrid } from '@components/floor/FloorGrid';
 import { ComponentController } from '@pages/ComponentController';
+import { DemoDescription, DemoHighlights } from '@pages/DemoControlsContent';
 import { getRandomName, getRandomCategory } from './useSharedBaseballData';
 import type { Contestant } from '@types';
 import type { GridConfig } from '@/storage/gridConfig';
@@ -190,17 +191,24 @@ export default function GridManagementDemo() {
         ]}
         onReset={handleReset}
         description={
-          <>
+          <DemoDescription>
             <p>
-              Adjust grid dimensions and manage contestants. Add contestants to test with more
-              players, randomize to auto-position unpositioned contestants.
+              Two components for grid management: <strong>GridInitializer</strong> auto-positions
+              unpositioned contestants using layout algorithms, and{' '}
+              <strong>GridConfigurator</strong> provides drag-and-drop manual positioning. Used on
+              the Dashboard for setting up the game floor.
             </p>
-            <p style={{ marginTop: '0.75rem' }}>
-              <strong>Try it out:</strong> Alice and Bob are already positioned. Carol and David are
-              unpositioned. Use the GridInitializer to auto-position everyone, or use the
-              GridConfigurator below to drag and drop contestants manually!
-            </p>
-          </>
+          </DemoDescription>
+        }
+        highlights={
+          <DemoHighlights title="Try These Features:">
+            - <strong>Grid sliders:</strong> Adjust dimensions (3-7 rows, 5-11 cols)
+            <br />- <strong>Add Contestants:</strong> Create more players to position
+            <br />- <strong>Randomize:</strong> Auto-position unpositioned contestants
+            <br />- <strong>GridInitializer (below):</strong> One-click auto-layout button
+            <br />- <strong>GridConfigurator (below):</strong> Drag contestants onto grid squares
+            <br />- Alice and Bob start positioned, Carol and David are unpositioned
+          </DemoHighlights>
         }
       />
 

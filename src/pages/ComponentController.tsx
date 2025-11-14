@@ -64,12 +64,29 @@ export const ComponentController = memo(function ComponentController({
         {description && (
           <div
             style={{
-              marginBottom: controls.length > 0 ? '1rem' : '0',
+              marginBottom: highlights ? '2.5rem' : controls.length > 0 ? '2.5rem' : '0',
               color: 'var(--text-secondary)',
               textAlign: 'left',
             }}
           >
             {description}
+          </div>
+        )}
+
+        {/* Highlights section */}
+        {highlights && (
+          <div
+            style={{
+              padding: '1.25rem',
+              backgroundColor: 'rgba(var(--primary-color-rgb, 63, 81, 181), 0.08)',
+              borderRadius: '6px',
+              border: '2px solid rgba(var(--primary-color-rgb, 63, 81, 181), 0.2)',
+              fontSize: '0.95rem',
+              textAlign: 'left',
+              marginBottom: controls.length > 0 ? '2.5rem' : '0',
+            }}
+          >
+            {highlights}
           </div>
         )}
 
@@ -81,7 +98,6 @@ export const ComponentController = memo(function ComponentController({
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '1rem',
               alignItems: 'start',
-              marginBottom: highlights ? '1rem' : '0',
             }}
           >
             {controls.map((control, index) => {
@@ -335,22 +351,6 @@ export const ComponentController = memo(function ComponentController({
                   return null;
               }
             })}
-          </div>
-        )}
-
-        {/* Highlights section */}
-        {highlights && (
-          <div
-            style={{
-              padding: '1.25rem',
-              backgroundColor: 'rgba(var(--primary-color-rgb, 63, 81, 181), 0.08)',
-              borderRadius: '6px',
-              border: '2px solid rgba(var(--primary-color-rgb, 63, 81, 181), 0.2)',
-              fontSize: '0.95rem',
-              textAlign: 'left',
-            }}
-          >
-            {highlights}
           </div>
         )}
       </Card>

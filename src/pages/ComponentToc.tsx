@@ -36,6 +36,7 @@ export const ComponentToc = memo(function ComponentToc({
               color: isActive ? 'var(--primary-color)' : 'inherit',
               fontWeight: isActive || hasActiveChild ? 'bold' : 'normal',
               cursor: 'pointer',
+              transition: 'color 0.15s ease-in-out',
             }}
           >
             <code>&lt;{section.label} /&gt;</code>
@@ -58,6 +59,7 @@ export const ComponentToc = memo(function ComponentToc({
                         color: childIsActive ? 'var(--primary-color)' : 'inherit',
                         fontWeight: childIsActive ? 'bold' : 'normal',
                         cursor: 'pointer',
+                        transition: 'color 0.15s ease-in-out',
                       }}
                     >
                       <code>&lt;{child.label} /&gt;</code>

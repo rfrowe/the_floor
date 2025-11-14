@@ -82,14 +82,20 @@ export default function ImportContentDemo({
         ]}
         description={
           <DemoDescription>
-            <p>Navigate through the five workflow views using the buttons above.</p>
+            <p>
+              Shared workflow component used by both CategoryManager and ContestantCreator for
+              importing categories. Supports drag/drop JSON files, browsing sample categories, and
+              previewing individual imports one-by-one before confirmation.
+            </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Reusable Workflow:">
-            This ImportContent workflow is shared by both CategoryManager and ContestantCreator.
-            Demonstrates drag/drop, sample browsing, and one-by-one preview. Shows both sample
-            category imports and JSON file uploads.
+          <DemoHighlights title="Try the Full Workflow:">
+            - <strong>Navigate buttons:</strong> Move through all 5 workflow views
+            <br />- <strong>Upload view:</strong> Drag/drop JSON files or browse samples
+            <br />- <strong>Sample view:</strong> Browse pre-built category collections
+            <br />- <strong>Preview view:</strong> Review categories one-by-one
+            <br />- Watch how the workflow maintains state as you navigate back and forth
           </DemoHighlights>
         }
       />

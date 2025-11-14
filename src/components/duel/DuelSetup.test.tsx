@@ -324,7 +324,7 @@ describe('DuelSetup', () => {
       });
     });
 
-    it('should navigate to /master when starting duel', async () => {
+    it('should use default behavior (navigate, save state, start timer) when no onDuelStart provided', async () => {
       const user = userEvent.setup();
       renderDuelSetup({
         contestant1: mockContestant1,
@@ -337,7 +337,41 @@ describe('DuelSetup', () => {
       const startButton = screen.getByRole('button', { name: /start duel/i });
       await user.click(startButton);
 
+      // Default behavior should navigate to /master
       expect(mockNavigate).toHaveBeenCalledWith('/master');
+      // Default behavior should also save duel state and start timer
+      expect(mockSetDuelState).toHaveBeenCalled();
+    });
+
+    it('should call custom onDuelStart when provided instead of default behavior', async () => {
+      const user = userEvent.setup();
+      const mockOnDuelStart = vi.fn();
+
+      renderDuelSetup({
+        contestant1: mockContestant1,
+        contestant2: mockContestant2,
+        onDuelStart: mockOnDuelStart,
+      });
+
+      const categorySelect = screen.getByLabelText(/duel category/i);
+      await user.selectOptions(categorySelect, 'Math');
+
+      const startButton = screen.getByRole('button', { name: /start duel/i });
+      await user.click(startButton);
+
+      // Should call custom handler
+      expect(mockOnDuelStart).toHaveBeenCalledWith({
+        duelState: expect.objectContaining({
+          contestant1: mockContestant1,
+          contestant2: mockContestant2,
+          selectedCategory: mockContestant1.category,
+        }) as unknown,
+        timePerPlayer: expect.any(Number) as unknown,
+        activePlayer: 1,
+      });
+
+      // Should NOT call default navigation
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 
