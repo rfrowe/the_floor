@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import type { Category, Contestant, StoredCategory } from '@types';
@@ -22,6 +22,7 @@ import { useCategories } from '@hooks/useCategories';
 import { useContestantSelection } from '@hooks/useContestantSelection';
 import { useDuelState } from '@hooks/useDuelState';
 import { createLogger } from '@/utils/logger';
+import timerSyncService from '@services/timerSync';
 import styles from './Dashboard.module.css';
 
 const log = createLogger('Dashboard');
@@ -53,8 +54,36 @@ function Dashboard() {
   } = useContestantSelection(contestants);
   const [selectedContestant1, selectedContestant2] = selected;
   const duelSetupRef = useRef<DuelSetupHandle>(null);
-  const [duelState] = useDuelState();
+  const [duelState, setDuelState] = useDuelState();
   const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  // Handle duel start side effects (state, timer, navigation)
+  const handleDuelStartSideEffects = useCallback(
+    (params: {
+      duelState: {
+        contestant1: Contestant;
+        contestant2: Contestant;
+        selectedCategory: Category;
+        currentSlideIndex: number;
+        activePlayer: 1 | 2;
+        timeRemaining1: number;
+        timeRemaining2: number;
+        isSkipAnimationActive: boolean;
+      };
+      timePerPlayer: number;
+      activePlayer: 1 | 2;
+    }) => {
+      // Save duel state
+      setDuelState(params.duelState);
+
+      // Start timer sync
+      timerSyncService.sendStart(params.timePerPlayer, params.timePerPlayer, params.activePlayer);
+
+      // Navigate to master view
+      void navigate('/master');
+    },
+    [setDuelState, navigate]
+  );
 
   const handleImport = async (
     contestants: { name: string; category: Category }[]
@@ -343,6 +372,7 @@ function Dashboard() {
           onStartDuel={handleStartDuel}
           onRandomSelect={randomSelect}
           canRandomSelect={hasContestantsOnGrid}
+          onDuelStart={handleDuelStartSideEffects}
         />
       </Card>
 

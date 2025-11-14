@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { SlidePreview } from '@components/slide/SlidePreview';
 import { ComponentController, type ControlConfig } from '@pages/ComponentController';
+import { DemoDescription, DemoHighlights } from '@pages/DemoControlsContent';
 import { demoSlide, quadrantTestSlides } from './testSlides';
 import { useSlideViewerControls } from './useSlideViewerControls';
 import styles from '@pages/ComponentsDemo.module.css';
@@ -88,12 +89,24 @@ export default function SlidePreviewDemo() {
           setMode('edit');
           setIsExpanded(true);
         }}
+        description={
+          <DemoDescription>
+            <p>
+              Displays individual slides from categories with expandable/collapsible headers and
+              interactive answer revealing. Supports two modes: readonly (view-only) and edit (with
+              censor box management). Used in category import workflows.
+            </p>
+          </DemoDescription>
+        }
         highlights={
-          <p>
-            <strong>Both modes:</strong> Click header to expand/collapse. Click the slide image to
-            temporarily reveal the answer (hides on mouse leave or tap outside). Hover effects show
-            the image is interactive.
-          </p>
+          <DemoHighlights title="Try These Interactions:">
+            - <strong>Click header:</strong> Expand/collapse the slide
+            <br />- <strong>Click slide image:</strong> Temporarily reveal the answer
+            <br />- <strong>Mode toggle:</strong> Switch between readonly and edit modes
+            <br />- <strong>Censor boxes (edit mode):</strong> Adjust boxes to hide parts of the
+            image
+            <br />- Answer hides automatically when you move mouse away or tap outside
+          </DemoHighlights>
         }
       />
 

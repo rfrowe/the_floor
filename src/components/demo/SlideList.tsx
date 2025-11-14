@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { SlideList } from '@components/slide/SlideList';
 import { ComponentController } from '@pages/ComponentController';
+import { DemoDescription, DemoHighlights } from '@pages/DemoControlsContent';
 import { quadrantTestSlides } from './testSlides';
 import { useSharedBaseballData } from './useSharedBaseballData';
 import type { Slide } from '@types';
@@ -99,6 +100,24 @@ export default function SlideListDemo() {
           },
         ]}
         onReset={handleReset}
+        description={
+          <DemoDescription>
+            <p>
+              Displays a list of slides with expand/collapse functionality. Supports readonly and
+              edit modes for viewing or modifying slide answers. Used in category detail view and
+              import preview workflows.
+            </p>
+          </DemoDescription>
+        }
+        highlights={
+          <DemoHighlights title="Try These Features:">
+            - <strong>Mode toggle:</strong> Switch between Read-Only and Edit modes
+            <br />- <strong>Add button:</strong> Insert random baseball slides
+            <br />- <strong>Remove button:</strong> Delete the last slide
+            <br />- <strong>Click slide headers:</strong> Expand/collapse individual slides
+            <br />- In Edit mode, you can modify answers directly
+          </DemoHighlights>
+        }
       />
 
       <SlideList

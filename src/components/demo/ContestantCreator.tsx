@@ -81,14 +81,19 @@ export default function ContestantCreatorDemo({
         ]}
         description={
           <DemoDescription>
-            <p>Navigate through the two workflow views using the buttons above.</p>
+            <p>
+              Creates contestants by importing categories and assigning names. Reuses the shared{' '}
+              <strong>ImportContent workflow</strong> with pre-filled contestant names for
+              streamlined creation. Used when adding new contestants to the game.
+            </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Integration:">
-            ContestantCreator reuses ImportContent workflow (ImportContent, IndividualPreview,
-            SampleCategoryBrowser). The contestant name is pre-filled throughout the import process
-            for streamlined creation.
+          <DemoHighlights title="Try the Workflow:">
+            - <strong>Navigate buttons:</strong> Move between Create and Import views
+            <br />- <strong>Create view:</strong> Enter contestant name
+            <br />- <strong>Import view:</strong> Multi-step category import process
+            <br />- Notice how the contestant name persists throughout the workflow
           </DemoHighlights>
         }
       />

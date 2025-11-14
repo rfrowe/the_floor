@@ -30,6 +30,7 @@ export default function DuelSetupDemo() {
   const [contestant1, setContestant1] = useState<Contestant | null>(mockContestants[0] ?? null);
   const [contestant2, setContestant2] = useState<Contestant | null>(mockContestants[1] ?? null);
   const [audienceWatching, setAudienceWatching] = useState(false);
+  const [duelStarted, setDuelStarted] = useState(false);
 
   const handleClear = useCallback(() => {
     console.log('Clear selection');
@@ -42,9 +43,10 @@ export default function DuelSetupDemo() {
       selectedCategory: { name: string };
     }) => {
       console.log('Start duel with:', config);
-      alert(
-        `Starting duel: ${config.contestant1.name} vs ${config.contestant2.name} - ${config.selectedCategory.name}`
-      );
+      setDuelStarted(true);
+      setTimeout(() => {
+        setDuelStarted(false);
+      }, 3000);
     },
     []
   );
@@ -91,21 +93,21 @@ export default function DuelSetupDemo() {
         description={
           <DemoDescription>
             <p>
-              Toggle audience connection to see how validation works. Swap button switches Player 1
-              and Player 2. Start Duel requires both contestants, a category, and audience watching.
+              Configures and validates a duel between two contestants. Shows contestant info,
+              category selection dropdown, and validates all requirements before enabling Start
+              Duel. Used on the Dashboard to initiate duels.
             </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Component Features:">
-            - Displays selected contestants with categories
-            <br />
-            - Category selection dropdown (from both contestants&apos; categories)
-            <br />
-            - Clear and Random Select buttons
-            <br />
-            - Validation: requires 2 contestants, category, and audience connection
-            <br />- <code>isAudienceWatching</code> prop controls Start Duel button availability
+          <DemoHighlights title="Try These Controls:">
+            - <strong>Toggle Audience:</strong> Enable/disable audience connection
+            <br />- <strong>Swap P1 ↔ P2:</strong> Switch Player 1 and Player 2
+            <br />- <strong>Category dropdown:</strong> Choose from both contestants&apos;
+            categories
+            <br />- <strong>Start Duel:</strong> Only enabled when all requirements met (2
+            contestants, category, audience watching)
+            <br />- Watch validation messages update as you toggle controls
           </DemoHighlights>
         }
       />
@@ -118,8 +120,32 @@ export default function DuelSetupDemo() {
           onStartDuel={handleStartDuel}
           canRandomSelect={false}
           isAudienceWatching={audienceWatching}
+          onDuelStart={() => {
+            setDuelStarted(true);
+            setTimeout(() => {
+              setDuelStarted(false);
+            }, 3000);
+          }}
         />
       </div>
+
+      {duelStarted && (
+        <div
+          style={{
+            marginTop: '1rem',
+            padding: '1.5rem',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            border: '2px solid rgb(76, 175, 80)',
+            borderRadius: '8px',
+            textAlign: 'center',
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            color: 'rgb(76, 175, 80)',
+          }}
+        >
+          🎮 Duel Started! {contestant1?.name} vs {contestant2?.name}
+        </div>
+      )}
     </section>
   );
 }

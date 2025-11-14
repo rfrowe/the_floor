@@ -103,14 +103,19 @@ export default function CategoryManagerDemo({
         ]}
         description={
           <DemoDescription>
-            <p>Navigate through the three workflow views using the buttons above.</p>
+            <p>
+              Manages category library with list, import, and delete workflows. Uses the shared{' '}
+              <strong>ImportContent workflow</strong> (also used by ContestantCreator) for importing
+              categories. Displays categories with thumbnails and storage info.
+            </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Workflow:">
-            CategoryManager provides list view and delete confirmation. For importing categories, it
-            uses the shared <strong>ImportContent workflow</strong> which is also used by
-            ContestantCreator.
+          <DemoHighlights title="Try These Workflows:">
+            - <strong>Navigate buttons:</strong> Switch between List, Import, and Delete views
+            <br />- <strong>List view:</strong> Browse all categories
+            <br />- <strong>Import view:</strong> Multi-step workflow for adding categories
+            <br />- <strong>Delete view:</strong> Confirmation flow for removing categories
           </DemoHighlights>
         }
       />

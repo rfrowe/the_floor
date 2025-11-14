@@ -193,25 +193,20 @@ export default function ClockBarDemo() {
         description={
           <DemoDescription>
             <p>
-              Adjust player times, countdown speed, and trigger various clock states. The skip
-              animation button shows the 3-second answer overlay used when players skip questions.
+              Displays dual countdown timers for both players with visual state indicators (active,
+              low time, critical time). Shows category name and includes skip animation overlay.
+              Used during duel gameplay on MasterView and AudienceView.
             </p>
           </DemoDescription>
         }
         highlights={
-          <DemoHighlights title="Key Features:">
-            - Real-time countdown with adjustable speed multiplier (0.5x - 5x)
-            <br />
-            - Pause/Resume control to freeze the countdown
-            <br />
-            - Clear visual indicator of active player
-            <br />
-            - Low time warning (orange) at &lt; 10 seconds
-            <br />
-            - Critical time warning (red, pulsing) at &lt; 5 seconds
-            <br />
-            - Skip animation: 3-second overlay with fade in/out transitions
-            <br />- Responsive design with viewport-based text sizing
+          <DemoHighlights title="Try These Controls:">
+            - <strong>Player time sliders:</strong> Adjust countdown timers (0-45 seconds)
+            <br />- <strong>Speed multiplier:</strong> Control countdown speed (0.5x - 5x)
+            <br />- <strong>Pause/Resume:</strong> Freeze the countdown
+            <br />- <strong>Active Player toggle:</strong> Switch which player is highlighted
+            <br />- <strong>Skip Animation:</strong> Trigger 3-second answer overlay
+            <br />- Watch warnings: orange at &lt;10s, red pulsing at &lt;5s
           </DemoHighlights>
         }
       />

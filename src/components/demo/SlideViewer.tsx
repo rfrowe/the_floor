@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { ComponentController } from '@pages/ComponentController';
-import { DemoHighlights } from '@pages/DemoControlsContent';
+import { DemoDescription, DemoHighlights } from '@pages/DemoControlsContent';
 import { demoSlide, quadrantTestSlides } from './testSlides';
 import { useSlideViewerControls } from './useSlideViewerControls';
 import styles from '@pages/ComponentsDemo.module.css';
@@ -28,18 +28,22 @@ export default function SlideViewerDemo() {
       <ComponentController
         controls={controls}
         onReset={reset}
+        description={
+          <DemoDescription>
+            <p>
+              Displays slide images with censorship boxes overlaid at precise positions. Handles
+              aspect ratio preservation with letterboxing and responsive sizing. Used in both duel
+              gameplay (MasterView, AudienceView) and import workflows.
+            </p>
+          </DemoDescription>
+        }
         highlights={
-          <DemoHighlights title="Key Features:">
-            - Maintains image aspect ratio with letterboxing
-            <br />
-            - Precisely positioned censorship boxes using percentage coordinates
-            <br />
-            - White background for transparent images
-            <br />
-            - Smooth transitions when hiding/showing boxes
-            <br />
-            - Loading and error states
-            <br />- Responsive sizing to fit any container
+          <DemoHighlights title="Try These Controls:">
+            - <strong>Slide dropdown:</strong> Switch between demo and test slides
+            <br />- <strong>Show Answer toggle:</strong> Reveal/hide the answer
+            <br />- <strong>Censor boxes sliders:</strong> Adjust box positions
+            <br />- <strong>Box count:</strong> Add/remove censorship boxes
+            <br />- Watch how boxes maintain precise positions as you adjust them
           </DemoHighlights>
         }
       />
