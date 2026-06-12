@@ -19,6 +19,7 @@ import { CredentialsStep } from '@components/studio/steps/CredentialsStep';
 import { CategoryNameStep } from '@components/studio/steps/CategoryNameStep';
 import { CardsStep } from '@components/studio/steps/CardsStep';
 import { ImagesStep } from '@components/studio/steps/ImagesStep';
+import { CensorStep } from '@components/studio/steps/CensorStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
@@ -136,6 +137,11 @@ function Studio() {
             slides={draft.slides}
             onSetSlideImage={actions.setSlideImage}
             onContinue={goNext}
+          />
+        ) : draft.step === 'censor' ? (
+          <CensorStep
+            slides={draft.slides}
+            onSlideCensorBoxesChange={actions.setSlideCensorBoxes}
           />
         ) : (
           <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
