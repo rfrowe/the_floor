@@ -186,8 +186,7 @@ export function IndividualPreview({
         const [nextFile, ...restFiles] = remainingFiles;
         if (nextFile) {
           // Prepare the next category data - only use pre-loaded if it matches
-          const usePreloaded =
-            nextCategory && remainingFiles[0] && nextFile.filename === remainingFiles[0].filename;
+          const usePreloaded = nextCategory && nextFile.filename === remainingFiles[0]?.filename;
 
           const nextFileWithCategory: PreviewFile = usePreloaded
             ? { filename: nextFile.filename, category: nextCategory }

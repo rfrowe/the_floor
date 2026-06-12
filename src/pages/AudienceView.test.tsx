@@ -401,7 +401,7 @@ describe('AudienceView', () => {
             set: imageSrcSpy,
           });
         }
-      } as typeof Image;
+      };
 
       mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
 
@@ -457,7 +457,7 @@ describe('AudienceView', () => {
             set: imageSrcSpy,
           });
         }
-      } as typeof Image;
+      };
 
       mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
 
@@ -523,7 +523,7 @@ describe('AudienceView', () => {
             set: imageSrcSpy,
           });
         }
-      } as typeof Image;
+      };
 
       mockUseDuelState.mockReturnValue([mockDuelStateSlide0, vi.fn()]);
 

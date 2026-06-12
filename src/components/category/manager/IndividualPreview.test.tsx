@@ -65,8 +65,7 @@ vi.mock('@/utils/logger', () => {
 // Helper component to wrap IndividualPreview for ViewStack testing
 // Extends ViewStackViewProps to work as a ViewStack child
 interface IndividualPreviewWrapperProps
-  extends ViewStackViewProps,
-    React.ComponentProps<typeof IndividualPreview> {}
+  extends ViewStackViewProps, React.ComponentProps<typeof IndividualPreview> {}
 
 function IndividualPreviewWrapper(props: IndividualPreviewWrapperProps) {
   // ViewStack needs viewId/viewTitle on element.props - don't destructure them

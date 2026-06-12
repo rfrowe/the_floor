@@ -149,7 +149,7 @@ export function ViewStack({ isOpen, onClose, children, className, onComplete }: 
         // Only update if the root view ID matches
         const rootView = prev[0];
         const newRootView = initialViews[0];
-        if (rootView && newRootView && rootView.id === newRootView.id) {
+        if (rootView && rootView.id === newRootView?.id) {
           // Replace matching views from the beginning
           return [...initialViews, ...prev.slice(initialViews.length)];
         }
