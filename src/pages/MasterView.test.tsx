@@ -820,6 +820,133 @@ describe('MasterView', () => {
     });
   });
 
+  describe('Undo (Press Z)', () => {
+    let mockSetDuelState: ReturnType<typeof vi.fn>;
+    let mockSendSwitch: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      mockSetDuelState = vi.fn();
+      mockSendSwitch = vi.fn();
+
+      vi.mocked(useDuelState).mockReturnValue([
+        mockDuelState,
+        mockSetDuelState as (
+          value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+        ) => void,
+      ]);
+      vi.mocked(useTimerCommands).mockReturnValue({
+        currentTime1: 28.5,
+        currentTime2: 30.0,
+        currentActivePlayer: 1,
+        isSkipActive: false,
+        sendStart: vi.fn(),
+        sendPause: vi.fn(),
+        sendResume: vi.fn(),
+        sendSwitch: mockSendSwitch as (activePlayer: 1 | 2) => void,
+        sendSkipStart: vi.fn(),
+        sendDuelEnd: vi.fn(),
+      });
+    });
+
+    it('should render an Undo button with a Press Z hint', () => {
+      render(
+        <MemoryRouter>
+          <MasterView />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText(/↶ Undo/)).toBeInTheDocument();
+      expect(screen.getByText('Press Z')).toBeInTheDocument();
+    });
+
+    it('should disable Undo when there is nothing to undo', () => {
+      render(
+        <MemoryRouter>
+          <MasterView />
+        </MemoryRouter>
+      );
+
+      const undoButton = screen.getByText(/↶ Undo/).closest('button');
+      expect(undoButton).toBeDisabled();
+    });
+
+    it('should enable Undo after a Correct and restore the previous slide and player', () => {
+      render(
+        <MemoryRouter>
+          <MasterView />
+        </MemoryRouter>
+      );
+
+      const undoButton = screen.getByText(/↶ Undo/).closest('button');
+      expect(undoButton).toBeDisabled();
+
+      // Advance via Correct (slide 0 -> 1, player 1 -> 2)
+      const correctButton = screen.getByText(/✓ Correct/).closest('button');
+      if (correctButton) {
+        fireEvent.click(correctButton);
+      }
+
+      // Undo becomes available once there is something to roll back
+      expect(undoButton).not.toBeDisabled();
+
+      mockSetDuelState.mockClear();
+      mockSendSwitch.mockClear();
+
+      if (undoButton) {
+        fireEvent.click(undoButton);
+      }
+
+      // Restores the pre-correct slide/active-player
+      expect(mockSetDuelState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentSlideIndex: 0,
+          activePlayer: 1,
+          isSkipAnimationActive: false,
+        })
+      );
+      // Re-broadcasts the restored active player to the Audience timer
+      expect(mockSendSwitch).toHaveBeenCalledWith(1);
+    });
+
+    it('should undo the last Correct when Z is pressed', () => {
+      render(
+        <MemoryRouter>
+          <MasterView />
+        </MemoryRouter>
+      );
+
+      // Advance via Correct (Space)
+      fireEvent.keyDown(document, { key: ' ' });
+
+      mockSetDuelState.mockClear();
+      mockSendSwitch.mockClear();
+
+      // Press Z to undo
+      fireEvent.keyDown(document, { key: 'z' });
+
+      expect(mockSetDuelState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentSlideIndex: 0,
+          activePlayer: 1,
+        })
+      );
+      expect(mockSendSwitch).toHaveBeenCalledWith(1);
+    });
+
+    it('should be a no-op when Z is pressed with no history', () => {
+      render(
+        <MemoryRouter>
+          <MasterView />
+        </MemoryRouter>
+      );
+
+      fireEvent.keyDown(document, { key: 'z' });
+
+      expect(mockSetDuelState).not.toHaveBeenCalled();
+      expect(mockSendSwitch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('No Active Duel State', () => {
     beforeEach(() => {
       vi.mocked(useDuelState).mockReturnValue([null, vi.fn()]);
