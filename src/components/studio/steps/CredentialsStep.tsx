@@ -6,13 +6,18 @@
  * prominent security warning (the key is stored in plaintext in this browser),
  * a Clear action, and a Continue control gated on `isConfigured` (a non-blank key).
  *
- * No OpenAI calls happen here — the key is only persisted locally. Network usage
- * begins in Task 55. The key is never logged.
+ * On Continue the step performs a lightweight authenticated probe
+ * ({@link validateCredentials}, a `models.list()` call that consumes no
+ * completion tokens) before advancing: it shows a "Verifying…" state, disables
+ * Continue while in flight, advances only on success, and on failure stays put
+ * and renders the typed {@link GenerationError} message inline (re-click Continue
+ * to retry). The key is never logged.
  */
 
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '@components/common/Button';
 import { useCredentials } from '@hooks/useCredentials';
+import { validateCredentials, isGenerationError } from '@services/openai';
 import styles from './CredentialsStep.module.css';
 
 /** The OpenAI SDK default base URL, shown as a placeholder (empty = this default). */
@@ -28,6 +33,11 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
 
   const apiKeyId = useId();
   const baseUrlId = useId();
+  const errorId = useId();
+
+  // Transient (non-persisted) validation UI state.
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const stepClass = styles['step'] ?? '';
   const introClass = styles['intro'] ?? '';
@@ -40,12 +50,42 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
   const warningBodyClass = styles['warningBody'] ?? '';
   const warningTitleClass = styles['warningTitle'] ?? '';
   const warningListClass = styles['warningList'] ?? '';
+  const errorClass = styles['error'] ?? '';
+  const errorIconClass = styles['errorIcon'] ?? '';
+  const errorMessageClass = styles['errorMessage'] ?? '';
   const actionsClass = styles['actions'] ?? '';
 
   const handleContinue = () => {
-    if (isConfigured) {
-      onContinue();
+    // The empty-key gate (Task 54) still applies: never probe without a key, and
+    // ignore re-clicks while a probe is in flight.
+    if (!isConfigured || isVerifying) {
+      return;
     }
+
+    setIsVerifying(true);
+    setValidationError(null);
+
+    validateCredentials(config)
+      .then(() => {
+        onContinue();
+      })
+      .catch((error: unknown) => {
+        // Stay on the step and surface the typed, user-facing message so the
+        // user can fix the key/base URL and re-click Continue to retry.
+        const message = isGenerationError(error)
+          ? error.message
+          : 'Could not verify your credentials. Try again.';
+        setValidationError(message);
+      })
+      .finally(() => {
+        setIsVerifying(false);
+      });
+  };
+
+  // Clearing credentials also resets any prior validation feedback.
+  const handleClear = () => {
+    setValidationError(null);
+    clear();
   };
 
   return (
@@ -69,6 +109,7 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
           value={config.apiKey}
           onChange={(e) => {
             setKey(e.target.value);
+            setValidationError(null);
           }}
           aria-describedby={`${apiKeyId}-hint`}
         />
@@ -91,6 +132,7 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
           value={config.baseURL}
           onChange={(e) => {
             setBaseURL(e.target.value);
+            setValidationError(null);
           }}
           aria-describedby={`${baseUrlId}-hint`}
         />
@@ -123,17 +165,33 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
         </div>
       </aside>
 
+      {validationError !== null && (
+        <div className={errorClass} role="alert" id={errorId}>
+          <span className={errorIconClass} aria-hidden="true">
+            ⚠️
+          </span>
+          <p className={errorMessageClass}>{validationError}</p>
+        </div>
+      )}
+
       <div className={actionsClass}>
         <Button
           type="button"
           variant="danger"
-          onClick={clear}
-          disabled={!isConfigured && config.baseURL.length === 0}
+          onClick={handleClear}
+          disabled={(!isConfigured && config.baseURL.length === 0) || isVerifying}
         >
           Clear credentials
         </Button>
-        <Button type="button" variant="primary" onClick={handleContinue} disabled={!isConfigured}>
-          Continue →
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleContinue}
+          loading={isVerifying}
+          disabled={!isConfigured || isVerifying}
+          aria-describedby={validationError !== null ? errorId : undefined}
+        >
+          {isVerifying ? 'Verifying…' : 'Continue →'}
         </Button>
       </div>
     </div>

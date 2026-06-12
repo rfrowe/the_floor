@@ -6,7 +6,7 @@
  * it. Runs against the global fake-indexeddb (see src/setupTests.ts).
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, cleanup, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
@@ -14,6 +14,13 @@ import Studio from './Studio';
 import { putStudioDraft, clearStudioDraft, getStudioDraft } from '@storage/indexedDB';
 import { STUDIO_DRAFT_ID } from '@hooks/useStudioDraftStore';
 import type { StudioDraft } from '@types';
+
+// The Credentials step probes the key via the OpenAI service layer on Continue;
+// mock it so this shell-level test never touches the real SDK/network.
+vi.mock('@services/openai', async () => {
+  const actual = await vi.importActual<typeof import('@services/openai')>('@services/openai');
+  return { ...actual, validateCredentials: vi.fn().mockResolvedValue(undefined) };
+});
 
 function renderStudio() {
   return render(
@@ -113,7 +120,11 @@ describe('Studio page', () => {
     await user.type(screen.getByLabelText(/OpenAI API key/i), 'sk-test-key');
     await user.click(screen.getByRole('button', { name: /Continue/i }));
 
-    expect(screen.getByRole('heading', { name: /Pick a category name/i })).toBeInTheDocument();
+    // Continue validates the key (mocked to succeed) before advancing, so the
+    // step transition is async.
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /Pick a category name/i })).toBeInTheDocument();
+    });
     // The shared footer Continue is now disabled because no name is confirmed.
     expect(screen.getByRole('button', { name: /Continue/i })).toBeDisabled();
   });
