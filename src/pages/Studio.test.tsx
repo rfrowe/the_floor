@@ -41,6 +41,7 @@ function makeDraft(overrides: Partial<StudioDraft> = {}): StudioDraft {
 
 describe('Studio page', () => {
   beforeEach(async () => {
+    localStorage.clear();
     await clearStudioDraft(STUDIO_DRAFT_ID);
   });
 
@@ -81,7 +82,7 @@ describe('Studio page', () => {
     expect(cardsStep).toBeDisabled();
   });
 
-  it('disables Back on the first step', async () => {
+  it('hides the shared footer on the credentials step (it owns its own controls)', async () => {
     renderStudio();
 
     await waitFor(() => {
@@ -90,10 +91,12 @@ describe('Studio page', () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /Back/i })).toBeDisabled();
+    // The shared footer "← Back" control is not rendered on the credentials
+    // step; the step provides Clear + Continue instead.
+    expect(screen.queryByRole('button', { name: /Back/i })).not.toBeInTheDocument();
   });
 
-  it('advances to the category-name step via Continue', async () => {
+  it('advances to the category-name step once a key is entered', async () => {
     const user = userEvent.setup();
     renderStudio();
 
@@ -103,10 +106,15 @@ describe('Studio page', () => {
       ).toBeInTheDocument();
     });
 
+    // The step's Continue is gated until a key is present.
+    const credentialsContinue = screen.getByRole('button', { name: /Continue/i });
+    expect(credentialsContinue).toBeDisabled();
+
+    await user.type(screen.getByLabelText(/OpenAI API key/i), 'sk-test-key');
     await user.click(screen.getByRole('button', { name: /Continue/i }));
 
     expect(screen.getByRole('heading', { name: /Pick a category name/i })).toBeInTheDocument();
-    // Continue is now disabled because no name is confirmed.
+    // The shared footer Continue is now disabled because no name is confirmed.
     expect(screen.getByRole('button', { name: /Continue/i })).toBeDisabled();
   });
 

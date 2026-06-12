@@ -15,6 +15,7 @@ import { Button } from '@components/common/Button';
 import { LinkButton } from '@components/common/LinkButton';
 import { ThemeToggle } from '@components/common/ThemeToggle';
 import { StudioStepper } from '@components/studio/StudioStepper';
+import { CredentialsStep } from '@components/studio/steps/CredentialsStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
@@ -31,7 +32,7 @@ const STEP_TITLES: Record<StudioStep, string> = {
 
 /** Placeholder copy describing what each step will do once implemented. */
 const STEP_PLACEHOLDERS: Record<StudioStep, string> = {
-  credentials: 'Credential entry arrives in Task 54.',
+  credentials: '',
   categoryName: 'AI-suggested names with reroll arrive in Task 56.',
   cards: 'Editable AI-generated card ideas arrive in Task 57.',
   images: 'Per-card image generation arrives in Task 58.',
@@ -104,17 +105,28 @@ function Studio() {
 
       <section className={stepPanelClass} aria-live="polite">
         <h2>{STEP_TITLES[draft.step]}</h2>
-        <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
+        {draft.step === 'credentials' ? (
+          <CredentialsStep onContinue={goNext} />
+        ) : (
+          <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
+        )}
       </section>
 
-      <div className={controlsClass}>
-        <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
-          ← Back
-        </Button>
-        <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
-          Continue →
-        </Button>
-      </div>
+      {/*
+        The credentials step owns its own Clear + Continue controls (the latter
+        gated on a configured key), so the shared footer is hidden there to avoid
+        a second, ungated Continue button.
+      */}
+      {draft.step !== 'credentials' && (
+        <div className={controlsClass}>
+          <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
+            ← Back
+          </Button>
+          <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
+            Continue →
+          </Button>
+        </div>
+      )}
 
       {/* Resume / Start over prompt: shown when a saved draft is found on load. */}
       {!isHydrating && pendingDraft && (

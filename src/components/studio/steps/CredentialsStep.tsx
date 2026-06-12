@@ -1,0 +1,141 @@
+/**
+ * CredentialsStep — the first step of the LLM Studio wizard.
+ *
+ * Lets the user enter an OpenAI API key (password-masked) and an optional custom
+ * OpenAI-compatible base URL, persisted via {@link useCredentials}. Surfaces a
+ * prominent security warning (the key is stored in plaintext in this browser),
+ * a Clear action, and a Continue control gated on `isConfigured` (a non-blank key).
+ *
+ * No OpenAI calls happen here — the key is only persisted locally. Network usage
+ * begins in Task 55. The key is never logged.
+ */
+
+import { useId } from 'react';
+import { Button } from '@components/common/Button';
+import { useCredentials } from '@hooks/useCredentials';
+import styles from './CredentialsStep.module.css';
+
+/** The OpenAI SDK default base URL, shown as a placeholder (empty = this default). */
+const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
+
+export interface CredentialsStepProps {
+  /** Advance to the next wizard step. Invoked by the gated Continue control. */
+  onContinue: () => void;
+}
+
+export function CredentialsStep({ onContinue }: CredentialsStepProps) {
+  const [config, { setKey, setBaseURL, clear, isConfigured }] = useCredentials();
+
+  const apiKeyId = useId();
+  const baseUrlId = useId();
+
+  const stepClass = styles['step'] ?? '';
+  const introClass = styles['intro'] ?? '';
+  const fieldClass = styles['field'] ?? '';
+  const labelClass = styles['label'] ?? '';
+  const inputClass = styles['input'] ?? '';
+  const hintClass = styles['hint'] ?? '';
+  const warningClass = styles['warning'] ?? '';
+  const warningIconClass = styles['warningIcon'] ?? '';
+  const warningBodyClass = styles['warningBody'] ?? '';
+  const warningTitleClass = styles['warningTitle'] ?? '';
+  const warningListClass = styles['warningList'] ?? '';
+  const actionsClass = styles['actions'] ?? '';
+
+  const handleContinue = () => {
+    if (isConfigured) {
+      onContinue();
+    }
+  };
+
+  return (
+    <div className={stepClass}>
+      <p className={introClass}>
+        The Studio uses your own OpenAI key to suggest names, draft cards, and generate images.
+        Image generation is fixed to OpenAI, so there is no second key to provide.
+      </p>
+
+      <div className={fieldClass}>
+        <label className={labelClass} htmlFor={apiKeyId}>
+          OpenAI API key
+        </label>
+        <input
+          id={apiKeyId}
+          className={inputClass}
+          type="password"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="sk-..."
+          value={config.apiKey}
+          onChange={(e) => {
+            setKey(e.target.value);
+          }}
+          aria-describedby={`${apiKeyId}-hint`}
+        />
+        <p id={`${apiKeyId}-hint`} className={hintClass}>
+          Stored only in this browser. Used solely to call the OpenAI endpoint below.
+        </p>
+      </div>
+
+      <div className={fieldClass}>
+        <label className={labelClass} htmlFor={baseUrlId}>
+          Custom base URL <span aria-hidden="true">(optional)</span>
+        </label>
+        <input
+          id={baseUrlId}
+          className={inputClass}
+          type="text"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={DEFAULT_OPENAI_BASE_URL}
+          value={config.baseURL}
+          onChange={(e) => {
+            setBaseURL(e.target.value);
+          }}
+          aria-describedby={`${baseUrlId}-hint`}
+        />
+        <p id={`${baseUrlId}-hint`} className={hintClass}>
+          Leave blank to use the default ({DEFAULT_OPENAI_BASE_URL}). Set this for an
+          OpenAI-compatible endpoint.
+        </p>
+      </div>
+
+      <aside className={warningClass} role="note" aria-label="Security warning">
+        <span className={warningIconClass} aria-hidden="true">
+          ⚠️
+        </span>
+        <div className={warningBodyClass}>
+          <p className={warningTitleClass}>Your key is stored in plaintext in this browser</p>
+          <ul className={warningListClass}>
+            <li>
+              It is saved unencrypted in this browser&apos;s local storage and is readable by any
+              script running on this site.
+            </li>
+            <li>
+              Use a <strong>spend-limited key</strong> dedicated to this app so a leak can&apos;t
+              run up unbounded cost.
+            </li>
+            <li>
+              <strong>Clear credentials</strong> below removes the key from this browser. Using
+              &ldquo;Reset App&rdquo; from the dashboard also wipes it.
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <div className={actionsClass}>
+        <Button
+          type="button"
+          variant="danger"
+          onClick={clear}
+          disabled={!isConfigured && config.baseURL.length === 0}
+        >
+          Clear credentials
+        </Button>
+        <Button type="button" variant="primary" onClick={handleContinue} disabled={!isConfigured}>
+          Continue →
+        </Button>
+      </div>
+    </div>
+  );
+}
