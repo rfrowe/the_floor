@@ -7,7 +7,7 @@
 
 ## Objective
 
-Build a typed service layer that wraps the OpenAI API for the browser: a configured client (custom base URL + `dangerouslyAllowBrowser`), a structured-output chat helper, the category-name and card-idea generators, and a typed error model. This is the I/O foundation that Tasks 56–58 consume.
+Build a typed service layer that wraps the OpenAI API for the browser: a configured client (custom base URL + `dangerouslyAllowBrowser`), a structured-output chat helper, the category-name and card-idea generators, a credential-validation probe wired into the Credentials step, and a typed error model. This is the I/O foundation that Tasks 56–58 consume.
 
 ## Background
 
@@ -24,6 +24,8 @@ Use **Structured Outputs** (`response_format: { type: 'json_schema', ... }`) so 
 - [ ] `generateCardIdeas(categoryName, count)` → `Promise<CardIdea[]>` (`answer`, `imageKeywords`, `imagePrompt`; uses `nanoid` ids — or the caller assigns ids).
 - [ ] `GenerationError` carries `kind: 'auth' | 'rateLimit' | 'network' | 'cors' | 'parse' | 'unknown'` derived from `OpenAI.APIError.status` (401/403→auth, 429→rateLimit, network reject→network) and a user-facing `message`.
 - [ ] Default chat model `gpt-4o-mini` (overridable); no key is ever logged.
+- [ ] `validateCredentials(config)` performs a **lightweight authenticated probe** (call `client.models.list()` — does not consume completion tokens) to confirm the key (and any custom base URL) actually work; it resolves on success and throws a typed `GenerationError` on failure (auth/network/cors/unknown via `toGenerationError`).
+- [ ] **Wire validation into the existing `CredentialsStep`** (created in Task 54, on `main` by the time this task runs): the step's Continue handler `await`s `validateCredentials(config)` before advancing. While in flight, show a "Verifying…" loading state and disable Continue; advance to the next step **only on success**; on failure stay on the step and render the typed `GenerationError` message inline with a retry (re-click Continue). The empty-key gate from Task 54 still applies (no validation call until a key is present).
 
 ## Implementation Guidance
 
@@ -33,10 +35,12 @@ Use **Structured Outputs** (`response_format: { type: 'json_schema', ... }`) so 
 - `src/services/openai/categoryNames.ts` — `generateCategoryNames`.
 - `src/services/openai/cardIdeas.ts` — `generateCardIdeas`.
 - `src/services/openai/errors.ts` — `GenerationError` + `toGenerationError(err)`.
+- `src/services/openai/validate.ts` — `validateCredentials(config)` (the `models.list()` probe).
 - `src/services/openai/index.ts` — barrel.
 
 ### Files to modify
 - `package.json` / lockfile — add `openai`.
+- `src/components/studio/steps/CredentialsStep.tsx` — wire the Continue handler to `validateCredentials` (loading state, disable-while-validating, inline error + retry on failure, advance on success). Keep Task 54's empty-key gate.
 
 ### Client sketch
 ```ts
@@ -103,10 +107,13 @@ export async function structuredChat<T>(args: {
 - Mock the client via `vi.mock('openai')` (or mock `global.fetch`). Assert:
   - `categoryNames.test.ts` / `cardIdeas.test.ts` — correct parsing of structured JSON; `baseURL` passthrough when set vs. default when empty.
   - `errors.test.ts` — `status` 401→auth, 429→rateLimit, thrown `TypeError`→network/cors, bad JSON→parse.
+  - `validate.test.ts` — `models.list()` resolving → `validateCredentials` resolves; `models.list()` rejecting with 401 → throws an `auth` `GenerationError`; network/`TypeError` reject → `network`/`cors`.
+  - `CredentialsStep.test.tsx` (extend Task 54's) — mock the service: Continue shows the "Verifying…" loading state and is disabled while validating; advances on success; on failure stays on the step and shows the inline error, and re-clicking retries. Empty key still gates the call.
 - No real network calls in tests.
 
 ## Success Criteria
 - `generateCategoryNames`/`generateCardIdeas` return typed, validated data against a mocked client, honoring a custom base URL.
+- A wrong/garbage key entered in the Credentials step is rejected on Continue with a clear inline `auth` error instead of silently advancing; a valid key advances to the name step.
 - `npm run build`, `npm test -- --run`, `npm run lint` pass.
 
 ## Notes

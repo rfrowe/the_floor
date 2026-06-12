@@ -65,7 +65,7 @@ export function useCredentials() {
 
 ## Out of Scope
 - Image-service keys (no second API).
-- Connection-test / "validate key" button (nice-to-have; defer).
+- Live key validation / connection-test on Continue — **moved to [Task 55](../task-55-openai-service-layer/PROMPT.md)**, which adds a `validateCredentials` probe and wires it into this step's Continue handler (needs the OpenAI client from that task). Task 54 only does the non-empty `isConfigured` gate.
 - Cost tracking (future).
 
 ## Testing Strategy
