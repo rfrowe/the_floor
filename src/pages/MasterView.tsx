@@ -17,6 +17,7 @@ import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
 import { clearTimerState } from '@/storage/timerState';
 import { consolidateTerritories } from '@utils/territoryConsolidation';
+import { recordQuickDuelWin } from '@utils/quickDuelUtils';
 import { onAppReset } from '@utils/resetApp';
 import { createLogger } from '@/utils/logger';
 import type { Contestant, DuelState } from '@types';
@@ -80,6 +81,22 @@ function MasterView() {
       timerCommandsRef.current?.sendDuelEnd();
 
       try {
+        // Quick duel: exhibition match. Only increment the winner's win count —
+        // no territory transfer, no elimination, no category-ownership change.
+        // Look up the live contestant (not the start-of-duel snapshot) so we only
+        // ever touch `wins` and never resurrect or re-territory anyone.
+        if (duelState.isQuickDuel) {
+          const liveWinner = contestants.find((c) => c.id === winner.id) ?? winner;
+          await updateContestant(recordQuickDuelWin(liveWinner));
+
+          setDuelState(null);
+          clearTimerState();
+          void navigate('/');
+
+          alert(`${winner.name} wins the quick duel!`);
+          return;
+        }
+
         // IMPORTANT: Winner inherits the category that was NOT played in the duel
         // If duel used contestant1's category → winner gets contestant2's category
         // If duel used contestant2's category → winner gets contestant1's category
@@ -88,6 +105,14 @@ function MasterView() {
           duelState.selectedCategory.name === duelState.contestant1.category.name
             ? duelState.contestant2.category
             : duelState.contestant1.category;
+
+        // Keep categoryId authoritative: the winner's categoryId must follow the
+        // category it inherits (the unplayed contestant's categoryId), otherwise the
+        // ID-based duel-state hydration would later load the wrong slides.
+        const inheritedCategoryId =
+          duelState.selectedCategory.name === duelState.contestant1.category.name
+            ? duelState.contestant2.categoryId
+            : duelState.contestant1.categoryId;
 
         // Consolidate territories - winner absorbs loser's grid squares
         const updatedContestants = consolidateTerritories(winner, loser, contestants);
@@ -104,6 +129,7 @@ function MasterView() {
         await updateContestant({
           ...updatedWinner,
           category: inheritedCategory,
+          ...(inheritedCategoryId ? { categoryId: inheritedCategoryId } : {}),
         });
 
         // Update loser (eliminated + territory cleared)
@@ -414,6 +440,21 @@ function MasterView() {
           Slide {duelState.currentSlideIndex + 1} / {duelState.selectedCategory.slides.length}
         </div>
       </header>
+
+      {/* Quick Duel Banner */}
+      {duelState.isQuickDuel && (
+        <div
+          style={{
+            backgroundColor: 'var(--accent-purple, #7c3aed)',
+            color: 'white',
+            padding: '0.75rem',
+            textAlign: 'center',
+            fontWeight: 'bold',
+          }}
+        >
+          ⚡ Quick Duel — winner&apos;s wins only; no territory, elimination, or category changes
+        </div>
+      )}
 
       {/* Audience Disconnection Warning */}
       {!audienceConnected && (

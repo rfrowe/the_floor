@@ -4,7 +4,11 @@
 Implement a "single-combat" mode where the game master can initiate exhibition duels between any two contestants for fun, without affecting game state (eliminations, territories, or categories).
 
 ## Status
-Not Started
+Done — shipped as **Quick Duel**. A "Quick Duel" button on the Dashboard opens a setup modal to pick any two existing players (including eliminated ones) and any category from the library; the match runs with normal mechanics and only increments the winner's win count (no elimination, territory, or category-ownership change), shown via a Quick Duel banner on the Master and Audience views.
+
+Divergences from the original sketch below, kept intentionally:
+- **Category source** is the full category library (not restricted to the two players' categories). This drove a related change: duel state now persists/hydrates the selected category by **ID** (one unified path) instead of by name, and `contestant.categoryId` was made authoritative (a startup backfill runs `populateCategoriesStore()`, and normal-duel inheritance now updates `categoryId`).
+- **No slide-offset** and **no per-duel time configuration** were implemented (out of scope for the request that prompted this).
 
 ## Priority
 **MEDIUM** - Feature that adds flexibility for entertainment and practice rounds.

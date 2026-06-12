@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { DuelState, DuelStateReference, Contestant } from '@types';
-import { getContestantById } from '@storage/indexedDB';
+import type { DuelState, DuelStateReference, Contestant, StoredCategory } from '@types';
+import { getContestantById, getCategoryById } from '@storage/indexedDB';
 import { createLogger } from '@/utils/logger';
 
 const log = createLogger('DuelState');
@@ -19,12 +19,13 @@ function duelStateToReference(state: DuelState): DuelStateReference {
   return {
     contestant1Id: state.contestant1.id,
     contestant2Id: state.contestant2.id,
-    selectedCategoryName: state.selectedCategory.name,
+    selectedCategoryId: state.selectedCategoryId,
     activePlayer: state.activePlayer,
     timeRemaining1: state.timeRemaining1,
     timeRemaining2: state.timeRemaining2,
     currentSlideIndex: state.currentSlideIndex,
     isSkipAnimationActive: state.isSkipAnimationActive,
+    isQuickDuel: state.isQuickDuel ?? false,
   };
 }
 
@@ -41,21 +42,27 @@ async function hydrateReference(ref: DuelStateReference): Promise<DuelState | nu
       return null;
     }
 
-    // Find the selected category from one of the contestants
-    const selectedCategory =
-      contestant1.category.name === ref.selectedCategoryName
-        ? contestant1.category
-        : contestant2.category;
+    // Single, unified hydration path: load the category by ID from the categories store.
+    // This supports both normal duels (player categories) and quick duels (any library
+    // category), and works cross-window into the Audience View.
+    const selectedCategory = await getCategoryById<StoredCategory>(ref.selectedCategoryId);
+
+    if (!selectedCategory) {
+      log.error('Failed to hydrate duel state: category not found in IndexedDB');
+      return null;
+    }
 
     return {
       contestant1,
       contestant2,
       selectedCategory,
+      selectedCategoryId: ref.selectedCategoryId,
       activePlayer: ref.activePlayer,
       timeRemaining1: ref.timeRemaining1,
       timeRemaining2: ref.timeRemaining2,
       currentSlideIndex: ref.currentSlideIndex,
       isSkipAnimationActive: ref.isSkipAnimationActive,
+      isQuickDuel: ref.isQuickDuel ?? false,
     };
   } catch (error) {
     log.error('Error hydrating duel state:', error);

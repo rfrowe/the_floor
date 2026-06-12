@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
-import type { Category, Contestant, StoredCategory } from '@types';
+import { DEFAULT_GAME_CONFIG, type Category, type Contestant, type StoredCategory } from '@types';
 import { CategoryImporter } from '@components/CategoryImporter';
 import { CategoryManager } from '@components/category/CategoryManager';
 import { ContestantCard } from '@components/contestant/ContestantCard';
 import { ContestantCreator } from '@components/contestant/ContestantCreator';
 import { DuelSetup, type DuelConfig, type DuelSetupHandle } from '@components/duel/DuelSetup';
+import { QuickDuelSetup, type QuickDuelConfig } from '@components/duel/QuickDuelSetup';
 import { GridConfigurator } from '@components/dashboard/GridConfigurator';
 import { Container } from '@components/common/Container';
 import { Button } from '@components/common/Button';
@@ -33,6 +34,7 @@ function Dashboard() {
   const [showImporter, setShowImporter] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showAddContestant, setShowAddContestant] = useState(false);
+  const [showQuickDuel, setShowQuickDuel] = useState(false);
   const [contestantToDelete, setContestantToDelete] = useState<Contestant | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -65,11 +67,13 @@ function Dashboard() {
         contestant1: Contestant;
         contestant2: Contestant;
         selectedCategory: Category;
+        selectedCategoryId: string;
         currentSlideIndex: number;
         activePlayer: 1 | 2;
         timeRemaining1: number;
         timeRemaining2: number;
         isSkipAnimationActive: boolean;
+        isQuickDuel: boolean;
       };
       timePerPlayer: number;
       activePlayer: 1 | 2;
@@ -81,6 +85,35 @@ function Dashboard() {
       timerSyncService.sendStart(params.timePerPlayer, params.timePerPlayer, params.activePlayer);
 
       // Navigate to master view
+      void navigate('/master');
+    },
+    [setDuelState, navigate]
+  );
+
+  // Handle quick duel start: exhibition match between any two players in any
+  // library category. Only the winner's win count changes (handled in MasterView).
+  const handleQuickDuelStart = useCallback(
+    (config: QuickDuelConfig) => {
+      setDuelState({
+        contestant1: config.contestant1,
+        contestant2: config.contestant2,
+        selectedCategory: config.category,
+        selectedCategoryId: config.category.id,
+        activePlayer: 1,
+        timeRemaining1: DEFAULT_GAME_CONFIG.timePerPlayer,
+        timeRemaining2: DEFAULT_GAME_CONFIG.timePerPlayer,
+        currentSlideIndex: 0,
+        isSkipAnimationActive: false,
+        isQuickDuel: true,
+      });
+
+      timerSyncService.sendStart(
+        DEFAULT_GAME_CONFIG.timePerPlayer,
+        DEFAULT_GAME_CONFIG.timePerPlayer,
+        1
+      );
+
+      setShowQuickDuel(false);
       void navigate('/master');
     },
     [setDuelState, navigate]
@@ -352,6 +385,15 @@ function Dashboard() {
           <Button
             variant="secondary"
             onClick={() => {
+              setShowQuickDuel(true);
+            }}
+            title="Start a one-off exhibition match (wins only, no territory)"
+          >
+            Quick Duel
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
               setShowCategoryManager(true);
             }}
             title="Manage categories"
@@ -589,6 +631,18 @@ function Dashboard() {
           }}
           onCreate={handleCreateContestant}
           categories={categories}
+        />
+      )}
+
+      {/* Quick Duel Setup Modal */}
+      {showQuickDuel && (
+        <QuickDuelSetup
+          contestants={contestants}
+          categories={categories}
+          onStart={handleQuickDuelStart}
+          onCancel={() => {
+            setShowQuickDuel(false);
+          }}
         />
       )}
     </Container>
