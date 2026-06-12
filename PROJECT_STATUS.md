@@ -100,8 +100,8 @@ Plus existing tasks:
 - [ ] Task 48-52: Bridge discovery, API client, "Randomizer" lighting effect
 
 ### Phase 12: LLM Studio (PROPOSED)
-8 tasks for AI-powered category generation - **17-23 days**
-- [ ] Task 53-60: GPT-4 integration, image search, slide editing
+8 tasks for a guided AI category-creation wizard - **16-22 days**
+- [ ] Task 53-60: studio shell + wizard state, OpenAI credentials, OpenAI service layer, batched name generation, card-ideas editor, OpenAI image generation, censor-box drawing editor, save + JSON export
 - **Note:** Could be standalone product
 
 ### Phase 13: Process Improvements
