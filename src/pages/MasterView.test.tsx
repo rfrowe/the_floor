@@ -34,6 +34,11 @@ vi.mock('@hooks/useAudienceConnection', () => ({
   useAudienceConnection: vi.fn(),
 }));
 
+vi.mock('@/storage/indexedDB', () => ({
+  getCategoryById: vi.fn(),
+  updateCategory: vi.fn(),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -47,6 +52,7 @@ import { useDuelState } from '@hooks/useDuelState';
 import { useContestants } from '@hooks/useIndexedDB';
 import { useTimerCommands } from '@hooks/useTimerCommands';
 import { useAudienceConnection } from '@hooks/useAudienceConnection';
+import { getCategoryById, updateCategory } from '@/storage/indexedDB';
 
 // Mock duel state
 const mockDuelState: DuelState = {
@@ -1028,6 +1034,157 @@ describe('MasterView', () => {
           expect(mockSetDuelState).toHaveBeenCalledWith(null);
         });
         expect(mockNavigate).toHaveBeenCalledWith('/');
+
+        alertSpy.mockRestore();
+      });
+    });
+
+    describe('Slide Wraparound & Resume', () => {
+      const threeSlides = [
+        { imageUrl: '/s0.jpg', answer: 'A0', censorBoxes: [] },
+        { imageUrl: '/s1.jpg', answer: 'A1', censorBoxes: [] },
+        { imageUrl: '/s2.jpg', answer: 'A2', censorBoxes: [] },
+      ];
+
+      const makeContestants = (): [Contestant, Contestant] => [
+        {
+          id: '1',
+          name: 'Alice',
+          category: { name: 'Math', slides: threeSlides },
+          categoryId: 'cat-test',
+          eliminated: false,
+          wins: 0,
+          controlledSquares: ['0-0'],
+        },
+        {
+          id: '2',
+          name: 'Bob',
+          category: { name: 'History', slides: [] },
+          categoryId: 'cat-history',
+          eliminated: false,
+          wins: 0,
+          controlledSquares: ['0-1'],
+        },
+      ];
+
+      it('wraps to the start of the deck instead of ending when slides run out mid-lap', () => {
+        const [c1, c2] = makeContestants();
+        const duel: DuelState = {
+          contestant1: c1,
+          contestant2: c2,
+          selectedCategoryId: 'cat-test',
+          selectedCategory: { name: 'Math', slides: threeSlides },
+          startSlideIndex: 2,
+          currentSlideIndex: 2, // last index; advancing wraps to 0
+          activePlayer: 1,
+          timeRemaining1: 45,
+          timeRemaining2: 45,
+          isSkipAnimationActive: false,
+        };
+
+        vi.mocked(useDuelState).mockReturnValue([
+          duel,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+        vi.mocked(useContestants).mockReturnValue([
+          [c1, c2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            updateBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Wraps to slide 0 and switches player — does NOT end the duel.
+        expect(mockSetDuelState).toHaveBeenCalledWith(
+          expect.objectContaining({ currentSlideIndex: 0, activePlayer: 2 })
+        );
+        expect(mockUpdateContestant).not.toHaveBeenCalled();
+      });
+
+      it('ends the duel after a full lap and persists the category resume cursor', async () => {
+        const [c1, c2] = makeContestants();
+        const duel: DuelState = {
+          contestant1: c1,
+          contestant2: c2,
+          selectedCategoryId: 'cat-test',
+          selectedCategory: { name: 'Math', slides: threeSlides },
+          startSlideIndex: 2,
+          currentSlideIndex: 1, // advancing reaches startSlideIndex (2) → full lap
+          activePlayer: 1,
+          timeRemaining1: 45,
+          timeRemaining2: 45,
+          isSkipAnimationActive: false,
+        };
+
+        vi.mocked(useDuelState).mockReturnValue([
+          duel,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+        vi.mocked(useContestants).mockReturnValue([
+          [c1, c2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            updateBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+
+        vi.mocked(getCategoryById).mockResolvedValue({
+          id: 'cat-test',
+          name: 'Math',
+          slides: threeSlides,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          thumbnailUrl: '',
+        });
+        vi.mocked(updateCategory).mockResolvedValue(undefined);
+
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Active player (Alice) wins by completing the lap.
+        await vi.waitFor(() => {
+          expect(mockUpdateContestant).toHaveBeenCalledWith(
+            expect.objectContaining({ id: '1', wins: 1 }) as object
+          );
+        });
+
+        // Resume cursor saved = (currentSlideIndex + 1) % slideCount = (1 + 1) % 3 = 2
+        expect(vi.mocked(getCategoryById)).toHaveBeenCalledWith('cat-test');
+        expect(vi.mocked(updateCategory)).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'cat-test', nextSlideIndex: 2 }) as object
+        );
 
         alertSpy.mockRestore();
       });

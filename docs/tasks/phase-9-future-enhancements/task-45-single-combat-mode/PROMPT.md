@@ -8,7 +8,8 @@ Done — shipped as **Quick Duel**. A "Quick Duel" button on the Dashboard opens
 
 Divergences from the original sketch below, kept intentionally:
 - **Category source** is the full category library (not restricted to the two players' categories). This drove a related change: duel state now persists/hydrates the selected category by **ID** (one unified path) instead of by name, and `contestant.categoryId` was made authoritative (a startup backfill runs `populateCategoriesStore()`, and normal-duel inheritance now updates `categoryId`).
-- **No slide-offset** and **no per-duel time configuration** were implemented (out of scope for the request that prompted this).
+- **Slide-position resume (all duels)** replaces the manual slide-offset idea: each category persists a `nextSlideIndex` cursor, so any duel (normal or quick) that plays it resumes where the last one left off instead of re-showing seen slides. Slides **wrap around**, so a duel no longer ends just because the deck runs out — it ends after a full lap (every slide shown once from the start offset) or on timeout. The cursor is saved at duel end as `(currentSlideIndex + 1) % slideCount`.
+- **No per-duel time configuration** was implemented (out of scope for the request that prompted this).
 
 ## Priority
 **MEDIUM** - Feature that adds flexibility for entertainment and practice rounds.

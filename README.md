@@ -50,6 +50,7 @@ This web application recreates the game show experience with:
 - 🎯 **Censor box overlays** - Hide answers until reveal
 - 📊 **Territory tracking** - Winners inherit losers' territories
 - ⚡ **Quick Duel** - One-off exhibition match between any two players (including eliminated ones) in any library category; only the winner's win count changes — no territory, elimination, or category-ownership effects
+- 🔁 **Slide resume + wraparound** - Each category remembers its position, so repeated duels pick up where they left off instead of re-showing seen slides; slides wrap, and a duel ends after a full lap or on timeout
 
 ### User Experience
 - 🎨 **Dark mode** - System preference detection + manual toggle

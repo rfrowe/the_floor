@@ -33,6 +33,14 @@ export interface StoredCategory extends Category {
 
   /** Approximate size in bytes (calculated from JSON stringification) */
   sizeInBytes?: number;
+
+  /**
+   * Resume cursor: index of the next slide to show the next time this category
+   * is played in a duel. Lets repeated duels (especially quick duels) pick up
+   * where they left off instead of re-showing already-seen slides. Wraps around
+   * the slide list. Defaults to 0 (start) when absent.
+   */
+  nextSlideIndex?: number;
 }
 
 /**
