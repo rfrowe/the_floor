@@ -19,7 +19,7 @@ import { clearTimerState } from '@/storage/timerState';
 import { consolidateTerritories } from '@utils/territoryConsolidation';
 import { onAppReset } from '@utils/resetApp';
 import { createLogger } from '@/utils/logger';
-import type { Contestant } from '@types';
+import type { Contestant, DuelState } from '@types';
 import styles from './MasterView.module.css';
 
 const log = createLogger('MasterView');
@@ -29,6 +29,11 @@ function MasterView() {
   const [duelState, setDuelState] = useDuelState();
   const [contestants, { update: updateContestant }] = useContestants();
   const [controlsDisabled, setControlsDisabled] = useState(false);
+
+  // History of pre-action duel states for undo (LIFO stack). Each correct/skip
+  // pushes the state captured immediately before it, so "Undo" can roll the most
+  // recent one back. Local to the Master View — undo is a game-master control.
+  const [duelHistory, setDuelHistory] = useState<DuelState[]>([]);
 
   // Listen for app reset from Dashboard
   useEffect(() => {
@@ -182,6 +187,8 @@ function MasterView() {
   // Reset duel ending flag when duel changes
   useEffect(() => {
     duelEndingRef.current = false;
+    // A new (or cleared) duel starts with a clean undo history.
+    setDuelHistory([]);
   }, [duelState?.contestant1.id, duelState?.contestant2.id]);
 
   // Handle exit duel
@@ -205,6 +212,9 @@ function MasterView() {
       return;
     }
 
+    // Record the pre-correct state so this action can be undone.
+    setDuelHistory((prev) => [...prev, duelState]);
+
     // Update duel state: increment slide, switch player
     setDuelState({
       ...duelState,
@@ -221,6 +231,10 @@ function MasterView() {
   // Handle skip
   const handleSkip = useCallback(() => {
     if (!duelState || controlsDisabled) return;
+
+    // Record the pre-skip state (without the animation flag) so this skip can be
+    // undone once it resolves.
+    setDuelHistory((prev) => [...prev, { ...duelState, isSkipAnimationActive: false }]);
 
     // Disable controls during animation
     setControlsDisabled(true);
@@ -240,6 +254,32 @@ function MasterView() {
       timeRemaining2: timerCommands.currentTime2,
     });
   }, [duelState, controlsDisabled, timerCommands, setDuelState]);
+
+  // Handle undo - roll back the most recent correct/skip
+  const handleUndo = useCallback(() => {
+    // Only undo when controls are live (never mid skip-animation) and there is
+    // something to roll back.
+    if (controlsDisabled || duelHistory.length === 0) return;
+
+    const previous = duelHistory[duelHistory.length - 1];
+    if (!previous) return;
+
+    // Pop the entry we are restoring.
+    setDuelHistory((prev) => prev.slice(0, -1));
+
+    // Restore the previous slide and active player, but keep the live clock
+    // readings so we never persist stale times. The timer is authoritative on the
+    // Audience View, so undo rewinds the slide/turn, not the elapsed clock.
+    setDuelState({
+      ...previous,
+      isSkipAnimationActive: false,
+      timeRemaining1: timerCommands.currentTime1,
+      timeRemaining2: timerCommands.currentTime2,
+    });
+
+    // Re-broadcast the restored active player so the Audience timer follows it.
+    timerCommands.sendSwitch(previous.activePlayer);
+  }, [controlsDisabled, duelHistory, timerCommands, setDuelState]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -266,6 +306,14 @@ function MasterView() {
         }
       }
 
+      // Z: Undo last correct/skip
+      if (e.key === 'z' || e.key === 'Z') {
+        e.preventDefault();
+        if (!controlsDisabled) {
+          handleUndo();
+        }
+      }
+
       // Escape: Exit duel
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -277,7 +325,7 @@ function MasterView() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleExitDuel, handleCorrect, handleSkip, controlsDisabled]);
+  }, [handleExitDuel, handleCorrect, handleSkip, handleUndo, controlsDisabled]);
 
   // No active duel state
   if (!duelState) {
@@ -333,6 +381,11 @@ function MasterView() {
   const correctButtonClass = styles['correct-button'] ?? '';
   const skipButtonClass = styles['skip-button'] ?? '';
   const buttonHintClass = styles['button-hint'] ?? '';
+  const undoControlsClass = styles['undo-controls'] ?? '';
+  const undoButtonClass = styles['undo-button'] ?? '';
+
+  // Undo is available only when controls are live and there is history to pop.
+  const undoDisabled = controlsDisabled || duelHistory.length === 0;
 
   // Player 1 classes
   const player1Class = `${playerClass} ${activePlayer === 1 ? activeClass : ''}`.trim();
@@ -439,6 +492,23 @@ function MasterView() {
           >
             ⊗ Skip
             <span className={buttonHintClass}>Press S</span>
+          </button>
+        </div>
+
+        {/* Undo Control */}
+        <div className={undoControlsClass}>
+          <button
+            className={undoButtonClass}
+            onClick={handleUndo}
+            disabled={undoDisabled}
+            aria-label="Undo last correct or skip"
+            style={{
+              opacity: undoDisabled ? 0.4 : 1,
+              cursor: undoDisabled ? 'not-allowed' : 'pointer',
+            }}
+          >
+            ↶ Undo
+            <span className={buttonHintClass}>Press Z</span>
           </button>
         </div>
       </main>
