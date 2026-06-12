@@ -17,6 +17,8 @@ export type { SpinnerProps, SpinnerSize } from './Spinner';
 
 export { ThemeToggle } from './ThemeToggle';
 
+export { OfflineDownloadButton } from './OfflineDownloadButton';
+
 export { ViewStack, useViewStack, ViewStackContext } from './ViewStack';
 export type { View, ViewStackContextValue } from './ViewStack';
 

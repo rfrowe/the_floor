@@ -14,6 +14,7 @@ import { LinkButton } from '@components/common/LinkButton';
 import { Card } from '@components/common/Card';
 import { Modal } from '@components/common/Modal';
 import { ThemeToggle } from '@components/common/ThemeToggle';
+import { OfflineDownloadButton } from '@components/common/OfflineDownloadButton';
 import { createContestantFromCategory } from '@utils/jsonImport';
 import { resetAppState } from '@utils/resetApp';
 import { calculateCategorySize } from '@utils/storageUtils';
@@ -339,6 +340,7 @@ function Dashboard() {
         <h1 className={titleClass}>The Floor</h1>
         <div className={headerActionsClass}>
           <ThemeToggle />
+          <OfflineDownloadButton />
           {duelState && (
             <Button variant="primary" onClick={handleResumeDuel}>
               Resume Duel

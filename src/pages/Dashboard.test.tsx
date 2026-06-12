@@ -118,6 +118,10 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Open Audience View' })).toBeInTheDocument();
     // Import Contestant button replaced by Add Contestant card
     expect(screen.getByRole('button', { name: 'Add new contestant' })).toBeInTheDocument();
+    // Offline download control sits in the header next to the theme toggle
+    expect(
+      screen.getByRole('button', { name: /download sample categories for offline use/i })
+    ).toBeInTheDocument();
   });
 
   it('shows empty state when no contestants', () => {
