@@ -1,0 +1,107 @@
+/* CensorBoxEditor — interactive draw/select/delete editor for censor boxes. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.instructions {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* The image container is the positioning context for the overlay; it mirrors
+   SlideViewer's letterboxing so authored boxes line up with gameplay. */
+.image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1e3a5f; /* PowerPoint blue letterboxing */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.image.loaded {
+  opacity: 1;
+}
+
+/* The drawing surface, sized/positioned to the rendered image bounds. */
+.overlay {
+  position: absolute;
+  touch-action: none; /* allow pointer drawing on touch without scrolling */
+  cursor: crosshair;
+}
+
+/* A committed censor box, rendered as a focusable button for selection. */
+.box-button {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.box-button:focus-visible,
+.box-button.selected {
+  border-color: var(--accent-primary, #4f9cff);
+  outline: 2px solid var(--accent-primary, #4f9cff);
+  outline-offset: 1px;
+}
+
+/* The dashed preview rectangle shown while dragging. */
+.in-progress {
+  position: absolute;
+  border: 2px dashed var(--accent-primary, #4f9cff);
+  background-color: rgba(79, 156, 255, 0.25);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--status-danger, #d9534f);
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
+  background-color: var(--bg-primary, #fff);
+  border-radius: 8px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
