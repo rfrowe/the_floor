@@ -77,6 +77,8 @@ describe('useDuelState', () => {
       expect(reference['contestant2Id']).toBe('bob-test');
       expect(reference['selectedCategoryId']).toBe('cat-math');
       expect(reference['isQuickDuel']).toBe(false);
+      // startSlideIndex defaults to the current slide index when not set
+      expect(reference['startSlideIndex']).toBe(0);
       // Should not contain full contestant objects
       expect(reference['contestant1']).toBeUndefined();
       expect(reference['contestant2']).toBeUndefined();
@@ -166,6 +168,7 @@ describe('useDuelState', () => {
         timeRemaining1: 25,
         timeRemaining2: 30,
         currentSlideIndex: 2,
+        startSlideIndex: 1,
         isSkipAnimationActive: false,
         isQuickDuel: true,
       })
@@ -194,6 +197,7 @@ describe('useDuelState', () => {
     expect(result.current[0]?.selectedCategory).toEqual(mockCategory);
     expect(result.current[0]?.selectedCategoryId).toBe('cat-math');
     expect(result.current[0]?.currentSlideIndex).toBe(2);
+    expect(result.current[0]?.startSlideIndex).toBe(1);
     expect(result.current[0]?.isQuickDuel).toBe(true);
   });
 

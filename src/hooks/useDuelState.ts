@@ -24,6 +24,7 @@ function duelStateToReference(state: DuelState): DuelStateReference {
     timeRemaining1: state.timeRemaining1,
     timeRemaining2: state.timeRemaining2,
     currentSlideIndex: state.currentSlideIndex,
+    startSlideIndex: state.startSlideIndex ?? state.currentSlideIndex,
     isSkipAnimationActive: state.isSkipAnimationActive,
     isQuickDuel: state.isQuickDuel ?? false,
   };
@@ -61,6 +62,7 @@ async function hydrateReference(ref: DuelStateReference): Promise<DuelState | nu
       timeRemaining1: ref.timeRemaining1,
       timeRemaining2: ref.timeRemaining2,
       currentSlideIndex: ref.currentSlideIndex,
+      startSlideIndex: ref.startSlideIndex ?? ref.currentSlideIndex,
       isSkipAnimationActive: ref.isSkipAnimationActive,
       isQuickDuel: ref.isQuickDuel ?? false,
     };

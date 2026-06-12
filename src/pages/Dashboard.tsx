@@ -78,8 +78,18 @@ function Dashboard() {
       timePerPlayer: number;
       activePlayer: 1 | 2;
     }) => {
+      // Resume the category where the last duel left off (wraps around).
+      const slideCount = params.duelState.selectedCategory.slides.length;
+      const storedCategory = categories.find((c) => c.id === params.duelState.selectedCategoryId);
+      const startSlideIndex =
+        slideCount > 0 ? (storedCategory?.nextSlideIndex ?? 0) % slideCount : 0;
+
       // Save duel state
-      setDuelState(params.duelState);
+      setDuelState({
+        ...params.duelState,
+        currentSlideIndex: startSlideIndex,
+        startSlideIndex,
+      });
 
       // Start timer sync
       timerSyncService.sendStart(params.timePerPlayer, params.timePerPlayer, params.activePlayer);
@@ -87,13 +97,18 @@ function Dashboard() {
       // Navigate to master view
       void navigate('/master');
     },
-    [setDuelState, navigate]
+    [setDuelState, navigate, categories]
   );
 
   // Handle quick duel start: exhibition match between any two players in any
   // library category. Only the winner's win count changes (handled in MasterView).
   const handleQuickDuelStart = useCallback(
     (config: QuickDuelConfig) => {
+      // Resume the category where the last duel left off (wraps around).
+      const slideCount = config.category.slides.length;
+      const startSlideIndex =
+        slideCount > 0 ? (config.category.nextSlideIndex ?? 0) % slideCount : 0;
+
       setDuelState({
         contestant1: config.contestant1,
         contestant2: config.contestant2,
@@ -102,7 +117,8 @@ function Dashboard() {
         activePlayer: 1,
         timeRemaining1: DEFAULT_GAME_CONFIG.timePerPlayer,
         timeRemaining2: DEFAULT_GAME_CONFIG.timePerPlayer,
-        currentSlideIndex: 0,
+        currentSlideIndex: startSlideIndex,
+        startSlideIndex,
         isSkipAnimationActive: false,
         isQuickDuel: true,
       });

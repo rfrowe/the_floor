@@ -27,6 +27,13 @@ export interface DuelState {
   /** Index of the current slide being displayed */
   currentSlideIndex: number;
 
+  /**
+   * Index of the slide this duel started on (the category's resume cursor at
+   * start). Used to detect a full lap through the slides for the win-by-
+   * completion condition when slides wrap around. Defaults to 0 when absent.
+   */
+  startSlideIndex?: number;
+
   /** The category whose slides are being used in this duel */
   selectedCategory: Category;
 
@@ -97,6 +104,9 @@ export interface DuelStateReference {
 
   /** Index of the current slide being displayed */
   currentSlideIndex: number;
+
+  /** Index of the slide this duel started on (see DuelState.startSlideIndex) */
+  startSlideIndex?: number;
 
   /** Whether the skip answer animation is currently playing */
   isSkipAnimationActive: boolean;

@@ -16,11 +16,12 @@ import { useAudienceConnection } from '@hooks/useAudienceConnection';
 import { SlideViewer } from '@components/slide/SlideViewer';
 import { formatTime } from '@utils/time';
 import { clearTimerState } from '@/storage/timerState';
+import { getCategoryById, updateCategory } from '@/storage/indexedDB';
 import { consolidateTerritories } from '@utils/territoryConsolidation';
 import { recordQuickDuelWin } from '@utils/quickDuelUtils';
 import { onAppReset } from '@utils/resetApp';
 import { createLogger } from '@/utils/logger';
-import type { Contestant, DuelState } from '@types';
+import type { Contestant, DuelState, StoredCategory } from '@types';
 import styles from './MasterView.module.css';
 
 const log = createLogger('MasterView');
@@ -81,6 +82,24 @@ function MasterView() {
       timerCommandsRef.current?.sendDuelEnd();
 
       try {
+        // Persist the category's resume cursor so the next duel using this
+        // category picks up where this one left off (applies to both normal and
+        // quick duels). The next slide is (current + 1), wrapping around.
+        const slideCount = duelState.selectedCategory.slides.length;
+        if (slideCount > 0) {
+          const nextSlideIndex = (duelState.currentSlideIndex + 1) % slideCount;
+          try {
+            const storedCategory = await getCategoryById<StoredCategory>(
+              duelState.selectedCategoryId
+            );
+            if (storedCategory) {
+              await updateCategory({ ...storedCategory, nextSlideIndex });
+            }
+          } catch (cursorError) {
+            log.error('Failed to persist category slide cursor:', cursorError);
+          }
+        }
+
         // Quick duel: exhibition match. Only increment the winner's win count —
         // no territory transfer, no elimination, no category-ownership change.
         // Look up the live contestant (not the start-of-duel snapshot) so we only
@@ -170,12 +189,15 @@ function MasterView() {
     (_switchToPlayer: 1 | 2) => {
       if (!duelState) return;
 
-      // Advance slide
-      const nextIndex = duelState.currentSlideIndex + 1;
+      // Advance slide, wrapping around the category. Slides loop so a duel never
+      // ends merely because the deck ran out; it ends after a full lap (every
+      // slide shown once) or on timeout.
+      const slideCount = duelState.selectedCategory.slides.length;
+      const startIndex = duelState.startSlideIndex ?? 0;
+      const nextIndex = slideCount > 0 ? (duelState.currentSlideIndex + 1) % slideCount : 0;
 
-      // Check if last slide - skipping player continues (NOT the switched player)
-      if (nextIndex >= duelState.selectedCategory.slides.length) {
-        // All slides completed - skipping player (current active player) wins
+      // Full lap completed - skipping player (current active player) wins
+      if (slideCount === 0 || nextIndex === startIndex) {
         const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
         const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
         void handleDuelEnd(winner, loser);
@@ -226,12 +248,16 @@ function MasterView() {
   const handleCorrect = useCallback(() => {
     if (!duelState || controlsDisabled) return;
 
-    // Advance to next slide
-    const nextIndex = duelState.currentSlideIndex + 1;
+    // Advance to next slide, wrapping around the category. Slides loop so a duel
+    // ends after a full lap (every slide shown once) or on timeout, not merely
+    // because the deck ran out.
+    const slideCount = duelState.selectedCategory.slides.length;
+    const startIndex = duelState.startSlideIndex ?? 0;
+    const nextIndex = slideCount > 0 ? (duelState.currentSlideIndex + 1) % slideCount : 0;
     const nextPlayer = duelState.activePlayer === 1 ? 2 : 1;
 
-    // Check if last slide - active player wins by completion
-    if (nextIndex >= duelState.selectedCategory.slides.length) {
+    // Full lap completed - active player wins by completion
+    if (slideCount === 0 || nextIndex === startIndex) {
       const winner = duelState.activePlayer === 1 ? duelState.contestant1 : duelState.contestant2;
       const loser = duelState.activePlayer === 1 ? duelState.contestant2 : duelState.contestant1;
       void handleDuelEnd(winner, loser);
