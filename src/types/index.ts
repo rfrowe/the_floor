@@ -22,3 +22,6 @@ export type { DuelState, DuelResult, DuelInput, DuelStateReference } from './due
 // Game configuration and state types
 export type { GameConfig, GameState } from './game';
 export { DEFAULT_GAME_CONFIG } from './game';
+
+// LLM Studio wizard types
+export type { StudioStep, StudioImageSource, CardIdea, StudioDraft } from './studio';

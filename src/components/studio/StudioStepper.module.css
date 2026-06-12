@@ -1,0 +1,113 @@
+/* StudioStepper — horizontal progress indicator */
+
+.stepper {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  flex: 1 1 0;
+  min-width: 7rem;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.65rem 0.85rem;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-default);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+}
+
+.index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Current step */
+.current .button {
+  border-color: var(--color-primary);
+  background-color: var(--bg-highlight);
+  color: var(--text-highlight);
+}
+
+.current .index {
+  background-color: var(--color-primary);
+  color: var(--btn-primary-text);
+}
+
+/* Completed steps */
+.completed .button {
+  border-color: var(--status-success);
+  color: var(--text-primary);
+}
+
+.completed .index {
+  background-color: var(--status-success);
+  color: #ffffff;
+}
+
+/* Locked (not yet reachable) steps */
+.locked .button {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.locked .button:hover {
+  transform: none;
+  border-color: var(--border-default);
+}
+
+/* Responsive: stack vertically on narrow screens */
+@media (max-width: 720px) {
+  .list {
+    flex-direction: column;
+  }
+
+  .step {
+    min-width: 0;
+  }
+}

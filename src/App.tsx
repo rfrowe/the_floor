@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from '@pages/Dashboard';
 import MasterView from '@pages/MasterView';
 import AudienceView from '@pages/AudienceView';
 import { ComponentsDemo } from '@pages/ComponentsDemo';
 import NotFound from '@pages/NotFound';
+import { Spinner } from '@components/common/Spinner';
 import { populateCategoriesStore } from '@utils/migrateCategories';
 import { createLogger } from '@/utils/logger';
 import './App.css';
 
 const log = createLogger('App');
+
+// Lazy-load the Studio so its (future) OpenAI SDK stays off the gameplay
+// bundle and only downloads when a user opens /studio.
+const Studio = lazy(() => import('@pages/Studio'));
 
 function App() {
   // Use base path from Vite config (set at build time)
@@ -40,6 +45,14 @@ function App() {
         <Route path="/master" element={<MasterView />} />
         <Route path="/audience" element={<AudienceView />} />
         <Route path="/components" element={<ComponentsDemo />} />
+        <Route
+          path="/studio"
+          element={
+            <Suspense fallback={<Spinner size="large" label="Loading Studio…" />}>
+              <Studio />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

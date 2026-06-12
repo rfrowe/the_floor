@@ -416,6 +416,13 @@ function Dashboard() {
           >
             Manage Categories
           </Button>
+          <LinkButton
+            to="/studio"
+            variant="secondary"
+            title="Create a new category with the AI-powered Studio"
+          >
+            Studio
+          </LinkButton>
           <Button variant="danger" onClick={handleResetClick} title="Reset all application data">
             Reset App
           </Button>
