@@ -9,15 +9,17 @@
  * Schema Version History:
  * - v1: Initial schema with contestants store (embedded categories)
  * - v2: Added categories store, contestants now reference categories by ID
+ * - v3: Added studio-drafts store for in-progress LLM Studio wizard drafts
  */
 
 import { createBroadcastSync } from '@/utils/broadcastSync';
 import { loggers } from '@/utils/logger';
 
 const DB_NAME = 'the-floor';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const CONTESTANT_STORE = 'contestants';
 const CATEGORY_STORE = 'categories';
+const STUDIO_DRAFT_STORE = 'studio-drafts';
 
 const log = loggers.indexedDB;
 
@@ -31,6 +33,13 @@ const contestantBroadcast = createBroadcastSync<'reload'>({
 
 const categoryBroadcast = createBroadcastSync<'reload'>({
   channelName: 'the_floor_categories',
+  onMessage: () => {
+    // No-op - only used for sending
+  },
+});
+
+const studioDraftBroadcast = createBroadcastSync<'reload'>({
+  channelName: 'the_floor_studio_drafts',
   onMessage: () => {
     // No-op - only used for sending
   },
@@ -74,6 +83,14 @@ function initDB(): Promise<IDBDatabase> {
           store.createIndex('name', 'name', { unique: false });
           // Create index on creation date for sorting
           store.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+      }
+
+      // Version 3: Add studio-drafts store (single-row, keyed by draft id)
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains(STUDIO_DRAFT_STORE)) {
+          // Use the draft's stable id (e.g. 'current') as the key
+          db.createObjectStore(STUDIO_DRAFT_STORE, { keyPath: 'id' });
         }
       }
     };
@@ -645,6 +662,96 @@ export async function clearAllCategories(): Promise<void> {
     categoryBroadcast.send('reload');
   } catch (error) {
     log.asyncError('clearAllCategories', error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// Studio Draft Storage Functions
+// ============================================================================
+
+/**
+ * Get the in-progress Studio draft by id from IndexedDB.
+ * Returns null when no draft exists.
+ */
+export async function getStudioDraft<T>(id: string): Promise<T | null> {
+  try {
+    const db = await initDB();
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction([STUDIO_DRAFT_STORE], 'readonly');
+      const store = transaction.objectStore(STUDIO_DRAFT_STORE);
+      const request = store.get(id);
+
+      request.onsuccess = () => {
+        resolve((request.result as T) || null);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to get studio draft from IndexedDB'));
+      };
+    });
+  } catch (error) {
+    log.error('Error getting studio draft from IndexedDB:', error);
+    return null;
+  }
+}
+
+/**
+ * Insert or update the Studio draft in IndexedDB (single-row store).
+ */
+export async function putStudioDraft<T extends { id: string }>(draft: T): Promise<void> {
+  try {
+    const db = await initDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STUDIO_DRAFT_STORE], 'readwrite');
+      const store = transaction.objectStore(STUDIO_DRAFT_STORE);
+      const request = store.put(draft);
+
+      request.onsuccess = () => {
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to put studio draft in IndexedDB'));
+      };
+    });
+
+    log.dbUpdate('studio-draft', draft.id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    studioDraftBroadcast.send('reload');
+  } catch (error) {
+    log.asyncError('putStudioDraft', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove the Studio draft from IndexedDB (Start over / after a successful save).
+ */
+export async function clearStudioDraft(id: string): Promise<void> {
+  try {
+    const db = await initDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STUDIO_DRAFT_STORE], 'readwrite');
+      const store = transaction.objectStore(STUDIO_DRAFT_STORE);
+      const request = store.delete(id);
+
+      request.onsuccess = () => {
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to clear studio draft from IndexedDB'));
+      };
+    });
+
+    log.dbDelete('studio-draft', id);
+
+    // Broadcast change for same-tab and cross-tab sync
+    studioDraftBroadcast.send('reload');
+  } catch (error) {
+    log.asyncError('clearStudioDraft', error);
     throw error;
   }
 }

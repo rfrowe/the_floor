@@ -125,6 +125,30 @@ describe('Dashboard', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders a Studio link in the header pointing at /studio', () => {
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [],
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        updateBulk: vi.fn(),
+        refresh: mockRefresh,
+      },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // LinkButton renders as a link, not a button.
+    const studioLink = screen.getByRole('link', { name: 'Studio' });
+    expect(studioLink).toHaveAttribute('href', '/studio');
+  });
+
   it('shows empty state when no contestants', () => {
     vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
       [],

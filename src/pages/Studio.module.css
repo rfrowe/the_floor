@@ -1,0 +1,149 @@
+/* Studio page layout */
+
+.studio {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+/* Header (mirrors Dashboard header conventions) */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-default);
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Stepper panel */
+.stepper-panel {
+  margin-bottom: 2rem;
+}
+
+/* Active step content */
+.step-panel {
+  min-height: 12rem;
+  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.step-panel h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.placeholder {
+  margin: 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Back / Continue controls */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Resume / Start over prompt */
+.resume-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.resume-card {
+  max-width: 28rem;
+  width: 100%;
+  padding: 1.75rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.resume-card h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resume-card p {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.resume-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .step-panel {
+    padding: 1.25rem;
+  }
+
+  .controls {
+    flex-direction: column-reverse;
+  }
+
+  .controls button {
+    width: 100%;
+  }
+
+  .resume-actions {
+    flex-direction: column-reverse;
+  }
+
+  .resume-actions button {
+    width: 100%;
+  }
+}
