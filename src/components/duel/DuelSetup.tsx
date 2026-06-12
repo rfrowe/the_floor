@@ -52,11 +52,13 @@ export interface DuelSetupProps {
       contestant1: Contestant;
       contestant2: Contestant;
       selectedCategory: Category;
+      selectedCategoryId: string;
       currentSlideIndex: number;
       activePlayer: 1 | 2;
       timeRemaining1: number;
       timeRemaining2: number;
       isSkipAnimationActive: boolean;
+      isQuickDuel: boolean;
     };
     timePerPlayer: number;
     activePlayer: 1 | 2;
@@ -141,16 +143,31 @@ export const DuelSetup = forwardRef<DuelSetupHandle, DuelSetupProps>(function Du
       return;
     }
 
+    // Resolve the category's store ID from whichever player owns the selected
+    // category. Required for the unified ID-based duel-state hydration (the
+    // startup migration guarantees contestants carry a categoryId).
+    const selectedCategoryId =
+      contestant1.category.name === selectedCategory.name
+        ? contestant1.categoryId
+        : contestant2.categoryId;
+
+    if (!selectedCategoryId) {
+      log.error('❌ Cannot start duel: selected category has no store ID (categoryId)');
+      return;
+    }
+
     // Create initial duel state
     const initialDuelState = {
       contestant1,
       contestant2,
       selectedCategory,
+      selectedCategoryId,
       activePlayer: 1 as const,
       timeRemaining1: DEFAULT_GAME_CONFIG.timePerPlayer,
       timeRemaining2: DEFAULT_GAME_CONFIG.timePerPlayer,
       currentSlideIndex: 0,
       isSkipAnimationActive: false,
+      isQuickDuel: false,
     };
 
     // Call side effects handler (state, timer, navigation)

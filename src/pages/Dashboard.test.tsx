@@ -66,6 +66,7 @@ const mockEliminatedContestant: Contestant = {
 const mockDuelState: DuelState = {
   contestant1: mockContestant,
   contestant2: mockEliminatedContestant,
+  selectedCategoryId: 'cat-test',
   selectedCategory: mockContestant.category,
   currentSlideIndex: 0,
   activePlayer: 1,
@@ -284,6 +285,35 @@ describe('Dashboard', () => {
     expect(audienceLink).toHaveAttribute('href', '/audience');
     expect(audienceLink).toHaveAttribute('target', '_blank');
     expect(audienceLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('opens the Quick Duel setup modal when Quick Duel button clicked', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(indexedDBHook, 'useContestants').mockReturnValue([
+      [mockContestant],
+      {
+        add: mockAdd,
+        addBulk: mockAddBulk,
+        remove: mockRemove,
+        update: mockUpdate,
+        updateBulk: vi.fn(),
+        refresh: mockRefresh,
+      },
+    ]);
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const quickDuelButton = screen.getByRole('button', { name: 'Quick Duel' });
+    await user.click(quickDuelButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /Quick Duel/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start Quick Duel/i })).toBeInTheDocument();
+    });
   });
 
   it('shows delete confirmation modal when Delete button clicked', async () => {

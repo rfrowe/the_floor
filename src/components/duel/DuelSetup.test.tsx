@@ -45,6 +45,7 @@ describe('DuelSetup', () => {
         },
       ],
     },
+    categoryId: 'cat-math',
     wins: 2,
     eliminated: false,
     controlledSquares: ['0-0', '0-1'],
@@ -63,6 +64,7 @@ describe('DuelSetup', () => {
         },
       ],
     },
+    categoryId: 'cat-history',
     wins: 1,
     eliminated: false,
     controlledSquares: ['1-0', '1-1'],
@@ -293,11 +295,13 @@ describe('DuelSetup', () => {
         contestant1: mockContestant1,
         contestant2: mockContestant2,
         selectedCategory: mockContestant1.category,
+        selectedCategoryId: 'cat-math',
         activePlayer: 1,
         timeRemaining1: 45,
         timeRemaining2: 45,
         currentSlideIndex: 0,
         isSkipAnimationActive: false,
+        isQuickDuel: false,
       });
     });
 

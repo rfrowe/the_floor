@@ -120,6 +120,7 @@ describe('AudienceView', () => {
       timeRemaining1: 28.7,
       timeRemaining2: 30.2,
       currentSlideIndex: 0,
+      selectedCategoryId: 'cat-test',
       selectedCategory: {
         name: 'Math',
         slides: [
@@ -169,6 +170,22 @@ describe('AudienceView', () => {
       render(<AudienceView />);
 
       expect(screen.getByText('Math')).toBeInTheDocument();
+    });
+
+    it('does not show the Quick Duel banner for a normal duel', () => {
+      mockUseDuelState.mockReturnValue([mockDuelState, vi.fn()]);
+
+      render(<AudienceView />);
+
+      expect(screen.queryByText(/Quick Duel/)).not.toBeInTheDocument();
+    });
+
+    it('shows the Quick Duel banner for a quick duel', () => {
+      mockUseDuelState.mockReturnValue([{ ...mockDuelState, isQuickDuel: true }, vi.fn()]);
+
+      render(<AudienceView />);
+
+      expect(screen.getByText(/Quick Duel/)).toBeInTheDocument();
     });
 
     it('should highlight active player 1', () => {
@@ -241,6 +258,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 0,
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [
@@ -282,6 +300,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 0,
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [
@@ -333,6 +352,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 5, // Out of bounds
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [], // Empty slides array
@@ -373,6 +393,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 0,
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [
@@ -434,6 +455,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 0,
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [
@@ -490,6 +512,7 @@ describe('AudienceView', () => {
         timeRemaining1: 30,
         timeRemaining2: 30,
         currentSlideIndex: 0,
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [
@@ -571,6 +594,7 @@ describe('AudienceView', () => {
       timeRemaining1: 30,
       timeRemaining2: 30,
       currentSlideIndex: 0,
+      selectedCategoryId: 'cat-test',
       selectedCategory: {
         name: 'Math',
         slides: [
@@ -625,6 +649,7 @@ describe('AudienceView', () => {
       const mockDuelStateNoSlides = {
         ...mockDuelStateBase,
         currentSlideIndex: 5, // Out of bounds
+        selectedCategoryId: 'cat-test',
         selectedCategory: {
           name: 'Math',
           slides: [], // No slides

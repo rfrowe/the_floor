@@ -31,10 +31,25 @@ export interface DuelState {
   selectedCategory: Category;
 
   /**
+   * ID of the selected category in the categories store.
+   * Used to rehydrate the full category (slides) from IndexedDB, including
+   * cross-window into the Audience View. Always set when a duel starts.
+   */
+  selectedCategoryId: string;
+
+  /**
    * Whether the skip answer animation is currently playing.
    * When true, the answer is displayed on the audience view for 3 seconds.
    */
   isSkipAnimationActive: boolean;
+
+  /**
+   * Whether this is a "quick duel" (exhibition match).
+   * Quick duels only increment the winner's win count — no territory transfer,
+   * no elimination, and no category-ownership change. Defaults to false/undefined
+   * for normal duels.
+   */
+  isQuickDuel?: boolean;
 }
 
 /**
@@ -68,8 +83,8 @@ export interface DuelStateReference {
   /** ID of second contestant (to look up in IndexedDB) */
   contestant2Id: string;
 
-  /** Name of the category being used in this duel */
-  selectedCategoryName: string;
+  /** ID of the category being used in this duel (looked up in the categories store) */
+  selectedCategoryId: string;
 
   /** Which player currently has control (1 or 2) */
   activePlayer: 1 | 2;
@@ -85,4 +100,7 @@ export interface DuelStateReference {
 
   /** Whether the skip answer animation is currently playing */
   isSkipAnimationActive: boolean;
+
+  /** Whether this is a "quick duel" (exhibition match) — see DuelState.isQuickDuel */
+  isQuickDuel?: boolean;
 }

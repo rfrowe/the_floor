@@ -87,6 +87,7 @@ const mockDuelState: DuelState = {
     eliminated: false,
     wins: 0,
   },
+  selectedCategoryId: 'cat-test',
   selectedCategory: {
     name: 'Math',
     slides: [
@@ -664,6 +665,7 @@ describe('MasterView', () => {
             eliminated: false,
             wins: 0,
           },
+          selectedCategoryId: 'cat-test',
           selectedCategory: {
             name: 'Science',
             slides: [
@@ -755,6 +757,7 @@ describe('MasterView', () => {
             eliminated: false,
             wins: 0,
           },
+          selectedCategoryId: 'cat-test',
           selectedCategory: {
             name: 'History',
             slides: [
@@ -814,6 +817,217 @@ describe('MasterView', () => {
             }) as object
           );
         });
+
+        alertSpy.mockRestore();
+      });
+
+      it('should set the winner categoryId to the inherited category (keep categoryId authoritative)', async () => {
+        const duelStateWithCategoryIds: DuelState = {
+          contestant1: {
+            id: '1',
+            name: 'Alice',
+            category: {
+              name: 'Math',
+              slides: [{ imageUrl: '/m1.jpg', answer: 'A', censorBoxes: [] }],
+            },
+            categoryId: 'cat-math',
+            eliminated: false,
+            wins: 0,
+          },
+          contestant2: {
+            id: '2',
+            name: 'Bob',
+            category: {
+              name: 'History',
+              slides: [{ imageUrl: '/h1.jpg', answer: 'B', censorBoxes: [] }],
+            },
+            categoryId: 'cat-history',
+            eliminated: false,
+            wins: 0,
+          },
+          selectedCategoryId: 'cat-math',
+          selectedCategory: {
+            name: 'Math',
+            slides: [{ imageUrl: '/m1.jpg', answer: 'A', censorBoxes: [] }],
+          },
+          currentSlideIndex: 0, // Last slide (1 slide total)
+          activePlayer: 1, // Alice is active and wins
+          timeRemaining1: 45,
+          timeRemaining2: 30,
+          isSkipAnimationActive: false,
+        };
+
+        vi.mocked(useDuelState).mockReturnValue([
+          duelStateWithCategoryIds,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+        vi.mocked(useContestants).mockReturnValue([
+          [duelStateWithCategoryIds.contestant1, duelStateWithCategoryIds.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            updateBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Winner (Alice) inherits Bob's "History" category, so her categoryId must
+        // become Bob's categoryId ("cat-history") to stay authoritative.
+        await vi.waitFor(() => {
+          expect(mockUpdateContestant).toHaveBeenCalledWith(
+            expect.objectContaining({
+              id: '1',
+              category: expect.objectContaining({ name: 'History' }) as object,
+              categoryId: 'cat-history',
+            }) as object
+          );
+        });
+
+        alertSpy.mockRestore();
+      });
+    });
+
+    describe('Quick Duel', () => {
+      const quickDuelState: DuelState = {
+        contestant1: {
+          id: '1',
+          name: 'Alice',
+          category: {
+            name: 'Math',
+            slides: [{ imageUrl: '/m1.jpg', answer: 'A', censorBoxes: [] }],
+          },
+          categoryId: 'cat-math',
+          eliminated: false,
+          wins: 2,
+          controlledSquares: ['0-0'],
+        },
+        contestant2: {
+          id: '2',
+          name: 'Bob',
+          category: {
+            name: 'History',
+            slides: [{ imageUrl: '/h1.jpg', answer: 'B', censorBoxes: [] }],
+          },
+          categoryId: 'cat-history',
+          eliminated: false,
+          wins: 1,
+          controlledSquares: ['1-0'],
+        },
+        selectedCategoryId: 'cat-science',
+        selectedCategory: {
+          name: 'Science',
+          slides: [{ imageUrl: '/s1.jpg', answer: 'C', censorBoxes: [] }],
+        },
+        currentSlideIndex: 0, // Last slide (1 slide total)
+        activePlayer: 1, // Alice is active and wins
+        timeRemaining1: 45,
+        timeRemaining2: 30,
+        isSkipAnimationActive: false,
+        isQuickDuel: true,
+      };
+
+      beforeEach(() => {
+        vi.mocked(useDuelState).mockReturnValue([
+          quickDuelState,
+          mockSetDuelState as (
+            value: DuelState | ((prev: DuelState | null) => DuelState | null) | null
+          ) => void,
+        ]);
+        vi.mocked(useContestants).mockReturnValue([
+          [quickDuelState.contestant1, quickDuelState.contestant2],
+          {
+            add: vi.fn() as (contestant: Contestant) => Promise<void>,
+            addBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            update: mockUpdateContestant as (contestant: Contestant) => Promise<void>,
+            updateBulk: vi.fn() as (contestants: Contestant[]) => Promise<void>,
+            remove: vi.fn() as (id: string) => Promise<void>,
+            refresh: vi.fn() as () => Promise<void>,
+          },
+        ]);
+      });
+
+      it('shows the Quick Duel banner', () => {
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        expect(screen.getByText(/Quick Duel/)).toBeInTheDocument();
+      });
+
+      it('increments only the winner win count, leaving territory/elimination/category intact', async () => {
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        // Winner (Alice) gets +1 win; everything else preserved.
+        await vi.waitFor(() => {
+          expect(mockUpdateContestant).toHaveBeenCalledWith(
+            expect.objectContaining({
+              id: '1',
+              wins: 3,
+              eliminated: false,
+              controlledSquares: ['0-0'],
+              category: expect.objectContaining({ name: 'Math' }) as object,
+              categoryId: 'cat-math',
+            }) as object
+          );
+        });
+
+        // Only the winner is persisted — the loser is never touched.
+        expect(mockUpdateContestant).toHaveBeenCalledTimes(1);
+        expect(mockUpdateContestant).not.toHaveBeenCalledWith(
+          expect.objectContaining({ id: '2' }) as object
+        );
+
+        alertSpy.mockRestore();
+      });
+
+      it('clears duel state and returns to the dashboard after a quick duel', async () => {
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+
+        render(
+          <MemoryRouter>
+            <MasterView />
+          </MemoryRouter>
+        );
+
+        const correctButton = screen.getByText(/✓ Correct/).closest('button');
+        if (correctButton) {
+          fireEvent.click(correctButton);
+        }
+
+        await vi.waitFor(() => {
+          expect(mockSetDuelState).toHaveBeenCalledWith(null);
+        });
+        expect(mockNavigate).toHaveBeenCalledWith('/');
 
         alertSpy.mockRestore();
       });

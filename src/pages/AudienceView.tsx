@@ -236,6 +236,22 @@ function AudienceView() {
 
   return (
     <div className={containerClass}>
+      {/* Quick Duel banner */}
+      {duelState.isQuickDuel && (
+        <div
+          style={{
+            backgroundColor: 'var(--accent-purple, #7c3aed)',
+            color: 'white',
+            padding: '0.75rem',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            fontSize: '1.25rem',
+          }}
+        >
+          ⚡ Quick Duel
+        </div>
+      )}
+
       {/* Clock bar with player info and timers */}
       <ClockBar
         contestant1={duelState.contestant1}

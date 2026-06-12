@@ -49,6 +49,7 @@ This web application recreates the game show experience with:
 - 🗺️ **Grid floor display** - Territory visualization with real-time updates
 - 🎯 **Censor box overlays** - Hide answers until reveal
 - 📊 **Territory tracking** - Winners inherit losers' territories
+- ⚡ **Quick Duel** - One-off exhibition match between any two players (including eliminated ones) in any library category; only the winner's win count changes — no territory, elimination, or category-ownership effects
 
 ### User Experience
 - 🎨 **Dark mode** - System preference detection + manual toggle
@@ -129,6 +130,9 @@ npm run preview
 5. **Territory Transfer** - Winner claims loser's territory
 6. **Continue** - Select next duel participants
 7. **Win Condition** - Last contestant standing wins
+
+### Quick Duel (Exhibition)
+Click **Quick Duel** on the Dashboard to run a one-off match outside the main game: pick any two existing players (eliminated players allowed) and any category from the library. It plays with the normal duel mechanics, but winning only adds to the winner's win count — there is no territory transfer, elimination, or category-ownership change. Both views show a Quick Duel banner while it's active.
 
 ### Views Explained
 

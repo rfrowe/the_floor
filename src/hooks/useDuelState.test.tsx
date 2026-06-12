@@ -13,6 +13,7 @@ import * as indexedDB from '@/storage/indexedDB';
 // Mock IndexedDB functions
 vi.mock('@/storage/indexedDB', () => ({
   getContestantById: vi.fn(),
+  getCategoryById: vi.fn(),
 }));
 
 describe('useDuelState', () => {
@@ -51,6 +52,7 @@ describe('useDuelState', () => {
       timeRemaining2: 30,
       currentSlideIndex: 0,
       selectedCategory: { name: 'Math', slides: [] },
+      selectedCategoryId: 'cat-math',
       isSkipAnimationActive: false,
     };
 
@@ -73,7 +75,8 @@ describe('useDuelState', () => {
       const reference = JSON.parse(stored) as Record<string, unknown>;
       expect(reference['contestant1Id']).toBe('alice-test');
       expect(reference['contestant2Id']).toBe('bob-test');
-      expect(reference['selectedCategoryName']).toBe('Math');
+      expect(reference['selectedCategoryId']).toBe('cat-math');
+      expect(reference['isQuickDuel']).toBe(false);
       // Should not contain full contestant objects
       expect(reference['contestant1']).toBeUndefined();
       expect(reference['contestant2']).toBeUndefined();
@@ -103,6 +106,7 @@ describe('useDuelState', () => {
       timeRemaining2: 30,
       currentSlideIndex: 0,
       selectedCategory: { name: 'Math', slides: [] },
+      selectedCategoryId: 'cat-math',
       isSkipAnimationActive: false,
     };
 
@@ -124,11 +128,12 @@ describe('useDuelState', () => {
     expect(localStorage.getItem('duel')).toBeNull();
   });
 
-  it('should handle hydration when contestants are found in IndexedDB', async () => {
+  it('should hydrate the category by ID from the categories store (unified path)', async () => {
     const mockContestant1 = {
       id: 'alice-test',
       name: 'Alice',
       category: { name: 'Math', slides: [] },
+      categoryId: 'cat-math',
       wins: 0,
       eliminated: false,
     };
@@ -137,29 +142,43 @@ describe('useDuelState', () => {
       id: 'bob-test',
       name: 'Bob',
       category: { name: 'Science', slides: [] },
+      categoryId: 'cat-science',
       wins: 0,
       eliminated: false,
     };
 
-    // Pre-populate localStorage with a reference
+    const mockCategory = {
+      id: 'cat-math',
+      name: 'Math',
+      slides: [{ answer: '4', imageUrl: 'a.png', censorBoxes: [] }],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      thumbnailUrl: 'a.png',
+    };
+
+    // Pre-populate localStorage with a reference (quick duel using a library category)
     localStorage.setItem(
       'duel',
       JSON.stringify({
         contestant1Id: 'alice-test',
         contestant2Id: 'bob-test',
-        selectedCategoryName: 'Math',
+        selectedCategoryId: 'cat-math',
         activePlayer: 1,
         timeRemaining1: 25,
         timeRemaining2: 30,
         currentSlideIndex: 2,
         isSkipAnimationActive: false,
+        isQuickDuel: true,
       })
     );
 
-    // Mock IndexedDB to return contestants
+    // Mock IndexedDB to return contestants and the category by ID
     vi.mocked(indexedDB.getContestantById).mockImplementation((id: string) => {
       if (id === 'alice-test') return Promise.resolve(mockContestant1);
       if (id === 'bob-test') return Promise.resolve(mockContestant2);
+      return Promise.resolve(null);
+    });
+    vi.mocked(indexedDB.getCategoryById).mockImplementation((id: string) => {
+      if (id === 'cat-math') return Promise.resolve(mockCategory);
       return Promise.resolve(null);
     });
 
@@ -172,8 +191,107 @@ describe('useDuelState', () => {
 
     expect(result.current[0]?.contestant1).toEqual(mockContestant1);
     expect(result.current[0]?.contestant2).toEqual(mockContestant2);
-    expect(result.current[0]?.selectedCategory.name).toBe('Math');
+    expect(result.current[0]?.selectedCategory).toEqual(mockCategory);
+    expect(result.current[0]?.selectedCategoryId).toBe('cat-math');
     expect(result.current[0]?.currentSlideIndex).toBe(2);
+    expect(result.current[0]?.isQuickDuel).toBe(true);
+  });
+
+  it('should return null when the category is not found in IndexedDB', async () => {
+    const mockContestant1 = {
+      id: 'alice-test',
+      name: 'Alice',
+      category: { name: 'Math', slides: [] },
+      wins: 0,
+      eliminated: false,
+    };
+    const mockContestant2 = {
+      id: 'bob-test',
+      name: 'Bob',
+      category: { name: 'Science', slides: [] },
+      wins: 0,
+      eliminated: false,
+    };
+
+    localStorage.setItem(
+      'duel',
+      JSON.stringify({
+        contestant1Id: 'alice-test',
+        contestant2Id: 'bob-test',
+        selectedCategoryId: 'cat-missing',
+        activePlayer: 1,
+        timeRemaining1: 25,
+        timeRemaining2: 30,
+        currentSlideIndex: 0,
+        isSkipAnimationActive: false,
+      })
+    );
+
+    vi.mocked(indexedDB.getContestantById).mockImplementation((id: string) => {
+      if (id === 'alice-test') return Promise.resolve(mockContestant1);
+      if (id === 'bob-test') return Promise.resolve(mockContestant2);
+      return Promise.resolve(null);
+    });
+    vi.mocked(indexedDB.getCategoryById).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useDuelState());
+
+    await waitFor(() => {
+      expect(result.current[0]).toBeNull();
+    });
+  });
+
+  it('defaults isQuickDuel to false when absent from the stored reference', async () => {
+    const mockContestant1 = {
+      id: 'alice-test',
+      name: 'Alice',
+      category: { name: 'Math', slides: [] },
+      wins: 0,
+      eliminated: false,
+    };
+    const mockContestant2 = {
+      id: 'bob-test',
+      name: 'Bob',
+      category: { name: 'Science', slides: [] },
+      wins: 0,
+      eliminated: false,
+    };
+    const mockCategory = {
+      id: 'cat-math',
+      name: 'Math',
+      slides: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      thumbnailUrl: '',
+    };
+
+    localStorage.setItem(
+      'duel',
+      JSON.stringify({
+        contestant1Id: 'alice-test',
+        contestant2Id: 'bob-test',
+        selectedCategoryId: 'cat-math',
+        activePlayer: 1,
+        timeRemaining1: 25,
+        timeRemaining2: 30,
+        currentSlideIndex: 0,
+        isSkipAnimationActive: false,
+      })
+    );
+
+    vi.mocked(indexedDB.getContestantById).mockImplementation((id: string) => {
+      if (id === 'alice-test') return Promise.resolve(mockContestant1);
+      if (id === 'bob-test') return Promise.resolve(mockContestant2);
+      return Promise.resolve(null);
+    });
+    vi.mocked(indexedDB.getCategoryById).mockResolvedValue(mockCategory);
+
+    const { result } = renderHook(() => useDuelState());
+
+    await waitFor(() => {
+      expect(result.current[0]).not.toBeNull();
+    });
+
+    expect(result.current[0]?.isQuickDuel).toBe(false);
   });
 
   it('should handle hydration failure when contestants not found in IndexedDB', async () => {
@@ -194,6 +312,7 @@ describe('useDuelState', () => {
 
     // Mock IndexedDB to return null (contestants not found)
     vi.mocked(indexedDB.getContestantById).mockResolvedValue(null);
+    vi.mocked(indexedDB.getCategoryById).mockResolvedValue(null);
 
     const { result } = renderHook(() => useDuelState());
 
@@ -277,6 +396,7 @@ describe('useDuelState', () => {
       timeRemaining2: 30,
       currentSlideIndex: 0,
       selectedCategory: { name: 'Math', slides: [] },
+      selectedCategoryId: 'cat-math',
       isSkipAnimationActive: false,
     };
 
