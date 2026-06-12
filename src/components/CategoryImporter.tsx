@@ -29,7 +29,7 @@ interface CategoryImporterProps {
   onImport: (
     contestants: { name: string; category: Category }[]
   ) => // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  | void
+    | void
     | Promise<void>
     | Promise<string[]>
     | Promise<{ categoryId: string; contestantId?: string }[]>;
