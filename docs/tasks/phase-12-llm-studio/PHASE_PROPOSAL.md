@@ -1,372 +1,218 @@
-# Phase 12: LLM Studio - AI-Powered Slide Generation
+# Phase 12: LLM Studio - AI-Powered Category Creation
 
 ## Overview
-Create "The Studio" - an AI-powered content creation interface for generating and editing game categories using LLM prompts, image search/generation, and interactive editing.
+
+**The Studio** is a guided, in-app wizard that lets a user create a brand-new game category end-to-end using their own OpenAI key — without writing JSON or parsing a PPTX. The user is walked through a fixed sequence of steps: enter credentials, pick an AI-suggested category name, generate ~50 card ideas, generate an image for each card, draw censor boxes, and save the finished category to the local library (with a JSON download for contributing it back to the repo).
+
+This is deliberately a **linear, opinionated wizard**, not a free-form editor. Each step produces one well-defined artifact and gates the next. The goal is the fastest possible path from "I want a new category" to a playable category.
 
 ## Vision
 
-**The Studio** is a dedicated space within The Floor application where users can:
-1. Prompt an LLM to generate category slide ideas
-2. Automatically find or generate images for each slide
-3. Review, edit, regenerate, and refine slides
-4. Save finished categories for use in gameplay
+A non-technical host can sit down, paste an OpenAI key, and in a few minutes produce a polished category that drops straight into gameplay — names, images, and censoring included. The app does the heavy lifting (suggesting names, drafting ideas, generating art); the user stays in control by rerolling, editing, deleting, and censoring.
 
-Think: "ChatGPT meets PowerPoint for game show content creation"
+## Locked Decisions
+
+These were decided up front and constrain every task in this phase:
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| **Image source** | **OpenAI image generation** (`gpt-image-1`) | Reuses the single OpenAI key — no second API, no extra CORS/attribution handling. Works for any subject. |
+| **Default card count** | **~50** (matches sample categories) | Sample categories carry 41–52 slides (50 is the norm). Card *ideas* are one cheap LLM call; **images are generated lazily per card** so the user never pays for 50 images they don't want. |
+| **Submit to repo** | **Download JSON + manual PR** (plus auto-save to the local library) | The app is a static SPA with no backend; category JSON embeds 2.6–16 MB of base64 images. A browser-held GitHub token + multi-MB commits is the wrong default. (In-browser PAT PR is noted as a future option.) |
+| **Credentials storage** | **`localStorage`, plaintext, with a prominent warning** | Client-only encryption is security theater (the key would ship in the bundle). Honesty + a Clear button is the right posture. |
+
+## Wizard Flow
+
+```
+Credentials → Category name → Cards → Images → Censor → Save
+```
+
+1. **Credentials** — Enter an OpenAI API key and (optionally) a custom OpenAI-compatible base URL. Stored in the browser. Choose nothing else; image source is fixed to OpenAI generation.
+2. **Category name** — On entry (key present), the app generates a *batch* of candidate category names. A dice/reroll button cycles to the next candidate instantly; the next batch is prefetched *before* the current one runs out so rerolls never lag. Confirm a name to advance.
+3. **Cards** — One LLM call prepopulates ~50 card ideas (answer + image keywords/prompt). The user can reroll all, edit an individual card, delete a card, or add a blank card.
+4. **Images** — For each card, generate an image with OpenAI (`gpt-image-1`). Images are generated lazily per card (or via a concurrency-limited "Generate all"), each stored as a base64 data URL on the slide.
+5. **Censor** — For each slide, the user draws censor boxes directly on the image (drag to draw a rectangle) and can delete a mistaken box (select + Delete, or a delete button). Reuses the existing `%`-coordinate censor model.
+6. **Save** — Save the finished category to the local IndexedDB library (immediately playable) and/or download it as JSON to open a PR by hand.
+
+Work-in-progress is **persisted as a draft** so a refresh or accidental navigation doesn't lose generated content.
 
 ## Use Cases
 
-### Use Case 1: Create New Category from Scratch
-User: "Create a category about 80s action movies with 10 slides"
-- LLM generates 10 movie titles with brief descriptions
-- System finds images for each movie
-- User reviews, tweaks, and saves
+### Use Case 1: Create a category from scratch (primary)
+Host opens Studio → dice through suggested names, picks "Cryptids" → 50 card ideas appear → tweaks a few answers, deletes two, adds one → generates images → censors the giveaway text on a handful of slides → saves. The category is now selectable in a duel.
 
-### Use Case 2: Edit Existing Category
-- User loads "State Capitals" category
-- Adds 5 more slides using LLM suggestions
-- Regenerates images for better quality
-- Saves updated version
+### Use Case 2: Quick themed category for a one-off game
+Host needs a category fast → accepts the first good name → "Generate all" images → minimal censoring → save + play.
 
-### Use Case 3: Generate Variations
-User: "Create 3 variations of 'Famous Landmarks' with different difficulty levels"
-- LLM generates easy, medium, hard versions
-- User picks best slides from each
-- Combines into final category
+### Use Case 3: Contribute a category to the repo
+Host builds a polished category → downloads the JSON → opens a PR adding it to `public/categories/`.
 
 ## Technical Architecture
 
 ### Components
+1. **Studio page + stepper** (React) — `/studio` route, a `StudioStepper` progress UI, and one component per step.
+2. **Wizard state machine** — a `useStudioState` reducer holding a single serializable `StudioDraft`, persisted (debounced) to IndexedDB so drafts survive refresh.
+3. **OpenAI service layer** — the official `openai` SDK configured for the browser with a custom base URL; a structured-output chat helper plus image generation; typed errors.
+4. **Credentials store** — `useCredentials` over `localStorage` with cross-tab sync.
+5. **Censor drawing editor** — a new interactive component (the app only *renders* boxes today).
+6. **Save/export** — build a `StoredCategory`, persist via the existing category hook, and offer a JSON download.
 
-1. **Studio Interface** (React UI)
-   - Category editor
-   - Slide list with preview
-   - LLM prompt input
-   - Image search/generation controls
-   - Regeneration options
+### Data model (unchanged — reused as-is)
+The Studio produces the existing types, so output drops straight into gameplay:
+- `Category = { name: string; slides: Slide[] }` (`src/types/contestant.ts`)
+- `Slide = { imageUrl: string /* base64 data URL */; answer: string; censorBoxes: CensorBox[] }` (`src/types/slide.ts`)
+- `CensorBox = { x; y; width; height; color }` with x/y/width/height as **percentages (0–100)** of the rendered image (`src/types/slide.ts`)
+- `StoredCategory = Category & { id; createdAt; thumbnailUrl; sizeInBytes? }`
 
-2. **LLM Integration** (OpenAI API)
-   - GPT-4 for content generation
-   - Structured output for slide data
-   - Cost tracking and limits
+### Persistence
+- **Finished categories** → existing `useCategories().add` → IndexedDB `categories` store (`src/hooks/useCategories.ts`, `src/storage/indexedDB.ts`).
+- **In-progress drafts** → a **new `studio-drafts` IndexedDB store** (bump `DB_VERSION` 2→3). Not `localStorage`: slides embed multi-MB base64 images that exceed the ~5 MB `localStorage` quota.
+- **Credentials** → `localStorage` via the existing `useLocalStorage` hook.
 
-3. **Image Pipeline**
-   - Search: Unsplash API, Pexels API
-   - Generation: DALL-E 3 (optional)
-   - Upload: User-provided images
-
-4. **Credentials Store**
-   - OpenAI API key storage
-   - Image service API keys
-   - Usage tracking
-   - Cost calculation
-
-5. **Export System**
-   - Save to categories storage
-   - Export as JSON
-   - Import existing categories for editing
+### Data flow
+```
+OpenAI (names)  → dice/reroll → confirmed category name
+OpenAI (ideas)  → ~50 CardIdea[] → user edits → Slide[] (no images yet)
+OpenAI (images) → per card → base64 data URL → slide.imageUrl
+user draws      → CensorBox[] → slide.censorBoxes
+buildStoredCategory → useCategories().add → playable
+                   ↘ download JSON → manual PR
+```
 
 ## Scope
 
-### Phase 12 In Scope
-- Studio UI for category creation
-- OpenAI GPT integration for content
-- Image search via free APIs (Unsplash/Pexels)
-- Manual slide editing (add, delete, reorder)
-- Regeneration of individual slides
-- Cost tracking and warnings
-- Export to category format
-- Import existing categories
+### In Scope (Phase 12 MVP)
+- Studio page, stepper, and the six-step wizard flow
+- OpenAI credentials (key + optional custom base URL) in `localStorage` with a security warning
+- OpenAI **chat** for category-name and card-idea generation (structured JSON output)
+- **Batched** name generation with **prefetch** for lag-free rerolls
+- ~50 card ideas with reroll-all / edit / delete / add
+- **OpenAI image generation** per card (lazy + "generate all")
+- **Manual censor-box drawing** with delete (the new interactive editor)
+- Draft persistence + resume
+- Save to local library + JSON download
 
 ### Out of Scope (Future Phases)
-- DALL-E image generation (expensive, add later)
-- Automatic censor box generation (complex CV)
-- Multi-user collaboration
-- Cloud storage/sync
-- Category marketplace
-- Batch generation (multiple categories at once)
-- Voice prompts
-- Video content
+- Image **search** APIs (Unsplash/Pexels) — superseded by OpenAI generation
+- In-browser **PAT-based PR submission** (feasible but token-in-browser + git bloat)
+- **Cost tracking / spend limits**
+- **Prompt templates** / difficulty presets
+- **Import an existing category to edit** in the Studio
+- Automatic censor-box generation (computer vision)
+- Slide reorder, undo/redo, video/audio slides, multi-user collaboration, cloud sync
 
-## Proposed Task Breakdown
+## Task Breakdown
 
-### Task 53: Studio UI Foundation
-**Objective**: Build basic Studio interface
+| Task | Title | Builds |
+|---|---|---|
+| **[53](./task-53-studio-shell-and-state/PROMPT.md)** | Studio Shell, Navigation & Wizard State | `/studio` route, header button, `Studio.tsx`, `StudioStepper`, `types/studio.ts`, `useStudioState` reducer, `studio-drafts` IndexedDB store + resume |
+| **[54](./task-54-credentials-management/PROMPT.md)** | Credentials Management | `useCredentials` (localStorage), `CredentialsStep`, security warning + Clear |
+| **[55](./task-55-openai-service-layer/PROMPT.md)** | OpenAI Service Layer | `openai` dep, configured client (base URL + browser), `structuredChat`, name/card generators, typed `GenerationError` |
+| **[56](./task-56-category-name-generation/PROMPT.md)** | Category Name Step — Batched Generation + Prefetch | `useBatchedGenerator<T>`, `CategoryNameStep`, dice/reroll, prefetch, error/retry |
+| **[57](./task-57-card-ideas-editor/PROMPT.md)** | Card Ideas Step — Editable List | `generateCardIdeas(name, ~50)`, `CardsStep`/`CardListItem`, reroll-all/edit/delete/add, derive `Slide[]` |
+| **[58](./task-58-image-generation/PROMPT.md)** | Image Step — OpenAI Image Generation | `generateImage` (`gpt-image-1` → data URL), `ImagesStep` lazy per-card + concurrency-limited "generate all" |
+| **[59](./task-59-censor-box-editor/PROMPT.md)** | Censor Step — Draw & Delete Boxes | `censorGeometry` (px↔%), `CensorBoxEditor` (draw/select/delete, a11y, ResizeObserver), `CensorStep` |
+| **[60](./task-60-save-and-export/PROMPT.md)** | Save & Export | `buildStoredCategory`, save via `useCategories().add`, duplicate-name check, clear draft, download JSON |
 
-- New "Studio" page/tab
-- Category metadata editor (name, difficulty)
-- Slide list view
-- Slide editor panel
-- Add/delete/reorder slides
-- Preview panel
-
-### Task 54: Credentials Management
-**Objective**: Secure storage and UI for API credentials
-
-- Settings modal for API keys
-- OpenAI API key input
-- Unsplash/Pexels API key inputs (optional, free tier)
-- Local storage (encrypted or with warning)
-- Test connection buttons
-- Usage tracking system
-
-### Task 55: LLM Integration
-**Objective**: OpenAI GPT-4 integration for content generation
-
-- Prompt engineering for slide generation
-- Structured output parsing
-- Category metadata from LLM
-- Individual slide regeneration
-- Context-aware suggestions (based on existing slides)
-- Token counting and cost estimation
-- Error handling and retries
-
-### Task 56: Image Search Integration
-**Objective**: Integrate Unsplash/Pexels for image search
-
-- Search by slide content/keywords
-- Display search results
-- Image preview and selection
-- Download and store images
-- Attribution handling (required by Unsplash/Pexels)
-- Fallback to placeholder images
-
-### Task 57: Slide Editing Interface
-**Objective**: Interactive slide editor with regeneration
-
-- Edit slide question/answer
-- Replace image (search, upload, or URL)
-- Regenerate individual slide
-- Regenerate all slides
-- Regenerate just images
-- Undo/redo system
-
-### Task 58: Export and Import
-**Objective**: Save Studio work to game categories
-
-- Export category to game storage
-- Import existing category for editing
-- Version control (track edits)
-- Duplicate category
-- Delete category from Studio
-
-### Task 59: Cost Tracking and Limits
-**Objective**: Help users manage AI costs
-
-- Track API calls (LLM and images)
-- Estimate costs (OpenAI pricing)
-- Display running total
-- Set spending limits
-- Warn before expensive operations
-- Usage history
-
-### Task 60: Prompt Templates
-**Objective**: Pre-built prompts for common use cases
-
-- Template library (movies, geography, history, etc.)
-- Custom template creation
-- Difficulty level presets
-- Slide count presets
-- Category tone/style options
+**Dependency graph:** 53 → 54 → 55; 55 → {56, 57, 58}; 53 underpins all step tasks; 60 depends on 53 (draft store) and consumes the output of 57/58/59.
 
 ## Technical Considerations
 
-### LLM Prompt Engineering
+### LLM prompt engineering
+Use OpenAI Structured Outputs (`response_format: { type: 'json_schema', ... }`) so parsing is deterministic.
 
-**Example Prompt Structure**:
-```
-Generate a quiz category about {topic} with {count} slides.
+- **Names** — request N short, punchy, distinct category titles for a guessing game; the app de-dups case-insensitively across batches.
+- **Cards** — for a confirmed category, request N items shaped as:
+  ```json
+  { "answer": "The Terminator", "imageKeywords": "terminator 1984 cyborg", "imagePrompt": "a chrome humanoid endoskeleton, dramatic lighting" }
+  ```
+  `answer` is the correct guess; `imagePrompt` drives image generation; `imageKeywords` is retained for future search support.
 
-Each slide should have:
-- A question or image prompt (what to show)
-- The correct answer (text)
-- Keywords for image search
-
-Format as JSON array:
-[
-  {
-    "question": "What 1984 film features this cyborg assassin?",
-    "answer": "The Terminator",
-    "keywords": "terminator movie 1984 arnold schwarzenegger"
-  },
-  ...
-]
-
-Requirements:
-- Difficulty: {easy/medium/hard}
-- Style: {family-friendly/adult/educational}
-- Variety: Mix of easy and hard within difficulty level
-```
-
-### API Cost Management
-
-**OpenAI Costs** (approximate):
-- GPT-4 Turbo: $0.01/1K input tokens, $0.03/1K output tokens
-- Generating 10 slides ≈ 1K tokens = ~$0.03-0.05 per category
-
-**Image Costs**:
-- Unsplash: Free (attribution required)
-- Pexels: Free (attribution optional)
-- DALL-E 3: $0.04-0.08 per image (future addition)
-
-**Mitigation**:
-- Use GPT-4 Turbo (cheaper than GPT-4)
-- Cache results
-- Warn before regenerating all
-- Daily/monthly limits
-
-### Data Flow
-
-```
-User Prompt
-  ↓
-LLM (GPT-4) → Structured Slide Data
-  ↓
-For each slide:
-  Image Search (Unsplash/Pexels) → Select Image
-  ↓
-User Review → Edit/Regenerate
-  ↓
-Export → Category Storage → Available in Game
-```
+### OpenAI image generation
+- Model: `gpt-image-1` (returns base64 directly; convert to a `data:` URL for `slide.imageUrl`).
+- **Honesty caveat to surface in the UI:** generated art may be less photo-accurate for *specific* real people, logos, or brands than a real photo would be. Prompts should describe the subject so the image is a recognizable *clue* without spelling out the answer in text.
+- Images are generated **on demand per card** (and via a rate-limited "Generate all") to control cost and latency.
 
 ### Security
+- The OpenAI key lives in plaintext in `localStorage`, readable by any script on the origin. The UI must warn the user, recommend a spend-limited key, and offer a Clear button. The key is sent only to the configured OpenAI endpoint and is never logged.
 
-- API keys stored locally (not in cloud)
-- Warn users about security
-- Consider encryption
-- Rate limiting to prevent abuse
-- CORS handling for API requests
-
-### Error Handling
-
-- LLM failures (rate limits, downtime)
-- Image search failures
-- Invalid API keys
-- Network issues
-- Graceful degradation (allow manual entry)
+### Error handling
+- Map OpenAI failures to a typed `GenerationError` (`auth | rateLimit | network | cors | parse | unknown`) and show actionable inline messages with retry. A failed *prefetch* must not break already-buffered candidates; a failed *image* must not block other cards.
+- Custom base URLs may not send permissive CORS headers — detect and surface this clearly.
 
 ## UI/UX Design
 
-### Studio Layout
-
+### Studio layout (step-based)
 ```
-┌─────────────────────────────────────────────────┐
-│ [Studio] [New] [Import] [Export] [Settings]    │
-├──────────────┬──────────────────────────────────┤
-│ Slide List   │ Slide Editor                     │
-│              │                                   │
-│ 1. Slide 1   │ ┌─────────────────────────────┐ │
-│ 2. Slide 2   │ │ Image Preview               │ │
-│ 3. Slide 3   │ │                             │ │
-│    ...       │ └─────────────────────────────┘ │
-│              │ Question: [____________________] │
-│ [+ Add]      │ Answer:   [____________________] │
-│ [Generate]   │ Keywords: [____________________] │
-│              │ [Search Images] [Regenerate]     │
-│              │ [Delete Slide] [Move Up/Down]    │
-└──────────────┴──────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│ The Floor — Studio            [Theme]  [Back to Dashboard]  │
+├───────────────────────────────────────────────────────────┤
+│  ① Key  →  ② Name  →  ③ Cards  →  ④ Images  →  ⑤ Censor → ⑥ Save │   ← StudioStepper
+├───────────────────────────────────────────────────────────┤
+│                                                             │
+│   [ current step renders here ]                             │
+│                                                             │
+│   e.g. Name step:    “Cryptids”        🎲 Reroll            │
+│                      [ Use this name → ]                    │
+│                                                             │
+├───────────────────────────────────────────────────────────┤
+│                                  [ ← Back ]   [ Continue → ]│
+└───────────────────────────────────────────────────────────┘
 ```
 
-### Generation Flow
-
-1. User enters prompt: "10 slides about famous painters"
-2. Loading indicator (30-60 seconds)
-3. Slides appear in list
-4. Images load progressively (search happening in background)
-5. User reviews, clicks slide to edit
-6. Makes changes, hits "Save Category"
+### Resume prompt
+On load, if a draft exists: offer **Resume** (hydrate the draft) or **Start over** (clear it) — mirrors the Dashboard "Resume Duel" affordance.
 
 ## Success Criteria
-
-- [ ] Users can generate categories from text prompts
-- [ ] Generated slides include question, answer, and image
-- [ ] Users can edit, add, delete slides
-- [ ] Images searchable and replaceable
-- [ ] Categories exportable to game
-- [ ] Existing categories importable for editing
-- [ ] Cost tracking functional
-- [ ] API key management secure
-- [ ] All tests passing
-- [ ] Documentation for setup and usage
+- [ ] A user with an OpenAI key can create and save a playable category without leaving the app
+- [ ] Category names reroll instantly (batched + prefetched)
+- [ ] ~50 card ideas prepopulate; cards can be rerolled/edited/deleted/added
+- [ ] Each card gets an OpenAI-generated image stored as a data URL
+- [ ] Censor boxes can be drawn and deleted per slide
+- [ ] Drafts survive a page refresh
+- [ ] Categories save to the library and download as importable JSON
+- [ ] API key management is local with a clear security warning
+- [ ] `npm run build`, `npm test -- --run`, and `npm run lint` all pass
 
 ## Timeline Estimate
+- Task 53 (Shell + state): 3–4 days
+- Task 54 (Credentials): 1–2 days
+- Task 55 (OpenAI service): 2–3 days
+- Task 56 (Name + prefetch): 2 days
+- Task 57 (Cards): 2–3 days
+- Task 58 (Images): 2 days
+- Task 59 (Censor editor): 3–4 days
+- Task 60 (Save/export): 1–2 days
 
-- Task 53 (Studio UI): 3-4 days
-- Task 54 (Credentials): 2 days
-- Task 55 (LLM): 3-4 days
-- Task 56 (Images): 2-3 days
-- Task 57 (Editing): 2-3 days
-- Task 58 (Export/Import): 2 days
-- Task 59 (Cost Tracking): 2 days
-- Task 60 (Templates): 1-2 days
-
-**Total**: 17-23 days (3-4 weeks)
+**Total:** ~16–22 days (3–4 weeks)
 
 ## Risks and Mitigations
-
-### Risk 1: API Costs Run High
-**Mitigation**: Strict cost tracking, warnings, limits, free tier testing
-
-### Risk 2: LLM Output Quality
-**Mitigation**: Prompt engineering, user editing, regeneration options
-
-### Risk 3: Image Search Failures
-**Mitigation**: Multiple APIs, fallback to placeholder, manual upload
-
-### Risk 4: Complex State Management
-**Mitigation**: Use reducer pattern, clear data flow, persistent drafts
+- **API cost** — lazy image generation, confirm-gated "reroll all" / "generate all", spend-limited key guidance.
+- **LLM output quality** — structured outputs + full user editing (reroll/edit/delete/add).
+- **Image fidelity** — surface the generation caveat; the user can reroll a single image.
+- **Complex state** — single reducer + serializable draft + IndexedDB persistence.
+- **Draft data size** — drafts live in IndexedDB (not localStorage); debounce writes.
 
 ## Resources
-
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Unsplash API](https://unsplash.com/documentation)
-- [Pexels API](https://www.pexels.com/api/)
-- [GPT-4 Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
+- [OpenAI API Docs](https://platform.openai.com/docs)
+- [OpenAI Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
+- [OpenAI Images (`gpt-image-1`)](https://platform.openai.com/docs/guides/images)
+- [OpenAI Node SDK — browser usage / `baseURL`](https://github.com/openai/openai-node)
 
 ## Future Enhancements (Post-Phase 12)
-
-### Phase 13: Advanced Studio Features
-- DALL-E 3 image generation
-- Automatic censor box generation (computer vision)
-- Category difficulty analysis
-- A/B testing for slide quality
-- Category remixing (combine best slides from multiple categories)
-- Bulk operations
-
-### Phase 14: Studio Pro
-- Cloud storage and sync
-- Collaboration (multi-user editing)
-- Category marketplace (share with community)
-- Analytics (which slides work best)
-- Slide templates
-- Custom branding
-
-### Phase 15: Content Moderation
-- Profanity filtering
-- Appropriateness checking
-- Copyright detection
-- Age-appropriateness ratings
-- Content warnings
+- Image **search** source (Unsplash/Pexels) as an alternative to generation
+- In-browser **PAT-based PR submission** (with git-bloat/token caveats addressed, ideally via a Cloudflare Pages Function)
+- **Cost tracking** and spend limits
+- **Prompt templates** and difficulty presets
+- **Import an existing category** into the Studio for editing
+- Slide reorder, undo/redo, automatic (CV) censor suggestions
 
 ## Notes
-
-- This is a major feature that could be a product itself
-- Phase 12 focuses on MVP: generate, edit, export
-- User testing crucial - iterate on UX
-- Consider open-sourcing as separate library
-- Could monetize with premium features (DALL-E, cloud storage)
-- Extremely useful for content creators and educators
-
-## Open Questions
-
-1. Should we support video slides (GIFs/MP4)?
-2. Should censor boxes be manually placed or auto-generated?
-3. Should we support audio clues/answers?
-4. What's the best way to handle image attribution requirements?
-5. Should Studio be a separate app or integrated page?
+- This is a major feature that touches storage (new IndexedDB store), routing, and a brand-new interactive censor editor.
+- The Studio is a separate route, so its OpenAI SDK can be code-split (`React.lazy`) off the gameplay hot path.
+- The Studio's output uses the *existing* `Slide`/`Category` types, so categories it produces are indistinguishable from imported ones in gameplay.
 
 ## Dependencies from Other Phases
-
-- Task 30: Category Manager (storage system)
-- Task 06: PPTX Import (similar export format)
-- Potential: Credentials store from Phase 11
+- **Task 30: Category Manager** — the IndexedDB category store the Studio saves into.
+- **Task 50: Sample Categories** — establishes the ~50-slide norm and the import-compatible JSON shape.
+- **Task 06: PPTX Import** — the prior content-authoring path the Studio complements.
