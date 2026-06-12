@@ -16,6 +16,7 @@ import { LinkButton } from '@components/common/LinkButton';
 import { ThemeToggle } from '@components/common/ThemeToggle';
 import { StudioStepper } from '@components/studio/StudioStepper';
 import { CredentialsStep } from '@components/studio/steps/CredentialsStep';
+import { CategoryNameStep } from '@components/studio/steps/CategoryNameStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
@@ -33,7 +34,7 @@ const STEP_TITLES: Record<StudioStep, string> = {
 /** Placeholder copy describing what each step will do once implemented. */
 const STEP_PLACEHOLDERS: Record<StudioStep, string> = {
   credentials: '',
-  categoryName: 'AI-suggested names with reroll arrive in Task 56.',
+  categoryName: '',
   cards: 'Editable AI-generated card ideas arrive in Task 57.',
   images: 'Per-card image generation arrives in Task 58.',
   censor: 'The interactive censor-box editor arrives in Task 59.',
@@ -60,6 +61,14 @@ function Studio() {
     if (next && canAdvance) {
       actions.setStep(next);
     }
+  };
+
+  // Confirm a chosen category name into the draft, then advance to the cards
+  // step. We dispatch both actions explicitly rather than relying on `goNext`'s
+  // `canAdvance` guard, which reads the not-yet-updated draft on this same tick.
+  const handleConfirmCategoryName = (name: string) => {
+    actions.setCategoryName(name);
+    actions.setStep('cards');
   };
 
   const handleStepSelect = (step: StudioStep) => {
@@ -107,24 +116,30 @@ function Studio() {
         <h2>{STEP_TITLES[draft.step]}</h2>
         {draft.step === 'credentials' ? (
           <CredentialsStep onContinue={goNext} />
+        ) : draft.step === 'categoryName' ? (
+          <CategoryNameStep onConfirm={handleConfirmCategoryName} />
         ) : (
           <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
         )}
       </section>
 
       {/*
-        The credentials step owns its own Clear + Continue controls (the latter
-        gated on a configured key), so the shared footer is hidden there to avoid
-        a second, ungated Continue button.
+        The credentials step owns its own Clear + Continue controls, and the
+        category-name step owns its own "Use this name" control (which confirms
+        the name and advances). Both hide the shared footer's Continue to avoid a
+        second, ungated forward button. The category-name step still gets the
+        shared Back control; credentials is the first step and needs no footer.
       */}
       {draft.step !== 'credentials' && (
         <div className={controlsClass}>
           <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
             ← Back
           </Button>
-          <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
-            Continue →
-          </Button>
+          {draft.step !== 'categoryName' && (
+            <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
+              Continue →
+            </Button>
+          )}
         </div>
       )}
 

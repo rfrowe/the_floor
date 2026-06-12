@@ -1,0 +1,124 @@
+/* CategoryNameStep — AI-suggested category names with an instant 🎲 reroll. */
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Field group: label + input row + hint */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+/* The name input and the Reroll button sit side by side. */
+.inputRow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.25);
+}
+
+.input::placeholder {
+  color: var(--text-disabled);
+}
+
+.input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+/* Inline "generating…" status. */
+.loading {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+/* Inline fetch error (shown when generation fails), with a Retry. */
+.error {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.9rem;
+  background-color: color-mix(in srgb, var(--status-danger) 12%, var(--bg-primary));
+  border: 1px solid var(--status-danger);
+  border-radius: 0.5rem;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.errorIcon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.errorMessage {
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.errorActions {
+  display: flex;
+}
+
+/* Actions row: Use this name (right-aligned). */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .inputRow {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}

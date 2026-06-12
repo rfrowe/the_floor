@@ -15,11 +15,16 @@ import { putStudioDraft, clearStudioDraft, getStudioDraft } from '@storage/index
 import { STUDIO_DRAFT_ID } from '@hooks/useStudioDraftStore';
 import type { StudioDraft } from '@types';
 
-// The Credentials step probes the key via the OpenAI service layer on Continue;
-// mock it so this shell-level test never touches the real SDK/network.
+// The Credentials step probes the key via the OpenAI service layer on Continue,
+// and the category-name step generates a batch of names on entry. Mock both so
+// this shell-level test never touches the real SDK/network.
 vi.mock('@services/openai', async () => {
   const actual = await vi.importActual<typeof import('@services/openai')>('@services/openai');
-  return { ...actual, validateCredentials: vi.fn().mockResolvedValue(undefined) };
+  return {
+    ...actual,
+    validateCredentials: vi.fn().mockResolvedValue(undefined),
+    generateCategoryNames: vi.fn().mockResolvedValue(['World Capitals', 'Cryptids']),
+  };
 });
 
 function renderStudio() {
@@ -125,8 +130,10 @@ describe('Studio page', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Pick a category name/i })).toBeInTheDocument();
     });
-    // The shared footer Continue is now disabled because no name is confirmed.
-    expect(screen.getByRole('button', { name: /Continue/i })).toBeDisabled();
+    // The category-name step owns its own "Use this name →" control, so the
+    // shared footer Continue is hidden (its own confirm gates the advance).
+    expect(screen.getByRole('button', { name: /Use this name/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Continue/i })).not.toBeInTheDocument();
   });
 
   it('shows the Resume prompt when a draft is seeded', async () => {
