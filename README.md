@@ -63,7 +63,7 @@ This web application recreates the game show experience with:
 - 🖼️ **Image optimization** - Automatic 4K resize and JPEG optimization
 - 💾 **IndexedDB storage** - Handle large image datasets
 - 📦 **Sample categories** - 20+ demo categories included
-- 🎬 **LLM Studio** (in progress) - A guided `/studio` wizard for creating categories with AI; the shell, stepper, and draft persistence are in place (Phase 12)
+- 🎬 **LLM Studio** (in progress) - A guided `/studio` wizard for creating categories with AI; the shell, stepper, draft persistence, OpenAI credentials, and an instant-reroll category-name step (batched generation with background prefetch) are in place (Phase 12)
 
 ## Live Demo
 
