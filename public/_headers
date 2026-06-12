@@ -1,0 +1,7 @@
+# Cloudflare Pages response headers.
+# The service worker and manifest must revalidate so app/SW updates aren't
+# blocked by a stale cached copy. Hashed assets remain immutable by default.
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
