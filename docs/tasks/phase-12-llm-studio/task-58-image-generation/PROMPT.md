@@ -51,6 +51,25 @@ export async function generateImage(prompt: string, config: OpenAIConfig): Promi
 ### Rendering current image
 - Reuse `SlideViewer` (`src/components/slide/SlideViewer.tsx`) to show the slide image (it also previews any censor boxes from a later step), or a plain `<img>` for the grid thumbnail.
 
+### Image prompt guidance (from SAMPLE_CATEGORY_ANALYSIS.md)
+The image is generated from `card.imagePrompt`, which Task 56's `cardIdeas.ts` already shapes to
+the sample-category style. To keep generated clues fair, this step must reinforce the same rules
+(see `docs/tasks/phase-12-llm-studio/SAMPLE_CATEGORY_ANALYSIS.md`, section 6 and the "Images"
+prompt-writing directives):
+
+- **One centered subject.** Depict exactly one subject — prominent and centered, instantly
+  recognizable to a general audience as the intended thing (for a pun answer, the literal
+  referent the player must leap from). No collages or split frames — one subject per image.
+- **Fair clue, not answer-key.** The image should make a knowledgeable player *recognize* the
+  subject, not hand them the spelled-out answer.
+- **Append a hard no-text suffix to every generated prompt.** Before calling `gpt-image-1`, wrap
+  `card.imagePrompt` with a suffix such as:
+  > "Photorealistic, single centered subject, plain uncluttered background, absolutely no text,
+  > letters, words, captions, logos, or watermarks anywhere in the image."
+
+  This is the single most important constraint: keeping text out of the image is what lets the
+  game skip manual censoring (censor boxes), so a clean, text-free image needs no censoring at all.
+
 ## Dependencies
 **Required:** [Task 55](../task-55-openai-service-layer/PROMPT.md) (client/errors), [Task 57](../task-57-card-ideas-editor/PROMPT.md) (cards → derived slides), [Task 54](../task-54-credentials-management/PROMPT.md) (config), [Task 53](../task-53-studio-shell-and-state/PROMPT.md) (`SET_SLIDE_IMAGE`).
 **Enables:** [Task 59](../task-59-censor-box-editor/PROMPT.md) (images are the canvas for censoring).
