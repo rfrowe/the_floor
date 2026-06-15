@@ -21,6 +21,13 @@ import type { OpenAIConfig } from '@hooks/useCredentials';
  */
 export const DEFAULT_CHAT_MODEL = 'gpt-4o-mini';
 
+/**
+ * The image-generation model used by {@link generateImage} (Task 58). Kept here
+ * alongside {@link DEFAULT_CHAT_MODEL} so all OpenAI model identifiers live in
+ * one place and a bump is a single-line change (never hardcoded per call site).
+ */
+export const DEFAULT_IMAGE_MODEL = 'gpt-image-1';
+
 /** Arguments for {@link structuredChat}. */
 export interface StructuredChatArgs<T> {
   /** Credentials used to build the client. */
