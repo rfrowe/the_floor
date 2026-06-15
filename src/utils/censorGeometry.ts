@@ -13,6 +13,7 @@
  * in the editor renders identically in gameplay.
  */
 
+import type { CSSProperties } from 'react';
 import type { CensorBox } from '@types';
 
 /** A rectangle in pixel space relative to the rendered image's top-left. */
@@ -98,16 +99,22 @@ export function pxRectToCensorBox(
 }
 
 /**
- * Convert a {@link CensorBox} (percentages) back into a pixel rectangle
- * relative to a `boundsW × boundsH` image — used for hit-testing and rendering
- * selection handles.
+ * The forward `%`→CSS transform for placing a {@link CensorBox}: returns the
+ * `left/top/width/height` percentage properties. Co-located here with the
+ * px↔% math so the coordinate convention lives in one place; consumed by
+ * `CensorBox.tsx` (and the editor's selection overlay) instead of being
+ * re-emitted inline. Visual fill (background color) and stacking are left to
+ * the caller, since they differ between the opaque gameplay box and the
+ * transparent editor hit-target.
  */
-export function censorBoxToPxRect(box: CensorBox, boundsW: number, boundsH: number): PxRect {
+export function boxToStyle(
+  box: CensorBox
+): Pick<CSSProperties, 'left' | 'top' | 'width' | 'height'> {
   return {
-    x: (box.x / 100) * boundsW,
-    y: (box.y / 100) * boundsH,
-    w: (box.width / 100) * boundsW,
-    h: (box.height / 100) * boundsH,
+    left: `${String(box.x)}%`,
+    top: `${String(box.y)}%`,
+    width: `${String(box.width)}%`,
+    height: `${String(box.height)}%`,
   };
 }
 

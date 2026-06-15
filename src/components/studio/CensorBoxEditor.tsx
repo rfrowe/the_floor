@@ -18,7 +18,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { CensorBox, Slide } from '@types';
 import { Button } from '@components/common/Button';
+import { CensorBox as CensorBoxView } from '@components/slide/CensorBox';
+import { useImageBounds } from '@hooks/useImageBounds';
 import {
+  boxToStyle,
   isBoxLargeEnough,
   normalizeRect,
   pxRectToCensorBox,
@@ -38,13 +41,6 @@ export interface CensorBoxEditorProps {
 /** Default censor fill: opaque black, matching how giveaway text is hidden. */
 const DEFAULT_COLOR = '#000000';
 
-interface ImageBounds {
-  width: number;
-  height: number;
-  left: number;
-  top: number;
-}
-
 /** A drag in progress, in pixels relative to the rendered image's top-left. */
 interface DragState {
   start: Point;
@@ -57,9 +53,6 @@ export function CensorBoxEditor({
   defaultColor = DEFAULT_COLOR,
   onChange,
 }: CensorBoxEditorProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [imageBounds, setImageBounds] = useState<ImageBounds | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -71,77 +64,24 @@ export function CensorBoxEditor({
   const boxes = slide.censorBoxes;
   const instructionsId = useId();
 
-  // --- bounds measurement (mirrors SlideViewer) -----------------------------
+  // --- bounds measurement (shared with SlideViewer via useImageBounds) -------
+  // observeResize: the editor is interactive, so window/layout changes while the
+  // user works must trigger a re-measure (the read-only viewer omits this).
+  const { imageLoaded, imageError, imageBounds, handleImageLoad, handleImageError } =
+    useImageBounds({
+      imageRef,
+      containerRef: imageContainerRef,
+      imageUrl: slide.imageUrl,
+      enabled: hasImage,
+      observeResize: true,
+    });
 
-  const measureBounds = useCallback(() => {
-    if (imageRef.current && imageContainerRef.current) {
-      const imgRect = imageRef.current.getBoundingClientRect();
-      const containerRect = imageContainerRef.current.getBoundingClientRect();
-      setImageBounds({
-        width: Math.round(imgRect.width),
-        height: Math.round(imgRect.height),
-        left: Math.round(imgRect.left - containerRect.left),
-        top: Math.round(imgRect.top - containerRect.top),
-      });
-    }
-  }, []);
-
-  // Reset + cached-image path when the slide image changes.
+  // Drawing/selection state is keyed to the rendered bounds; reset it whenever a
+  // new image is being measured so a stale drag/selection can't carry over.
   useEffect(() => {
-    setImageLoaded(false);
-    setImageError(false);
-    setImageBounds(null);
     setDrag(null);
     setSelectedIndex(null);
-
-    if (!hasImage) {
-      return;
-    }
-
-    const rafId = requestAnimationFrame(() => {
-      if (imageRef.current && imageRef.current.complete && imageRef.current.naturalHeight !== 0) {
-        measureBounds();
-        setImageLoaded(true);
-      }
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [slide.imageUrl, hasImage, measureBounds]);
-
-  const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
-    // Two frames: first for display:block to apply, second for paint.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        measureBounds();
-      });
-    });
-  }, [measureBounds]);
-
-  const handleImageError = useCallback(() => {
-    setImageError(true);
-    setImageLoaded(false);
-  }, []);
-
-  // Re-measure on layout/size changes — the editor is interactive, so the
-  // window or surrounding layout can change while the user works.
-  useEffect(() => {
-    if (!imageLoaded || !imageRef.current) {
-      return;
-    }
-    const observer = new ResizeObserver(() => {
-      measureBounds();
-    });
-    observer.observe(imageRef.current);
-    if (imageContainerRef.current) {
-      observer.observe(imageContainerRef.current);
-    }
-    return () => {
-      observer.disconnect();
-    };
-  }, [imageLoaded, measureBounds]);
+  }, [slide.imageUrl]);
 
   // --- drawing flow ----------------------------------------------------------
 
@@ -328,33 +268,33 @@ export function CensorBoxEditor({
             {boxes.map((box, index) => {
               const isSelected = index === selectedIndex;
               return (
-                <button
-                  type="button"
-                  key={index}
-                  className={`${boxButtonClass} ${isSelected ? selectedClass : ''}`.trim()}
-                  style={{
-                    left: `${String(box.x)}%`,
-                    top: `${String(box.y)}%`,
-                    width: `${String(box.width)}%`,
-                    height: `${String(box.height)}%`,
-                    backgroundColor: box.color,
-                  }}
-                  aria-label={`Censor box ${String(index + 1)}${isSelected ? ' (selected)' : ''}`}
-                  aria-pressed={isSelected}
-                  onPointerDown={(e) => {
-                    // Selecting a box must not also start a new draw on the overlay.
-                    e.stopPropagation();
-                  }}
-                  onClick={() => {
-                    setSelectedIndex(index);
-                  }}
-                  onFocus={() => {
-                    setSelectedIndex(index);
-                  }}
-                  onKeyDown={(e) => {
-                    handleBoxKeyDown(e, index);
-                  }}
-                />
+                // The static fill is rendered by the same CensorBox used in
+                // gameplay (WYSIWYG); a transparent button overlaid at the same
+                // rect provides selection/delete + keyboard focus. CensorBox has
+                // pointerEvents:none so the button always receives the click.
+                <span key={index}>
+                  <CensorBoxView box={box} />
+                  <button
+                    type="button"
+                    className={`${boxButtonClass} ${isSelected ? selectedClass : ''}`.trim()}
+                    style={boxToStyle(box)}
+                    aria-label={`Censor box ${String(index + 1)}${isSelected ? ' (selected)' : ''}`}
+                    aria-pressed={isSelected}
+                    onPointerDown={(e) => {
+                      // Selecting a box must not also start a new draw on the overlay.
+                      e.stopPropagation();
+                    }}
+                    onClick={() => {
+                      setSelectedIndex(index);
+                    }}
+                    onFocus={() => {
+                      setSelectedIndex(index);
+                    }}
+                    onKeyDown={(e) => {
+                      handleBoxKeyDown(e, index);
+                    }}
+                  />
+                </span>
               );
             })}
 
@@ -362,12 +302,7 @@ export function CensorBoxEditor({
               <div
                 className={inProgressClass}
                 aria-hidden="true"
-                style={{
-                  left: `${String(inProgressBox.x)}%`,
-                  top: `${String(inProgressBox.y)}%`,
-                  width: `${String(inProgressBox.width)}%`,
-                  height: `${String(inProgressBox.height)}%`,
-                }}
+                style={boxToStyle(inProgressBox)}
               />
             )}
           </div>

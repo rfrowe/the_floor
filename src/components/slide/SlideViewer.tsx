@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import type { Slide } from '@types';
+import { useImageBounds } from '@hooks/useImageBounds';
 import { CensorBox } from './CensorBox';
 import styles from './SlideViewer.module.css';
 
@@ -13,76 +14,22 @@ export interface SlideViewerProps {
  * SlideViewer component displays slide images with censorship boxes overlaid
  * at precise positions. Handles aspect ratio preservation with letterboxing.
  * Censor boxes are always rendered fully opaque (handled by CensorBox component).
+ *
+ * Rendered-image bounds are measured by the shared {@link useImageBounds} hook
+ * (cached-image probe + two-RAF post-load measurement), identical to the
+ * CensorBoxEditor so authored boxes line up with gameplay.
  */
 export function SlideViewer({ slide, showAnswer = false, className = '' }: SlideViewerProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [imageBounds, setImageBounds] = useState<{
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-  } | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when slide changes
-  useEffect(() => {
-    setImageLoaded(false);
-    setImageError(false);
-    setImageBounds(null);
-
-    // Use requestAnimationFrame to wait for next frame before checking cached images
-    const rafId = requestAnimationFrame(() => {
-      // Check if image is already loaded (cached)
-      if (imageRef.current && imageRef.current.complete && imageRef.current.naturalHeight !== 0) {
-        // For cached images, calculate bounds and set imageLoaded together
-        if (imageContainerRef.current) {
-          const imgRect = imageRef.current.getBoundingClientRect();
-          const containerRect = imageContainerRef.current.getBoundingClientRect();
-
-          const bounds = {
-            width: Math.round(imgRect.width),
-            height: Math.round(imgRect.height),
-            left: Math.round(imgRect.left - containerRect.left),
-            top: Math.round(imgRect.top - containerRect.top),
-          };
-          setImageBounds(bounds);
-          setImageLoaded(true);
-        }
-      }
+  const { imageLoaded, imageError, imageBounds, handleImageLoad, handleImageError } =
+    useImageBounds({
+      imageRef,
+      containerRef: imageContainerRef,
+      imageUrl: slide.imageUrl,
     });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [slide.imageUrl]);
-
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-    // Wait TWO frames: first for state update to apply display:block, second for paint
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (imageRef.current && imageContainerRef.current) {
-          const imgRect = imageRef.current.getBoundingClientRect();
-          const containerRect = imageContainerRef.current.getBoundingClientRect();
-
-          setImageBounds({
-            width: Math.round(imgRect.width),
-            height: Math.round(imgRect.height),
-            left: Math.round(imgRect.left - containerRect.left),
-            top: Math.round(imgRect.top - containerRect.top),
-          });
-        }
-      });
-    });
-  };
-
-  const handleImageError = () => {
-    setImageError(true);
-    setImageLoaded(false);
-  };
 
   // Build class names
   const containerClass = styles['container'] ?? '';

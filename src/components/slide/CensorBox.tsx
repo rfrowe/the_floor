@@ -6,6 +6,7 @@
  */
 
 import type { CensorBox as CensorBoxType } from '@types';
+import { boxToStyle } from '@utils/censorGeometry';
 
 interface CensorBoxProps {
   box: CensorBoxType;
@@ -36,21 +37,12 @@ function ensureOpaqueColor(color: string): string {
  * The box is always rendered fully opaque, even if the color has an alpha channel.
  */
 export function CensorBox({ box, className = '' }: CensorBoxProps) {
-  // Extract style values to satisfy TypeScript strict template literal requirements
-  const leftValue = String(box.x);
-  const topValue = String(box.y);
-  const widthValue = String(box.width);
-  const heightValue = String(box.height);
-
   return (
     <div
       className={className}
       style={{
         position: 'absolute',
-        left: `${leftValue}%`,
-        top: `${topValue}%`,
-        width: `${widthValue}%`,
-        height: `${heightValue}%`,
+        ...boxToStyle(box),
         backgroundColor: ensureOpaqueColor(box.color),
         pointerEvents: 'none',
       }}
