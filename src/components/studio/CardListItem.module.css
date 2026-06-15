@@ -60,6 +60,12 @@
 }
 
 .input {
+  /* width: 100% + padding + border needs border-box so the control's full box
+     stays inside its container (no global reset in this repo; set per-element,
+     matching SlidePreview.module.css). Without it the answer input overflows
+     `.answerField` under the Delete button and the prompt textarea overflows
+     the card's right edge. */
+  box-sizing: border-box;
   width: 100%;
   padding: 0.55rem 0.7rem;
   font-size: 0.95rem;
