@@ -8,23 +8,38 @@
  * max in-flight calls against a controllable, deferred mock). The index↔id
  * bridge is exercised by a stateful harness that applies real `SET_SLIDE_IMAGE`
  * (index-based) semantics. `generateImage` is mocked — no real network.
+ *
+ * The Phase 12 enhancements add: a per-card Google Images button (opens a
+ * `tbm=isch` search for the answer; disabled when blank), drag-and-drop of an
+ * image FILE onto the card's image area (and a keyboard "Upload" fallback) — both
+ * reusing the mocked `blobToDataUrl` → `SET_SLIDE_IMAGE` path, with non-image
+ * files rejected.
  */
 
 import { useMemo, useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, within, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, within, cleanup, fireEvent } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import type { CardIdea, Slide } from '@types';
 import { ImagesStep, GENERATE_ALL_CONCURRENCY } from './ImagesStep';
 import { __resetCredentialsForTest, __setCredentialsForTest } from '@hooks/useCredentials';
 import { GenerationError, generateImage } from '@services/openai';
+import { blobToDataUrl } from '@services/images/toDataUrl';
 
 vi.mock('@services/openai', async () => {
   const actual = await vi.importActual<typeof import('@services/openai')>('@services/openai');
   return { ...actual, generateImage: vi.fn() };
 });
 
+vi.mock('@services/images/toDataUrl', async () => {
+  const actual = await vi.importActual<typeof import('@services/images/toDataUrl')>(
+    '@services/images/toDataUrl'
+  );
+  return { ...actual, blobToDataUrl: vi.fn() };
+});
+
 const generateMock = vi.mocked(generateImage);
+const blobToDataUrlMock = vi.mocked(blobToDataUrl);
 
 /** Build a card with a deterministic id for assertions. */
 function card(id: string, answer: string): CardIdea {
@@ -87,6 +102,7 @@ function Harness({ cards }: { cards: CardIdea[] }) {
 beforeEach(() => {
   __resetCredentialsForTest();
   generateMock.mockReset();
+  blobToDataUrlMock.mockReset();
 });
 
 afterEach(() => {
@@ -235,5 +251,109 @@ describe('ImagesStep', () => {
     // Continue works even with blank slides.
     await user.click(screen.getByRole('button', { name: /Continue/i }));
     expect(screen.getByText('advanced to censor')).toBeInTheDocument();
+  });
+
+  it('Google Images button opens the correct tbm=isch search in a new tab', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    render(<Harness cards={[card('a', 'Fox')]} />);
+
+    const foxItem = screen.getByText('1. Fox').closest('li');
+    if (!foxItem) throw new Error('Fox card not found');
+
+    await user.click(within(foxItem).getByRole('button', { name: 'Google Images' }));
+
+    expect(openSpy).toHaveBeenCalledWith(
+      // card('a','Fox') => imageKeywords = 'Fox keywords'
+      'https://www.google.com/search?tbm=isch&q=Fox%20Fox%20keywords',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
+
+  it('Google Images button is disabled when the answer is blank', () => {
+    seedKey();
+    render(<Harness cards={[card('a', '')]} />);
+
+    const item = screen.getByText('1. Untitled card').closest('li');
+    if (!item) throw new Error('card not found');
+    expect(within(item).getByRole('button', { name: 'Google Images' })).toBeDisabled();
+  });
+
+  it('dropping an image file sets that slide via the blob→dataURL path (by index)', async () => {
+    seedKey();
+    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,DROPPED');
+
+    render(<Harness cards={[card('a', 'Fox'), card('b', 'Bear')]} />);
+
+    const foxItem = screen.getByText('1. Fox').closest('li');
+    const bearItem = screen.getByText('2. Bear').closest('li');
+    if (!foxItem || !bearItem) throw new Error('cards not found');
+
+    const file = new File(['x'], 'fox.png', { type: 'image/png' });
+    // The drop target is the thumbnail container (the <img>/placeholder's parent).
+    const dropTarget = within(foxItem).getByText('No image yet').parentElement;
+    if (!dropTarget) throw new Error('drop target not found');
+
+    fireEvent.dragOver(dropTarget, { dataTransfer: { files: [file] } });
+    fireEvent.drop(dropTarget, { dataTransfer: { files: [file] } });
+
+    await waitFor(() => {
+      expect(within(foxItem).getByRole('img')).toHaveAttribute(
+        'src',
+        'data:image/png;base64,DROPPED'
+      );
+    });
+    expect(blobToDataUrlMock).toHaveBeenCalledWith(file);
+    expect(generateMock).not.toHaveBeenCalled();
+    // Index isolation: Bear stays blank.
+    expect(within(bearItem).queryByRole('img')).toBeNull();
+  });
+
+  it('rejects a non-image file drop with an inline error and does not set the slide', async () => {
+    seedKey();
+    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,NOPE');
+
+    render(<Harness cards={[card('a', 'Fox')]} />);
+    const foxItem = screen.getByText('1. Fox').closest('li');
+    if (!foxItem) throw new Error('Fox card not found');
+
+    const textFile = new File(['hello'], 'notes.txt', { type: 'text/plain' });
+    const dropTarget = within(foxItem).getByText('No image yet').parentElement;
+    if (!dropTarget) throw new Error('drop target not found');
+
+    fireEvent.drop(dropTarget, { dataTransfer: { files: [textFile] } });
+
+    await waitFor(() => {
+      expect(within(foxItem).getByRole('alert')).toHaveTextContent(/isn’t an image/i);
+    });
+    expect(blobToDataUrlMock).not.toHaveBeenCalled();
+    expect(within(foxItem).queryByRole('img')).toBeNull();
+  });
+
+  it('the Upload file-input fallback runs the same blob→dataURL path', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,UPLOADED');
+
+    render(<Harness cards={[card('a', 'Fox')]} />);
+    const foxItem = screen.getByText('1. Fox').closest('li');
+    if (!foxItem) throw new Error('Fox card not found');
+
+    const file = new File(['x'], 'fox.png', { type: 'image/png' });
+    const input = within(foxItem).getByLabelText(/Upload an image for Fox/i);
+    await user.upload(input, file);
+
+    await waitFor(() => {
+      expect(within(foxItem).getByRole('img')).toHaveAttribute(
+        'src',
+        'data:image/png;base64,UPLOADED'
+      );
+    });
+    expect(blobToDataUrlMock).toHaveBeenCalledWith(file);
+    expect(generateMock).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,17 @@
  * without overwhelming the API; per-card failures are isolated and retryable and
  * never block the others.
  *
+ * Besides AI generation, each card offers a "find a real photo" path: a Google
+ * Images button (opens an image search for the card's answer in a new tab) paired
+ * with drag-and-drop / upload of a downloaded image FILE onto the card's image
+ * area. A dropped/selected file is read to a base64 `data:` URL via
+ * {@link blobToDataUrl} and dispatched through the same `SET_SLIDE_IMAGE` path.
+ *
+ * CONCURRENCY: a SINGLE shared limiter ({@link createLimiter}, cap
+ * {@link GENERATE_ALL_CONCURRENCY}) governs EVERY `generateImage` call — both the
+ * single-button path and "Generate all" — so total concurrent OpenAI image
+ * requests never exceed the cap no matter how rapidly the user clicks.
+ *
  * INDEX ↔ ID BRIDGE: slides are derived per card and keyed by ARRAY INDEX
  * (`SET_SLIDE_IMAGE` takes an `index`), while cards carry a stable nanoid `id`.
  * We iterate `cards.map((card, index) => …)` so every row holds BOTH: the `id`
@@ -27,10 +38,20 @@ import type { CardIdea, Slide } from '@types';
 import { Button } from '@components/common/Button';
 import { useCredentials } from '@hooks/useCredentials';
 import { generateImage, toGenerationError, type GenerationError } from '@services/openai';
+import { blobToDataUrl } from '@services/images/toDataUrl';
+import { createLimiter } from '@utils/concurrencyLimit';
+import { buildGoogleImagesUrl } from '@utils/googleImages';
 import styles from './ImagesStep.module.css';
 
-/** Max images generated at once by "Generate all". Keeps the API from being hammered. */
+/** Max OpenAI image requests in flight at once across the whole step. */
 export const GENERATE_ALL_CONCURRENCY = 3;
+
+/**
+ * The SINGLE shared limiter for the step. Module-level (not per-render) so every
+ * `generateImage` call — single-card clicks AND "Generate all" — competes for the
+ * same {@link GENERATE_ALL_CONCURRENCY} slots and the cap holds globally.
+ */
+const imageLimiter = createLimiter(GENERATE_ALL_CONCURRENCY);
 
 /** Transient per-card generation status (never persisted). */
 export type CardStatus = 'idle' | 'loading' | 'done' | 'error';
@@ -49,35 +70,6 @@ export interface ImagesStepProps {
   onContinue: () => void;
 }
 
-/**
- * Run `tasks` with at most `limit` in flight at once. A tiny hand-rolled queue
- * (no dependency): `limit` workers each pull the next index until the shared
- * cursor is exhausted. Each task is responsible for its own error handling — a
- * task must not reject, so one failure never aborts the pool.
- */
-async function runWithConcurrency(
-  tasks: readonly (() => Promise<void>)[],
-  limit: number
-): Promise<void> {
-  const max = Math.max(1, Math.floor(limit));
-  let cursor = 0;
-  const worker = async (): Promise<void> => {
-    while (cursor < tasks.length) {
-      const index = cursor;
-      cursor += 1;
-      const task = tasks[index];
-      if (task) {
-        await task();
-      }
-    }
-  };
-  const workers: Promise<void>[] = [];
-  for (let i = 0; i < Math.min(max, tasks.length); i += 1) {
-    workers.push(worker());
-  }
-  await Promise.all(workers);
-}
-
 export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: ImagesStepProps) {
   const [config, { isConfigured }] = useCredentials();
 
@@ -85,6 +77,8 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
   const [statuses, setStatuses] = useState<ReadonlyMap<string, CardStatus>>(() => new Map());
   const [errors, setErrors] = useState<ErrorMap>(() => new Map());
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  // Card id currently under a drag-over (for the drop-target visual state).
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // Latest props for use inside async callbacks without re-binding them on every
   // edit (the generate closures read these refs, not the captured props).
@@ -114,22 +108,51 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
   /**
    * Generate one card's image. Pure per-card unit reused by the single-button
    * path and by "Generate all": it flips status to `loading`, awaits
-   * `generateImage(card.imagePrompt)`, dispatches `SET_SLIDE_IMAGE { index }`,
-   * then `done`; any failure sets `error` (and a retryable message) WITHOUT
-   * rethrowing, so a pooled run is never aborted by one bad card.
+   * `generateImage(card.imagePrompt)` THROUGH THE SHARED LIMITER, dispatches
+   * `SET_SLIDE_IMAGE { index }`, then `done`; any failure sets `error` (and a
+   * retryable message) WITHOUT rethrowing, so a pooled run is never aborted by
+   * one bad card. Because every call routes through `imageLimiter`, rapid
+   * single-card clicks and "Generate all" together never exceed the cap.
    */
   const generateOne = useCallback(
     async (id: string, index: number, imagePrompt: string): Promise<void> => {
       setStatus(id, 'loading');
       setError(id, null);
       try {
-        const dataUrl = await generateImage(imagePrompt, configRef.current);
+        const dataUrl = await imageLimiter(() => generateImage(imagePrompt, configRef.current));
         onSetSlideImage(index, dataUrl);
         setStatus(id, 'done');
       } catch (caught) {
         const err: GenerationError = toGenerationError(caught);
         setStatus(id, 'error');
         setError(id, err.message);
+      }
+    },
+    [onSetSlideImage, setError, setStatus]
+  );
+
+  /**
+   * Apply an image FILE (drag-drop or upload) to a card: verify it's an image,
+   * read it to a base64 `data:` URL via {@link blobToDataUrl}, then dispatch
+   * `SET_SLIDE_IMAGE` for that card's index. Non-image files are rejected with a
+   * per-card message; this is the OS-file path that pairs with Google Images
+   * (dragging an <img> from a tab yields a CORS-blocked cross-origin URL, so we
+   * only accept files).
+   */
+  const applyImageFile = useCallback(
+    async (id: string, index: number, file: File): Promise<void> => {
+      if (!file.type.startsWith('image/')) {
+        setError(id, 'That file isn’t an image. Drop or choose a PNG, JPG, or similar.');
+        return;
+      }
+      setError(id, null);
+      try {
+        const dataUrl = await blobToDataUrl(file);
+        onSetSlideImage(index, dataUrl);
+        setStatus(id, 'done');
+      } catch {
+        setStatus(id, 'error');
+        setError(id, 'Couldn’t read that image file. Try another.');
       }
     },
     [onSetSlideImage, setError, setStatus]
@@ -146,13 +169,11 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
 
     setIsGeneratingAll(true);
     try {
-      await runWithConcurrency(
-        pending.map(
-          ({ card, index }) =>
-            () =>
-              generateOne(card.id, index, card.imagePrompt)
-        ),
-        GENERATE_ALL_CONCURRENCY
+      // Each call self-limits through the shared `imageLimiter`, so firing them
+      // all at once still caps concurrency at GENERATE_ALL_CONCURRENCY; the rest
+      // queue. generateOne never rejects, so one bad card can't abort the batch.
+      await Promise.all(
+        pending.map(({ card, index }) => generateOne(card.id, index, card.imagePrompt))
       );
     } finally {
       setIsGeneratingAll(false);
@@ -173,13 +194,17 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
   const gridClass = styles['grid'] ?? '';
   const cardClass = styles['card'] ?? '';
   const thumbClass = styles['thumb'] ?? '';
+  const thumbDragOverClass = styles['thumbDragOver'] ?? '';
   const thumbImgClass = styles['thumbImg'] ?? '';
   const placeholderClass = styles['placeholder'] ?? '';
   const loadingClass = styles['loading'] ?? '';
+  const dropHintClass = styles['dropHint'] ?? '';
   const cardBodyClass = styles['cardBody'] ?? '';
   const answerClass = styles['answer'] ?? '';
   const cardErrorClass = styles['cardError'] ?? '';
   const cardActionsClass = styles['cardActions'] ?? '';
+  const uploadLabelClass = styles['uploadLabel'] ?? '';
+  const visuallyHiddenClass = styles['visuallyHidden'] ?? '';
   const footerClass = styles['footer'] ?? '';
 
   if (!isConfigured) {
@@ -206,12 +231,13 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
     <div className={stepClass}>
       <p className={introClass}>
         Generate an image for each card. Images are created one at a time as you click — or use
-        Generate all to fill the rest a few at a time.
+        Generate all to fill the rest a few at a time. Prefer a real photo? Open Google Images, then
+        drag the downloaded file onto the card (or use “Upload”).
       </p>
 
       <p className={caveatClass}>
         Heads-up: AI art can be less photo-accurate for specific real people or logos. If an image
-        misses, just reroll that single card.
+        misses, just reroll that single card — or drop in a real photo.
       </p>
 
       <div className={toolbarClass}>
@@ -247,10 +273,33 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
           const isLoading = status === 'loading';
           const errorMessage = errors.get(card.id) ?? null;
           const answerLabel = card.answer.trim().length > 0 ? card.answer : 'Untitled card';
+          const googleUrl = buildGoogleImagesUrl(card.answer, card.imageKeywords);
+          const isDragOver = dragOverId === card.id;
+          const thumbClassName = `${thumbClass} ${isDragOver ? thumbDragOverClass : ''}`.trim();
 
           return (
             <li key={card.id} className={cardClass}>
-              <div className={thumbClass}>
+              {/*
+                File-drop target. preventDefault on dragover is required to allow
+                a drop; we read dataTransfer.files[0] on drop. Pointer-only, so
+                the "Upload" label below provides an equivalent keyboard path.
+              */}
+              <div
+                className={thumbClassName}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragOverId !== card.id) setDragOverId(card.id);
+                }}
+                onDragLeave={() => {
+                  setDragOverId((current) => (current === card.id ? null : current));
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverId(null);
+                  const file = e.dataTransfer.files[0];
+                  if (file) void applyImageFile(card.id, index, file);
+                }}
+              >
                 {isLoading ? (
                   <div className={loadingClass} role="status" aria-live="polite">
                     <span aria-hidden="true">⏳</span>
@@ -261,6 +310,11 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
                 ) : (
                   <div className={placeholderClass} aria-hidden="true">
                     No image yet
+                  </div>
+                )}
+                {isDragOver && (
+                  <div className={dropHintClass} aria-hidden="true">
+                    Drop image to use
                   </div>
                 )}
               </div>
@@ -294,6 +348,42 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
                           ? 'Regenerate'
                           : 'Generate'}
                   </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    onClick={() => {
+                      if (googleUrl) {
+                        window.open(googleUrl, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                    disabled={googleUrl === null}
+                  >
+                    Google Images
+                  </Button>
+
+                  {/*
+                    Keyboard-accessible equivalent of the file drop: a real <label>
+                    wrapping a visually-hidden <input type="file">. Clicking the
+                    label (or activating it via keyboard once focused) opens the OS
+                    file picker and runs the same blob→dataURL→SET_SLIDE_IMAGE path.
+                  */}
+                  <label className={uploadLabelClass}>
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className={visuallyHiddenClass}
+                      aria-label={`Upload an image for ${answerLabel}`}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void applyImageFile(card.id, index, file);
+                        // Reset so re-selecting the same file fires onChange again.
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
             </li>
