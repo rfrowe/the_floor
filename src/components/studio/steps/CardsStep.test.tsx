@@ -231,6 +231,51 @@ describe('CardsStep', () => {
     expectCount('2 cards (1 with an answer)');
   });
 
+  it('+ Add card appends a blank card without crashing, even when the list is empty', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    // One card, then the user deletes it to empty the list, then adds a blank.
+    generateMock.mockResolvedValue([card('a', 'Mothman')]);
+
+    render(<Harness />);
+    await screen.findByDisplayValue('Mothman');
+
+    // Empty the list first (this is the state that triggered the crash).
+    await user.click(screen.getByRole('button', { name: /Delete Mothman/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/No cards yet/i)).toBeInTheDocument();
+    });
+
+    // Adding a card on the empty list must append a blank card and not throw.
+    await user.click(screen.getByRole('button', { name: /Add card/i }));
+
+    const answerInputs = screen.getAllByLabelText('Answer');
+    expect(answerInputs).toHaveLength(1);
+    expect(answerInputs[0]).toHaveValue('');
+    expectCount('1 card (0 with an answer)');
+  });
+
+  it('deleting all cards does NOT retrigger generation', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    generateMock.mockResolvedValue([card('a', 'Mothman'), card('b', 'Bigfoot')]);
+
+    render(<Harness />);
+    await screen.findByDisplayValue('Mothman');
+    expect(generateMock).toHaveBeenCalledTimes(1);
+
+    // Delete every card so the list becomes empty.
+    await user.click(screen.getByRole('button', { name: /Delete Mothman/i }));
+    await user.click(screen.getByRole('button', { name: /Delete Bigfoot/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/No cards yet/i)).toBeInTheDocument();
+    });
+
+    // The auto-generate effect must not fire again from the empty list.
+    expect(generateMock).toHaveBeenCalledTimes(1);
+  });
+
   it('disables Continue until at least one card has a non-empty answer', async () => {
     const user = userEvent.setup();
     seedKey();
