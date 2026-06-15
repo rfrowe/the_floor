@@ -35,12 +35,22 @@ export function CardListItem({ card, position, onChange, onDelete }: CardListIte
   const positionClass = styles['position'] ?? '';
   const fieldsClass = styles['fields'] ?? '';
   const fieldClass = styles['field'] ?? '';
+  const answerRowClass = styles['answerRow'] ?? '';
+  const answerFieldClass = `${fieldClass} ${styles['answerField'] ?? ''}`.trim();
   const labelClass = styles['label'] ?? '';
   const inputClass = styles['input'] ?? '';
   const promptInputClass = `${inputClass} ${styles['promptInput'] ?? ''}`.trim();
   const actionsClass = styles['actions'] ?? '';
 
-  const answerLabel = card.answer.trim().length > 0 ? card.answer : `card ${String(position)}`;
+  // Defensive runtime guard: the `CardIdea` type says these are always strings,
+  // but a malformed card (e.g. a stale/persisted draft) must never crash the
+  // render, so coalesce. The lint rule below trusts the static type and flags
+  // the `??` as unnecessary; we keep it intentionally for resilience.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const answer = card.answer ?? '';
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const imagePrompt = card.imagePrompt ?? '';
+  const answerLabel = answer.trim().length > 0 ? answer : `card ${String(position)}`;
 
   return (
     <li className={rowClass}>
@@ -49,22 +59,38 @@ export function CardListItem({ card, position, onChange, onDelete }: CardListIte
       </span>
 
       <div className={fieldsClass}>
-        <div className={fieldClass}>
-          <label className={labelClass} htmlFor={answerId}>
-            Answer
-          </label>
-          <input
-            id={answerId}
-            className={inputClass}
-            type="text"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="The correct guess (1–3 words)"
-            value={card.answer}
-            onChange={(e) => {
-              onChange({ answer: e.target.value });
-            }}
-          />
+        {/* Answer field and Delete button share the top row so Delete aligns
+            with the answer input rather than floating. */}
+        <div className={answerRowClass}>
+          <div className={answerFieldClass}>
+            <label className={labelClass} htmlFor={answerId}>
+              Answer
+            </label>
+            <input
+              id={answerId}
+              className={inputClass}
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="The correct guess (1–3 words)"
+              value={answer}
+              onChange={(e) => {
+                onChange({ answer: e.target.value });
+              }}
+            />
+          </div>
+
+          <div className={actionsClass}>
+            <Button
+              type="button"
+              variant="danger"
+              size="small"
+              onClick={onDelete}
+              aria-label={`Delete ${answerLabel}`}
+            >
+              Delete
+            </Button>
+          </div>
         </div>
 
         <div className={fieldClass}>
@@ -77,24 +103,12 @@ export function CardListItem({ card, position, onChange, onDelete }: CardListIte
             rows={2}
             spellCheck={false}
             placeholder="What the generated image should depict (no text in image)"
-            value={card.imagePrompt}
+            value={imagePrompt}
             onChange={(e) => {
               onChange({ imagePrompt: e.target.value });
             }}
           />
         </div>
-      </div>
-
-      <div className={actionsClass}>
-        <Button
-          type="button"
-          variant="danger"
-          size="small"
-          onClick={onDelete}
-          aria-label={`Delete ${answerLabel}`}
-        >
-          Delete
-        </Button>
       </div>
     </li>
   );
