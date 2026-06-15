@@ -20,11 +20,12 @@ import { CategoryNameStep } from '@components/studio/steps/CategoryNameStep';
 import { CardsStep } from '@components/studio/steps/CardsStep';
 import { ImagesStep } from '@components/studio/steps/ImagesStep';
 import { CensorStep } from '@components/studio/steps/CensorStep';
+import { SaveStep } from '@components/studio/steps/SaveStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
 
-/** Short title shown above each step's placeholder content. */
+/** Short title shown above each step's content. */
 const STEP_TITLES: Record<StudioStep, string> = {
   credentials: 'Enter your OpenAI credentials',
   categoryName: 'Pick a category name',
@@ -32,16 +33,6 @@ const STEP_TITLES: Record<StudioStep, string> = {
   images: 'Generate images',
   censor: 'Censor the giveaway text',
   save: 'Save your category',
-};
-
-/** Placeholder copy describing what each step will do once implemented. */
-const STEP_PLACEHOLDERS: Record<StudioStep, string> = {
-  credentials: '',
-  categoryName: '',
-  cards: 'Editable AI-generated card ideas arrive in Task 57.',
-  images: 'Per-card image generation arrives in Task 58.',
-  censor: 'The interactive censor-box editor arrives in Task 59.',
-  save: 'Saving to the library and JSON export arrive in Task 60.',
 };
 
 function Studio() {
@@ -89,7 +80,6 @@ function Studio() {
   const headerActionsClass = styles['header-actions'] ?? '';
   const stepperPanelClass = styles['stepper-panel'] ?? '';
   const stepPanelClass = styles['step-panel'] ?? '';
-  const placeholderClass = styles['placeholder'] ?? '';
   const controlsClass = styles['controls'] ?? '';
   const resumeOverlayClass = styles['resume-overlay'] ?? '';
   const resumeCardClass = styles['resume-card'] ?? '';
@@ -144,7 +134,11 @@ function Studio() {
             onSlideCensorBoxesChange={actions.setSlideCensorBoxes}
           />
         ) : (
-          <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
+          <SaveStep
+            categoryName={draft.categoryName ?? ''}
+            slides={draft.slides}
+            onClearDraft={discardDraft}
+          />
         )}
       </section>
 
@@ -152,21 +146,25 @@ function Studio() {
         The credentials step owns its own Clear + Continue controls; the
         category-name step owns its own "Use this name" control; the cards step
         owns its own Continue (gated on ≥1 non-empty answer); and the images step
-        owns its own Continue (allowed even with some slides blank). Each hides
-        the shared footer's Continue to avoid a second, differently-gated forward
-        button, but still gets the shared Back control. Credentials is the first
-        step and needs no footer.
+        owns its own Continue (allowed even with some slides blank); and the save
+        step owns its own Save / Download actions (it is terminal — no Continue).
+        Each hides the shared footer's Continue to avoid a second, differently-gated
+        forward button, but still gets the shared Back control. Credentials is the
+        first step and needs no footer.
       */}
       {draft.step !== 'credentials' && (
         <div className={controlsClass}>
           <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
             ← Back
           </Button>
-          {draft.step !== 'categoryName' && draft.step !== 'cards' && draft.step !== 'images' && (
-            <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
-              Continue →
-            </Button>
-          )}
+          {draft.step !== 'categoryName' &&
+            draft.step !== 'cards' &&
+            draft.step !== 'images' &&
+            draft.step !== 'save' && (
+              <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
+                Continue →
+              </Button>
+            )}
         </div>
       )}
 

@@ -1,0 +1,110 @@
+/* SaveStep — review summary, save/download actions, and warnings. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.summary {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.summary h3 {
+  margin: 0 0 0.5rem;
+}
+
+.summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.warning {
+  background: var(--warning-bg, #4a3a16);
+  color: var(--warning-text, #f5d67b);
+  border: 1px solid var(--warning-border, #8a6d1f);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.blocked {
+  background: var(--bg-secondary, #2a2a2a);
+  color: var(--text-secondary, #bbb);
+  border: 1px dashed var(--border-color, #444);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.error {
+  background: var(--danger-bg, #4a1f1f);
+  color: var(--danger-text, #ff9b9b);
+  border: 1px solid var(--danger-border, #8a2f2f);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.note {
+  color: var(--text-secondary, #bbb);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.note code {
+  font-family: var(--font-mono, monospace);
+  background: var(--bg-secondary, #2a2a2a);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
+.success {
+  background: var(--success-bg, #173a26);
+  color: var(--success-text, #9be0b2);
+  border: 1px solid var(--success-border, #2f7d4f);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.success h3 {
+  margin: 0;
+}
+
+.duplicate {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--warning-border, #8a6d1f);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.duplicate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
