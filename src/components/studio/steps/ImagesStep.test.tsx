@@ -222,7 +222,7 @@ describe('ImagesStep', () => {
     expect(maxInFlight).toBe(GENERATE_ALL_CONCURRENCY);
   });
 
-  it('shows the blank-slide count and a no-text caveat; Continue is always allowed', async () => {
+  it('shows the blank-slide count and an AI-art accuracy caveat; Continue is always allowed', async () => {
     const user = userEvent.setup();
     seedKey();
     generateMock.mockResolvedValue('data:image/png;base64,FOX');
