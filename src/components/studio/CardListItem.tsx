@@ -102,7 +102,7 @@ export function CardListItem({ card, position, onChange, onDelete }: CardListIte
             className={promptInputClass}
             rows={2}
             spellCheck={false}
-            placeholder="What the generated image should depict (no text in image)"
+            placeholder="What the generated image should depict (the censor step hides giveaways)"
             value={imagePrompt}
             onChange={(e) => {
               onChange({ imagePrompt: e.target.value });
