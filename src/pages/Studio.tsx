@@ -18,6 +18,7 @@ import { StudioStepper } from '@components/studio/StudioStepper';
 import { CredentialsStep } from '@components/studio/steps/CredentialsStep';
 import { CategoryNameStep } from '@components/studio/steps/CategoryNameStep';
 import { CardsStep } from '@components/studio/steps/CardsStep';
+import { ImagesStep } from '@components/studio/steps/ImagesStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
@@ -129,6 +130,13 @@ function Studio() {
             onAddCard={actions.addCard}
             onContinue={goNext}
           />
+        ) : draft.step === 'images' ? (
+          <ImagesStep
+            cards={draft.cards}
+            slides={draft.slides}
+            onSetSlideImage={actions.setSlideImage}
+            onContinue={goNext}
+          />
         ) : (
           <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
         )}
@@ -136,9 +144,10 @@ function Studio() {
 
       {/*
         The credentials step owns its own Clear + Continue controls; the
-        category-name step owns its own "Use this name" control; and the cards
-        step owns its own Continue (gated on ≥1 non-empty answer). Each hides the
-        shared footer's Continue to avoid a second, differently-gated forward
+        category-name step owns its own "Use this name" control; the cards step
+        owns its own Continue (gated on ≥1 non-empty answer); and the images step
+        owns its own Continue (allowed even with some slides blank). Each hides
+        the shared footer's Continue to avoid a second, differently-gated forward
         button, but still gets the shared Back control. Credentials is the first
         step and needs no footer.
       */}
@@ -147,7 +156,7 @@ function Studio() {
           <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
             ← Back
           </Button>
-          {draft.step !== 'categoryName' && draft.step !== 'cards' && (
+          {draft.step !== 'categoryName' && draft.step !== 'cards' && draft.step !== 'images' && (
             <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
               Continue →
             </Button>

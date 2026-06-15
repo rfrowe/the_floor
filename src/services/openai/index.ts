@@ -8,10 +8,11 @@
  */
 
 export { getOpenAI, resetOpenAIClient } from './client';
-export { structuredChat, DEFAULT_CHAT_MODEL } from './structuredChat';
+export { structuredChat, DEFAULT_CHAT_MODEL, DEFAULT_IMAGE_MODEL } from './structuredChat';
 export type { StructuredChatArgs } from './structuredChat';
 export { generateCategoryNames } from './categoryNames';
 export { generateCardIdeas } from './cardIdeas';
+export { generateImage, buildImagePrompt, NO_TEXT_SUFFIX } from './images';
 export { validateCredentials } from './validate';
 export { GenerationError, isGenerationError, toGenerationError } from './errors';
 export type { GenerationErrorKind } from './errors';

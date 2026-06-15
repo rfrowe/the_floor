@@ -1,0 +1,171 @@
+/* ImagesStep — per-card OpenAI image generation grid. */
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* Short, honest caveat about AI art accuracy. */
+.caveat {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--status-warning, #c77700) 12%, var(--bg-primary));
+  border: 1px solid var(--status-warning, #c77700);
+  border-radius: 0.5rem;
+}
+
+/* Blank-count status + the Generate-all action. */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.count {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive grid of card tiles. */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.9rem;
+  max-height: 32rem;
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color, #d0d0d0);
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+}
+
+/* Square thumbnail area (matches the 1024×1024 generation). */
+.thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary);
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.loading span:first-child {
+  font-size: 1.6rem;
+  animation: images-spin 1.4s linear infinite;
+}
+
+@keyframes images-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading span:first-child {
+    animation: none;
+  }
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  flex: 1;
+}
+
+.answer {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inline, per-card generation error (does not block other cards). */
+.cardError {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--status-danger);
+}
+
+.cardActions {
+  margin-top: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer button {
+    width: 100%;
+  }
+}
