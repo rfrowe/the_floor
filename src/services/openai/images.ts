@@ -5,11 +5,14 @@
  * `slide.imageUrl`. The model returns base64 directly, so the happy path never
  * touches the network twice; we just wrap the payload via {@link b64ToDataUrl}.
  *
- * Every prompt is suffixed with a hard "no text, single centered subject"
- * directive ({@link NO_TEXT_SUFFIX}) drawn from the Phase-12 sample-category
- * analysis: keeping rendered text/letters/logos out of the image is what makes
- * the clue fair (a recognizable subject, not a spelled-out answer key) and lets
- * the game skip manual censor boxes.
+ * Every prompt is suffixed with a light quality directive ({@link QUALITY_SUFFIX})
+ * that nudges toward one clearly-lit, recognizable, centered subject. It does
+ * NOT strip text or logos: the game's censor step (Task 59) blacks out giveaway
+ * text/branding during guessing and reveals the full photo on a correct guess or
+ * skip, so the subject's real identifying detail (logos, labels, signage, jersey
+ * names) is desirable — it's often what makes a subject guessable in the first
+ * place. We only avoid gratuitously captioning the literal answer; the card's
+ * `imagePrompt` (shaped by `cardIdeas.ts`) carries that intent.
  *
  * BUNDLE: like the rest of `src/services/openai/*`, this is reached only from the
  * lazily-loaded Studio route, so gameplay never downloads the `openai` SDK.
@@ -24,26 +27,24 @@ import { b64ToDataUrl, DEFAULT_IMAGE_MIME } from '@services/images/toDataUrl';
 import type { OpenAIConfig } from '@hooks/useCredentials';
 
 /**
- * The hard suffix appended to every image prompt. Verbatim from
- * `docs/tasks/phase-12-llm-studio/SAMPLE_CATEGORY_ANALYSIS.md` (directive C):
- * one prominent centered subject, fair clue not answer-key, and — the single
- * most important constraint — absolutely no rendered text anywhere.
+ * A light quality suffix appended to every image prompt. It steers toward one
+ * clearly-lit, recognizable subject centered in frame, but deliberately does NOT
+ * forbid text, logos, or branding — those identifying details aid recognition,
+ * and the censor step hides any giveaways during play (see module docs).
  */
-export const NO_TEXT_SUFFIX =
-  'Photorealistic, single centered subject, plain uncluttered background, ' +
-  'absolutely no text, letters, words, captions, logos, or watermarks anywhere in the image.';
+export const QUALITY_SUFFIX = 'A single, clearly-lit, recognizable subject centered in frame.';
 
 /**
  * Compose the final prompt sent to the model: the card's prompt followed by the
- * {@link NO_TEXT_SUFFIX}. Exported for direct testing and so callers can preview
+ * {@link QUALITY_SUFFIX}. Exported for direct testing and so callers can preview
  * exactly what will be requested.
  *
  * A blank base prompt yields just the suffix (so a card with no written prompt
- * still produces a text-free image rather than failing here).
+ * still produces a sensible, centered image rather than failing here).
  */
 export function buildImagePrompt(prompt: string): string {
   const base = prompt.trim();
-  return base.length === 0 ? NO_TEXT_SUFFIX : `${base} ${NO_TEXT_SUFFIX}`;
+  return base.length === 0 ? QUALITY_SUFFIX : `${base} ${QUALITY_SUFFIX}`;
 }
 
 /**
@@ -53,7 +54,7 @@ export function buildImagePrompt(prompt: string): string {
  * which {@link b64ToDataUrl} wraps as `data:image/png;base64,…` — exactly the
  * shape `slide.imageUrl` expects.
  *
- * @param prompt The card's `imagePrompt` (the {@link NO_TEXT_SUFFIX} is appended
+ * @param prompt The card's `imagePrompt` (the {@link QUALITY_SUFFIX} is appended
  *   automatically; do not add it yourself).
  * @param config In-memory OpenAI credentials.
  * @returns A `data:image/png;base64,…` URL.

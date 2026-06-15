@@ -51,9 +51,11 @@ const CARD_IDEAS_SCHEMA: Record<string, unknown> = {
             type: 'string',
             description:
               'A vivid prompt for a single, centered, recognizable subject — the literal ' +
-              'referent of the answer — as a photo or clean illustration. It must make the ' +
-              'subject a fair visual clue WITHOUT any rendered text, words, letters, captions, ' +
-              'logos, watermarks, or name/number plates anywhere in the image, and no collages.',
+              'referent of the answer — as a photo or clean illustration. Depict the subject ' +
+              'naturally and recognizably, INCLUDING its real identifying detail (logos, ' +
+              'branding, labels, signage, jersey names) where that aids recognition — the ' +
+              'censor step hides giveaways during play. Only avoid adding an artificial ' +
+              'caption that merely spells out the answer word, and no collages.',
           },
         },
       },
@@ -121,10 +123,12 @@ const SYSTEM_PROMPT = [
   '  audience, as a photo or clean illustration. For a lateral/pun answer prompt the literal',
   '  referent (e.g. for "Tiger Woods" → "a professional golfer mid-swing on a course", not "a',
   '  tree"; for a bear-pun answer → the actual bear).',
-  '- "imagePrompt" must NOT include any rendered text, words, letters, captions, labels,',
-  '  logos-with-wordmarks, watermarks, or jersey/name plates anywhere in the image, must never',
-  '  write or imply the answer word, and must avoid multi-subject collages or anything',
-  '  un-picturable. Keeping text out of the image is what lets the game skip manual censoring.',
+  '- "imagePrompt" should depict the subject naturally and recognizably, INCLUDING its real',
+  '  identifying detail — logos, branding, labels, signage, jersey/name plates — where that aids',
+  "  recognition. Do NOT strip text or logos: the game's censor step blacks out any giveaways",
+  '  during guessing and reveals the full photo afterward, and that real detail is often what',
+  '  makes the subject guessable. Only avoid gratuitously adding a caption that just writes the',
+  '  literal answer word, and avoid multi-subject collages or anything un-picturable.',
 ].join('\n');
 
 /**
@@ -154,7 +158,9 @@ export async function generateCardIdeas(
       `Category: "${trimmedName}". Generate ${String(requested)} distinct card ideas. ` +
       'Keep answers 1–3 words and correctly spelled, vary the subtype, and match the direct/' +
       'lateral mix to this theme (lean lateral for a pun bucket, mostly direct for a taxonomy). ' +
-      'Make each imagePrompt a single centered subject with absolutely no text in the image.',
+      'Make each imagePrompt a single centered subject, recognizable with its real identifying ' +
+      "detail (logos/branding welcome — the censor step hides giveaways); just don't caption " +
+      'the literal answer.',
   });
 
   const cards: CardIdea[] = [];

@@ -12,7 +12,7 @@ export { structuredChat, DEFAULT_CHAT_MODEL, DEFAULT_IMAGE_MODEL } from './struc
 export type { StructuredChatArgs } from './structuredChat';
 export { generateCategoryNames } from './categoryNames';
 export { generateCardIdeas } from './cardIdeas';
-export { generateImage, buildImagePrompt, NO_TEXT_SUFFIX } from './images';
+export { generateImage, buildImagePrompt, QUALITY_SUFFIX } from './images';
 export { validateCredentials } from './validate';
 export { GenerationError, isGenerationError, toGenerationError } from './errors';
 export type { GenerationErrorKind } from './errors';

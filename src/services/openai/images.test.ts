@@ -2,7 +2,7 @@
  * Tests for generateImage + buildImagePrompt.
  *
  * The `openai` SDK is mocked so `images.generate` returns canned base64. Asserts
- * the request shape (model `gpt-image-1`, size, and the appended no-text
+ * the request shape (model `gpt-image-1`, size, and the appended quality
  * suffix), base64 → `data:` URL conversion, base-URL passthrough, and error
  * mapping (empty response → parse; 401 → auth) via toGenerationError. No real
  * network calls.
@@ -40,7 +40,7 @@ vi.mock('openai', async () => {
   };
 });
 
-import { generateImage, buildImagePrompt, NO_TEXT_SUFFIX } from './images';
+import { generateImage, buildImagePrompt, QUALITY_SUFFIX } from './images';
 import { resetOpenAIClient } from './client';
 import { GenerationError } from './errors';
 
@@ -54,21 +54,24 @@ function config(overrides: Partial<OpenAIConfig> = {}): OpenAIConfig {
 }
 
 describe('buildImagePrompt', () => {
-  it('appends the no-text suffix to a non-empty prompt', () => {
+  it('appends the quality suffix to a non-empty prompt', () => {
     const built = buildImagePrompt('a golden retriever');
-    expect(built).toBe(`a golden retriever ${NO_TEXT_SUFFIX}`);
+    expect(built).toBe(`a golden retriever ${QUALITY_SUFFIX}`);
   });
 
   it('trims the base prompt before appending', () => {
-    expect(buildImagePrompt('  a cat  ')).toBe(`a cat ${NO_TEXT_SUFFIX}`);
+    expect(buildImagePrompt('  a cat  ')).toBe(`a cat ${QUALITY_SUFFIX}`);
   });
 
   it('falls back to just the suffix for a blank prompt', () => {
-    expect(buildImagePrompt('   ')).toBe(NO_TEXT_SUFFIX);
+    expect(buildImagePrompt('   ')).toBe(QUALITY_SUFFIX);
   });
 
-  it('mandates no text anywhere in the image', () => {
-    expect(NO_TEXT_SUFFIX.toLowerCase()).toContain('no text');
+  it('does NOT forbid text or logos (the censor step hides giveaways)', () => {
+    const lower = QUALITY_SUFFIX.toLowerCase();
+    expect(lower).not.toContain('no text');
+    expect(lower).not.toContain('watermark');
+    expect(lower).not.toContain('logo');
   });
 });
 
@@ -85,7 +88,7 @@ describe('generateImage', () => {
     expect(url).toBe('data:image/png;base64,QUJD');
   });
 
-  it('requests gpt-image-1 at 1024x1024 with the no-text suffix appended', async () => {
+  it('requests gpt-image-1 at 1024x1024 with the quality suffix appended', async () => {
     mockState.generateMock.mockResolvedValue(imageResponse('QUJD'));
     await generateImage('a red fox', config());
 
@@ -93,8 +96,9 @@ describe('generateImage', () => {
     const params = firstCall?.[0] as { model: string; prompt: string; size: string };
     expect(params.model).toBe('gpt-image-1');
     expect(params.size).toBe('1024x1024');
-    expect(params.prompt).toBe(`a red fox ${NO_TEXT_SUFFIX}`);
-    expect(params.prompt).toContain('absolutely no text');
+    expect(params.prompt).toBe(`a red fox ${QUALITY_SUFFIX}`);
+    // The suffix must NOT smuggle back a no-text ban.
+    expect(params.prompt.toLowerCase()).not.toContain('no text');
   });
 
   it('passes baseURL: undefined to the SDK when the config base URL is empty', async () => {

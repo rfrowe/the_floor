@@ -192,19 +192,28 @@ the subject but does not spell out the answer.** Inferences and rules:
   for Clouds→`salesforce` the image is presumably the Salesforce cloud logo; for Trees→`Tiger Woods`, Tiger
   Woods; for Bears→`Toblerone`, the bar (with its hidden bear). The pun lives in the *connection*, not in
   on-image words.
-- **Censor boxes hide giveaway text.** Box counts vary widely (Nathan Fielder 27, Bears 15, Game of Thrones
-  13; several categories 0) — boxes appear specifically when a recognizable image carries a brand name, jersey
-  name, logo wordmark, or caption that would hand over the answer. **The cleaner lesson for generation: don't
-  bake the answer into the image as text in the first place**, so censoring is rarely needed.
+- **Censor boxes hide giveaway text — and that's the point.** Box counts vary widely (Nathan Fielder 27,
+  Bears 15, Game of Thrones 13; several categories 0) — boxes appear specifically when a recognizable image
+  carries a brand name, jersey name, logo wordmark, or caption that would hand over the answer. **The right
+  lesson for generation: keep that real identifying detail IN the image — it's what makes the subject
+  recognizable — and let the censor step black it out during guessing and reveal it on a correct guess or
+  skip** (e.g. a Clorox bottle with the logo censored, then revealed). A logo-less, text-free image is often
+  generic and *unguessable*.
 - **One subject, centered, unambiguous.** Each clue is a single subject filling the frame, not a busy collage —
   the player must identify *one* thing.
 
+> **Policy update (supersedes the earlier "no text in image" recommendation).** We previously told the
+> generators to strip all text/logos so censoring could be skipped. That was wrong: it defeats the censor
+> mechanic and makes many subjects unguessable. Generated images SHOULD include the subject's real identifying
+> detail (logos, branding, labels, signage, jersey names); the censor step hides giveaways during play.
+
 **What generated `imagePrompt`s should aim for:** a vivid, photographic-or-illustrative depiction of the single
 subject (or, for puns, the single literal referent), recognizable to a general audience, with the subject
-prominent and centered. **What they must avoid:** any rendered text, labels, captions, watermarks, jersey/name
-plates, or the answer word written anywhere in the image; multi-subject collages; abstractions that can't be
-pictured. The existing `cardIdeas.ts` schema already nails the headline rule ("makes the subject a recognizable
-clue WITHOUT spelling out the answer in any on-image text") — the directives below tighten it.
+prominent and centered — **including its real identifying text/logos/branding where that aids recognition.**
+**What they must avoid:** a gratuitous caption that merely *writes the literal answer word*; multi-subject
+collages; abstractions that can't be pictured. The existing `cardIdeas.ts` schema captures the headline rule
+("a recognizable subject, depicting its real identifying detail, without an artificial answer caption") — the
+directives below refine it.
 
 ---
 
@@ -249,12 +258,13 @@ Append to the system prompt:
 - **`imageKeywords`:** space-separated, concrete search terms describing the literal thing the image should
   show (for puns, the literal *referent*, not the pun target).
 - **`imagePrompt` do's:** describe one subject, centered and prominent, recognizable to a general audience,
-  photographic or clean illustration. For a pun/lateral answer, prompt the *literal referent* (e.g. for
-  `Tiger Woods` → "professional golfer mid-swing on a course," not "a tree").
-- **`imagePrompt` don'ts:** NO rendered text, words, letters, captions, labels, logos-with-wordmarks,
-  watermarks, or jersey/name plates anywhere in the image; never write or imply the answer word; no
-  multi-subject collages; nothing un-picturable. (Keeping text out of the image is what lets the game skip
-  manual censor boxes.)
+  photographic or clean illustration. **Include the subject's real identifying detail — logos, branding,
+  labels, signage, jersey/name plates — where it aids recognition** (the censor step hides giveaways during
+  play and reveals the full photo afterward). For a pun/lateral answer, prompt the *literal referent* (e.g.
+  for `Tiger Woods` → "professional golfer mid-swing on a course," not "a tree").
+- **`imagePrompt` don'ts:** don't add a gratuitous caption that just *writes the literal answer word*; no
+  multi-subject collages; nothing un-picturable. (Do NOT strip text/logos — that's the censor step's job, and
+  removing it makes many subjects generic and unguessable.)
 
 ### C. Images — `src/services/openai/images.ts` (Task 58, `gpt-image-1`)
 
@@ -263,13 +273,19 @@ wrapper:
 
 - **Depict exactly one subject**, prominent and centered, instantly recognizable to a general audience as the
   intended thing (or, for a pun, the literal referent the player must leap from).
-- **Absolutely no text in the image** — no words, letters, numbers, captions, signage, logos containing text,
-  watermarks, or name/number plates. This is the single most important constraint (it makes the clue fair and
-  avoids needing censor boxes). Consider appending a hard suffix to every prompt such as:
-  `"... Photorealistic, single centered subject, plain uncluttered background, absolutely no text, letters, words, captions, logos, or watermarks anywhere in the image."`
+- **Keep the subject's real identifying detail** — logos, branding, labels, signage, jersey/name plates — where
+  it aids recognition. Do **not** strip text/logos: the censor step (Task 59) blacks out giveaways during
+  guessing and reveals the full photo on a correct guess or skip, so that detail is desirable and a text-free
+  image is often generic and unguessable. A light quality suffix is fine, e.g.:
+  `"... A single, clearly-lit, recognizable subject centered in frame."` (No "no text/logos/watermarks" clause.)
 - **No collages or split frames** — one subject per image.
-- **Fair-clue, not answer-key:** the image should make a knowledgeable player *recognize* the subject, not hand
-  them the spelled-out answer.
+- **Don't caption the answer:** avoid an artificial overlay that simply spells out the literal answer word; the
+  image should make a knowledgeable player *recognize* the subject from its real appearance.
+- **Honest caveat:** `gpt-image-1` renders specific real people, logos, and text imperfectly — surface this to
+  the user and let them reroll a single image.
+
+> **Note:** This directive C supersedes the earlier "absolutely no text in the image" recommendation. Text and
+> logos in generated images are GOOD; the censor step hides them during play.
 
 ---
 
