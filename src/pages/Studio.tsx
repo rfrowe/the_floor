@@ -17,6 +17,7 @@ import { ThemeToggle } from '@components/common/ThemeToggle';
 import { StudioStepper } from '@components/studio/StudioStepper';
 import { CredentialsStep } from '@components/studio/steps/CredentialsStep';
 import { CategoryNameStep } from '@components/studio/steps/CategoryNameStep';
+import { CardsStep } from '@components/studio/steps/CardsStep';
 import { STUDIO_STEPS, useStudioState } from '@hooks/useStudioState';
 import type { StudioStep } from '@types';
 import styles from './Studio.module.css';
@@ -118,24 +119,35 @@ function Studio() {
           <CredentialsStep onContinue={goNext} />
         ) : draft.step === 'categoryName' ? (
           <CategoryNameStep onConfirm={handleConfirmCategoryName} />
+        ) : draft.step === 'cards' ? (
+          <CardsStep
+            categoryName={draft.categoryName ?? ''}
+            cards={draft.cards}
+            onSetCards={actions.setCards}
+            onUpdateCard={actions.updateCard}
+            onDeleteCard={actions.deleteCard}
+            onAddCard={actions.addCard}
+            onContinue={goNext}
+          />
         ) : (
           <p className={placeholderClass}>{STEP_PLACEHOLDERS[draft.step]}</p>
         )}
       </section>
 
       {/*
-        The credentials step owns its own Clear + Continue controls, and the
-        category-name step owns its own "Use this name" control (which confirms
-        the name and advances). Both hide the shared footer's Continue to avoid a
-        second, ungated forward button. The category-name step still gets the
-        shared Back control; credentials is the first step and needs no footer.
+        The credentials step owns its own Clear + Continue controls; the
+        category-name step owns its own "Use this name" control; and the cards
+        step owns its own Continue (gated on ≥1 non-empty answer). Each hides the
+        shared footer's Continue to avoid a second, differently-gated forward
+        button, but still gets the shared Back control. Credentials is the first
+        step and needs no footer.
       */}
       {draft.step !== 'credentials' && (
         <div className={controlsClass}>
           <Button variant="secondary" onClick={goBack} disabled={isFirstStep}>
             ← Back
           </Button>
-          {draft.step !== 'categoryName' && (
+          {draft.step !== 'categoryName' && draft.step !== 'cards' && (
             <Button variant="primary" onClick={goNext} disabled={isLastStep || !canAdvance}>
               Continue →
             </Button>
