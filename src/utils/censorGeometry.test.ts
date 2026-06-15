@@ -6,10 +6,10 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  boxToStyle,
   clamp,
   normalizeRect,
   pxRectToCensorBox,
-  censorBoxToPxRect,
   isBoxLargeEnough,
   MIN_BOX_SIZE_PCT,
   type PxRect,
@@ -112,43 +112,43 @@ describe('pxRectToCensorBox', () => {
   });
 });
 
-describe('censorBoxToPxRect', () => {
-  it('converts percentages back to pixels against the bounds', () => {
-    const rect = censorBoxToPxRect(
-      { x: 10, y: 10, width: 20, height: 20, color: '#000' },
-      800,
-      600
-    );
-    expect(rect).toEqual({ x: 80, y: 60, w: 160, h: 120 });
+describe('boxToStyle', () => {
+  it('maps a box to percentage left/top/width/height', () => {
+    expect(boxToStyle({ x: 10, y: 20, width: 30, height: 40, color: '#000' })).toEqual({
+      left: '10%',
+      top: '20%',
+      width: '30%',
+      height: '40%',
+    });
   });
-});
 
-describe('round-trip px → % → px', () => {
-  it('recovers the original pixel rect for an in-bounds box', () => {
-    const original: PxRect = { x: 80, y: 60, w: 160, h: 120 };
-    const box = pxRectToCensorBox(original, 800, 600, '#000');
+  it('is the exact forward transform pxRectToCensorBox feeds', () => {
+    // A rect → box → style must land at the same percentages the box carries.
+    const box = pxRectToCensorBox({ x: 80, y: 60, w: 160, h: 120 }, 800, 600, '#000');
     expect(box).not.toBeNull();
     if (box) {
-      const back = censorBoxToPxRect(box, 800, 600);
-      expect(back.x).toBeCloseTo(original.x, 5);
-      expect(back.y).toBeCloseTo(original.y, 5);
-      expect(back.w).toBeCloseTo(original.w, 5);
-      expect(back.h).toBeCloseTo(original.h, 5);
+      expect(boxToStyle(box)).toEqual({
+        left: '10%',
+        top: '10%',
+        width: '20%',
+        height: '20%',
+      });
     }
   });
 
-  it('round-trips after normalizing a reversed drag', () => {
-    const rect = normalizeRect({ x: 600, y: 500 }, { x: 200, y: 100 });
-    expect(rect).toEqual({ x: 200, y: 100, w: 400, h: 400 });
-    const box = pxRectToCensorBox(rect, 800, 600, '#000');
-    expect(box).not.toBeNull();
-    if (box) {
-      const back = censorBoxToPxRect(box, 800, 600);
-      expect(back.x).toBeCloseTo(200, 5);
-      expect(back.y).toBeCloseTo(100, 5);
-      expect(back.w).toBeCloseTo(400, 5);
-      expect(back.h).toBeCloseTo(400, 5);
-    }
+  it('preserves fractional percentages', () => {
+    expect(boxToStyle({ x: 12.5, y: 33.3, width: 45.7, height: 22.1, color: '#000' })).toEqual({
+      left: '12.5%',
+      top: '33.3%',
+      width: '45.7%',
+      height: '22.1%',
+    });
+  });
+
+  it('omits color and stacking — those are the caller’s concern', () => {
+    const style = boxToStyle({ x: 0, y: 0, width: 10, height: 10, color: '#abcdef' });
+    expect(style).not.toHaveProperty('backgroundColor');
+    expect(style).not.toHaveProperty('position');
   });
 });
 
