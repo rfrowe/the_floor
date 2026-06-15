@@ -1,39 +1,35 @@
 /**
- * useCredentials — OpenAI credentials store for the LLM Studio.
+ * useCredentials — ephemeral OpenAI credentials store for the LLM Studio.
  *
- * Persists the user's OpenAI API key and an optional custom (OpenAI-compatible)
- * base URL to `localStorage` via the existing {@link useLocalStorage} hook, which
- * prefixes the key with `the-floor:` and syncs across tabs through the `storage`
- * event. The image source is fixed to OpenAI generation in Phase 12, so there is
- * no second API key to manage.
+ * Holds the user's OpenAI API key and an optional custom (OpenAI-compatible)
+ * base URL in an **in-memory, module-level store** shared across every consumer
+ * via React's {@link useSyncExternalStore}. The image source is fixed to OpenAI
+ * generation in Phase 12, so there is no second API key to manage.
  *
- * SECURITY: the key is stored in plaintext and is readable by any script on this
- * origin. This is an intentional, honest design for a static client-only SPA —
- * client-side "encryption" is theater because the decryption key would ship in the
- * bundle. The {@link CredentialsStep} UI warns the user, recommends a spend-limited
- * key, and offers a Clear action. The key is sent only to the configured OpenAI
- * endpoint (Task 55) and MUST NEVER be logged.
+ * SECURITY: the credentials are NEVER persisted — not to `localStorage`,
+ * `sessionStorage`, IndexedDB, or anywhere else. They live only for the current
+ * page session and vanish on refresh or tab close, at which point the user
+ * re-enters the key. A single module-level value (rather than a Context) keeps
+ * all consumers in sync without threading a provider through the Studio tree.
+ * The key is sent only to the configured OpenAI endpoint (Task 55) and MUST
+ * NEVER be logged.
  */
 
-import { useMemo } from 'react';
-import { useLocalStorage } from '@hooks/useLocalStorage';
+import { useSyncExternalStore } from 'react';
 
 /**
- * The OpenAI configuration the Studio persists. `baseURL` is free-form; an empty
- * string means "use the SDK default" (normalization is the SDK's concern in
+ * The OpenAI configuration the Studio holds in memory. `baseURL` is free-form; an
+ * empty string means "use the SDK default" (normalization is the SDK's concern in
  * Task 55).
  */
 export interface OpenAIConfig {
-  /** The OpenAI API key (plaintext in localStorage). Empty until the user enters one. */
+  /** The OpenAI API key. In memory only — never persisted. Empty until entered. */
   apiKey: string;
   /** Optional custom OpenAI-compatible base URL. `''` → SDK default. */
   baseURL: string;
   /** Fixed to OpenAI image generation in Phase 12. */
   imageSource: 'openai';
 }
-
-/** The localStorage key (becomes `the-floor:studio:openai` via the existing prefix). */
-export const CREDENTIALS_STORAGE_KEY = 'studio:openai';
 
 /** A blank, unconfigured config used as the initial value and by `clear()`. */
 export const DEFAULT_CREDENTIALS: OpenAIConfig = {
@@ -48,7 +44,7 @@ interface CredentialsSetters {
   setKey: (apiKey: string) => void;
   /** Set the custom base URL, preserving the other fields. */
   setBaseURL: (baseURL: string) => void;
-  /** Remove the stored credentials (reset to {@link DEFAULT_CREDENTIALS}). */
+  /** Drop the in-memory credentials (reset to {@link DEFAULT_CREDENTIALS}). */
   clear: () => void;
 }
 
@@ -59,41 +55,88 @@ export interface CredentialsActions extends CredentialsSetters {
 }
 
 /**
- * Read and manage the persisted OpenAI credentials.
+ * Module-level in-memory store. A single mutable `config` value plus a set of
+ * subscriber callbacks is all `useSyncExternalStore` needs to keep every
+ * `useCredentials()` consumer rendering the same value. Nothing here touches any
+ * storage API, so the credentials are gone the moment the module is unloaded
+ * (refresh / tab close).
+ */
+let config: OpenAIConfig = DEFAULT_CREDENTIALS;
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): OpenAIConfig {
+  return config;
+}
+
+function setConfig(next: OpenAIConfig): void {
+  config = next;
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+// Setters have stable identity (they only close over module-level state), so the
+// returned `actions` object is safe to use in effect dependency arrays.
+function setKey(apiKey: string): void {
+  setConfig({ ...config, apiKey });
+}
+
+function setBaseURL(baseURL: string): void {
+  setConfig({ ...config, baseURL });
+}
+
+function clear(): void {
+  setConfig(DEFAULT_CREDENTIALS);
+}
+
+/**
+ * Reset the in-memory credentials store to its blank default. Intended for tests
+ * that need a clean store between cases; production code uses `clear()` via the
+ * hook actions.
+ */
+export function __resetCredentialsForTest(): void {
+  config = DEFAULT_CREDENTIALS;
+  // Notify any mounted consumers so they re-read the blank snapshot.
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/**
+ * Seed the in-memory credentials store directly. Test-only affordance for cases
+ * that need `useCredentials()` to come up already configured (e.g. steps gated on
+ * a key) without rendering the credentials step. Production code uses the hook
+ * setters.
+ */
+export function __setCredentialsForTest(overrides: Partial<OpenAIConfig>): void {
+  setConfig({ ...DEFAULT_CREDENTIALS, ...overrides });
+}
+
+/**
+ * Read and manage the in-memory OpenAI credentials.
  *
- * @returns A tuple of `[config, actions]`. Cross-tab sync is inherited from
- *          {@link useLocalStorage}, so a change in another tab updates `config`
- *          here automatically.
+ * @returns A tuple of `[config, actions]`. All consumers share one module-level
+ *          value via {@link useSyncExternalStore}, so a change anywhere updates
+ *          every mounted consumer. The value is never persisted.
  */
 export function useCredentials(): readonly [OpenAIConfig, CredentialsActions] {
-  const [config, setConfig] = useLocalStorage<OpenAIConfig>(
-    CREDENTIALS_STORAGE_KEY,
-    DEFAULT_CREDENTIALS
-  );
+  const current = useSyncExternalStore(subscribe, getSnapshot);
 
-  // Setters keep a stable identity across renders (they only depend on the
-  // stable `setConfig`), so callers can safely use them in effect deps.
-  const setters = useMemo<CredentialsSetters>(
-    () => ({
-      setKey: (apiKey: string) => {
-        setConfig((prev) => ({ ...prev, apiKey }));
-      },
-      setBaseURL: (baseURL: string) => {
-        setConfig((prev) => ({ ...prev, baseURL }));
-      },
-      clear: () => {
-        setConfig(DEFAULT_CREDENTIALS);
-      },
-    }),
-    [setConfig]
-  );
+  const isConfigured = current.apiKey.trim().length > 0;
 
-  const isConfigured = config.apiKey.trim().length > 0;
+  const actions: CredentialsActions = {
+    setKey,
+    setBaseURL,
+    clear,
+    isConfigured,
+  };
 
-  const actions = useMemo<CredentialsActions>(
-    () => ({ ...setters, isConfigured }),
-    [setters, isConfigured]
-  );
-
-  return [config, actions] as const;
+  return [current, actions] as const;
 }

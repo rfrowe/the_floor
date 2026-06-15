@@ -2,19 +2,21 @@
  * Tests for the CredentialsStep component.
  *
  * Covers: Continue is gated until a key is entered, the key input is password-
- * masked, the optional base URL persists, the prominent security warning is
- * present, Clear empties the fields, and the key-validation flow on Continue —
- * the probe runs only with a key, advances only on success, shows a "Verifying…"
- * state, and surfaces a typed error inline on failure with retry.
+ * masked, the optional base URL is editable, the reassuring ephemeral-credentials
+ * note is present, Clear empties the fields, and the key-validation flow on
+ * Continue — the probe runs only with a key, advances only on success, shows a
+ * "Verifying…" state, and surfaces a typed error inline on failure with retry.
  *
- * The OpenAI service layer is mocked so no real network call happens; the empty-
- * key gate is verified to short-circuit before the probe.
+ * Credentials are in-memory only, so each test resets the module store rather than
+ * clearing localStorage. The OpenAI service layer is mocked so no real network
+ * call happens; the empty-key gate is verified to short-circuit before the probe.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { GenerationError } from '@services/openai';
+import { __resetCredentialsForTest } from '@hooks/useCredentials';
 import { CredentialsStep } from './CredentialsStep';
 
 // Mock the service layer so the component never touches the real SDK/network.
@@ -29,14 +31,14 @@ vi.mock('@services/openai', async () => {
 
 describe('CredentialsStep', () => {
   beforeEach(() => {
-    localStorage.clear();
+    __resetCredentialsForTest();
     validateCredentialsMock.mockReset();
     validateCredentialsMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     cleanup();
-    localStorage.clear();
+    __resetCredentialsForTest();
   });
 
   it('validates then advances on Continue once a key is entered', async () => {
@@ -130,18 +132,21 @@ describe('CredentialsStep', () => {
     expect(screen.getByLabelText(/OpenAI API key/i)).toHaveAttribute('type', 'password');
   });
 
-  it('renders a prominent security warning', () => {
+  it('renders a reassuring ephemeral-credentials note', () => {
     render(<CredentialsStep onContinue={vi.fn()} />);
 
-    const warning = screen.getByRole('note', { name: /security warning/i });
-    expect(warning).toBeInTheDocument();
-    expect(warning).toHaveTextContent(/plaintext/i);
-    expect(warning).toHaveTextContent(/spend-limited/i);
-    // Documents that Reset App also wipes the credentials.
-    expect(warning).toHaveTextContent(/Reset App/i);
+    const note = screen.getByRole('note', { name: /security note/i });
+    expect(note).toBeInTheDocument();
+    // The new copy reassures: in memory only, never saved, cleared on refresh.
+    expect(note).toHaveTextContent(/in memory/i);
+    expect(note).toHaveTextContent(/never saved/i);
+    expect(note).toHaveTextContent(/refresh or close/i);
+    // The old alarming/false copy is gone.
+    expect(note).not.toHaveTextContent(/plaintext/i);
+    expect(note).not.toHaveTextContent(/Reset App/i);
   });
 
-  it('persists the optional custom base URL', async () => {
+  it('accepts the optional custom base URL without persisting it', async () => {
     const user = userEvent.setup();
     render(<CredentialsStep onContinue={vi.fn()} />);
 
@@ -151,10 +156,9 @@ describe('CredentialsStep', () => {
     await user.type(baseUrlInput, 'https://proxy.example/v1');
 
     expect(baseUrlInput).toHaveValue('https://proxy.example/v1');
-    const stored = JSON.parse(localStorage.getItem('the-floor:studio:openai') ?? '{}') as {
-      baseURL?: string;
-    };
-    expect(stored.baseURL).toBe('https://proxy.example/v1');
+    // Credentials are ephemeral: nothing is written to browser storage.
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
   });
 
   it('Clear empties the fields and re-disables Continue', async () => {

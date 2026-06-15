@@ -2,9 +2,10 @@
  * CredentialsStep — the first step of the LLM Studio wizard.
  *
  * Lets the user enter an OpenAI API key (password-masked) and an optional custom
- * OpenAI-compatible base URL, persisted via {@link useCredentials}. Surfaces a
- * prominent security warning (the key is stored in plaintext in this browser),
- * a Clear action, and a Continue control gated on `isConfigured` (a non-blank key).
+ * OpenAI-compatible base URL, held in memory via {@link useCredentials}. Surfaces
+ * a reassuring note (the key lives in memory for this session only and is never
+ * saved), a Clear action, and a Continue control gated on `isConfigured` (a
+ * non-blank key).
  *
  * On Continue the step performs a lightweight authenticated probe
  * ({@link validateCredentials}, a `models.list()` call that consumes no
@@ -114,7 +115,7 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
           aria-describedby={`${apiKeyId}-hint`}
         />
         <p id={`${apiKeyId}-hint`} className={hintClass}>
-          Stored only in this browser. Used solely to call the OpenAI endpoint below.
+          Held in memory for this session only. Used solely to call the OpenAI endpoint below.
         </p>
       </div>
 
@@ -142,24 +143,24 @@ export function CredentialsStep({ onContinue }: CredentialsStepProps) {
         </p>
       </div>
 
-      <aside className={warningClass} role="note" aria-label="Security warning">
+      <aside className={warningClass} role="note" aria-label="Security note">
         <span className={warningIconClass} aria-hidden="true">
-          ⚠️
+          🔒
         </span>
         <div className={warningBodyClass}>
-          <p className={warningTitleClass}>Your key is stored in plaintext in this browser</p>
+          <p className={warningTitleClass}>Your key stays in memory for this session only</p>
           <ul className={warningListClass}>
             <li>
-              It is saved unencrypted in this browser&apos;s local storage and is readable by any
-              script running on this site.
+              It is <strong>never saved</strong> to your browser or disk — no local storage, no
+              cookies, no database.
             </li>
             <li>
-              Use a <strong>spend-limited key</strong> dedicated to this app so a leak can&apos;t
-              run up unbounded cost.
+              It is <strong>cleared automatically</strong> when you refresh or close this tab, so
+              you&apos;ll re-enter it next time.
             </li>
             <li>
-              <strong>Clear credentials</strong> below removes the key from this browser. Using
-              &ldquo;Reset App&rdquo; from the dashboard also wipes it.
+              It is sent only to OpenAI (or your configured base URL).{' '}
+              <strong>Clear credentials</strong> below drops it from memory right away.
             </li>
           </ul>
         </div>

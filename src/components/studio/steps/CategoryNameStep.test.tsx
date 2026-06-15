@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { CategoryNameStep } from './CategoryNameStep';
-import { CREDENTIALS_STORAGE_KEY, type OpenAIConfig } from '@hooks/useCredentials';
+import { __resetCredentialsForTest, __setCredentialsForTest } from '@hooks/useCredentials';
 import { GenerationError, generateCategoryNames } from '@services/openai';
 
 vi.mock('@services/openai', async () => {
@@ -20,23 +20,21 @@ vi.mock('@services/openai', async () => {
   return { ...actual, generateCategoryNames: vi.fn() };
 });
 
-const FULL_KEY = `the-floor:${CREDENTIALS_STORAGE_KEY}`;
-
 const generateMock = vi.mocked(generateCategoryNames);
 
-/** Seed localStorage so `useCredentials().isConfigured` is true. */
+/** Seed the in-memory store so `useCredentials().isConfigured` is true. */
 function seedKey(apiKey = 'sk-test'): void {
-  const config: OpenAIConfig = { apiKey, baseURL: '', imageSource: 'openai' };
-  localStorage.setItem(FULL_KEY, JSON.stringify(config));
+  __setCredentialsForTest({ apiKey });
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  __resetCredentialsForTest();
   generateMock.mockReset();
 });
 
 afterEach(() => {
   cleanup();
+  __resetCredentialsForTest();
 });
 
 describe('CategoryNameStep', () => {
