@@ -1,0 +1,169 @@
+/* CardsStep — editable list of ~50 AI-generated card ideas. */
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* Count + bulk actions (add / reroll-all). */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.count {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Soft, non-blocking warning when the count drifts far from ~50. */
+.warning {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--status-warning, #c77700) 12%, var(--bg-primary));
+  border: 1px solid var(--status-warning, #c77700);
+  border-radius: 0.5rem;
+}
+
+/* Inline confirm bar for the destructive reroll-all. */
+.confirmBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--status-danger) 12%, var(--bg-primary));
+  border: 1px solid var(--status-danger);
+  border-radius: 0.5rem;
+}
+
+/* Typed generation error with Retry. */
+.error {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.9rem;
+  background-color: color-mix(in srgb, var(--status-danger) 12%, var(--bg-primary));
+  border: 1px solid var(--status-danger);
+  border-radius: 0.5rem;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.errorIcon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.errorMessage {
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.errorActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Scrollable list area; the spinner overlays it during generation. */
+.listWrap {
+  position: relative;
+  min-height: 6rem;
+  max-height: 28rem;
+  overflow-y: auto;
+  border-radius: 0.5rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* The single overlay spinner shared by initial generation and reroll-all. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+  border-radius: 0.5rem;
+}
+
+.spinner {
+  font-size: 1.75rem;
+  animation: cards-spin 1.4s linear infinite;
+}
+
+@keyframes cards-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Continue (gated on ≥1 non-empty answer). */
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer button {
+    width: 100%;
+  }
+}
