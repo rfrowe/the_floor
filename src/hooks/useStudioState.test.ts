@@ -22,10 +22,19 @@ import {
 import type { CardIdea, StudioDraft } from '@types';
 import type { StudioDraftStore } from './useStudioDraftStore';
 
-const sampleCards: CardIdea[] = [
-  { id: 'a', answer: 'Apple', imageKeywords: 'fruit red', imagePrompt: 'a shiny red apple' },
-  { id: 'b', answer: 'Banana', imageKeywords: 'fruit yellow', imagePrompt: 'a ripe banana' },
-];
+const appleCard: CardIdea = {
+  id: 'a',
+  answer: 'Apple',
+  imageKeywords: 'fruit red',
+  imagePrompt: 'a shiny red apple',
+};
+const bananaCard: CardIdea = {
+  id: 'b',
+  answer: 'Banana',
+  imageKeywords: 'fruit yellow',
+  imagePrompt: 'a ripe banana',
+};
+const sampleCards: CardIdea[] = [appleCard, bananaCard];
 
 describe('studioReducer', () => {
   it('starts on the credentials step with an empty draft', () => {
@@ -129,7 +138,7 @@ describe('studioReducer', () => {
     expect(next.slides[1]?.censorBoxes).toEqual([]);
   });
 
-  it('HYDRATE_DRAFT replaces the entire draft', () => {
+  it('HYDRATE_DRAFT replaces the entire draft (modern draft kept as-is)', () => {
     const stored: StudioDraft = {
       version: 1,
       id: 'current',
@@ -137,11 +146,52 @@ describe('studioReducer', () => {
       categoryName: 'Movies',
       cards: sampleCards,
       slides: [],
+      slideDataByCardId: {},
       imageSource: 'openai',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
     const next = studioReducer(createInitialDraft(), { type: 'HYDRATE_DRAFT', draft: stored });
     expect(next).toEqual(stored);
+  });
+
+  it('HYDRATE_DRAFT reconstructs slideDataByCardId for a legacy draft from its slides', () => {
+    // A draft persisted before the id-keyed map existed: it has populated
+    // slides but no slideDataByCardId. Hydration must rebuild the map so a
+    // later re-derive preserves the images instead of wiping them.
+    const legacy: StudioDraft = {
+      version: 1,
+      id: 'current',
+      step: 'images',
+      categoryName: 'Movies',
+      cards: sampleCards,
+      slides: [
+        { imageUrl: 'data:image/png;base64,APPLE', answer: 'Apple', censorBoxes: [] },
+        {
+          imageUrl: 'data:image/png;base64,BANANA',
+          answer: 'Banana',
+          censorBoxes: [{ x: 1, y: 2, width: 3, height: 4, color: '#000' }],
+        },
+      ],
+      imageSource: 'openai',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const hydrated = studioReducer(createInitialDraft(), {
+      type: 'HYDRATE_DRAFT',
+      draft: legacy,
+    });
+    expect(hydrated.slideDataByCardId).toEqual({
+      a: { imageUrl: 'data:image/png;base64,APPLE', censorBoxes: [] },
+      b: {
+        imageUrl: 'data:image/png;base64,BANANA',
+        censorBoxes: [{ x: 1, y: 2, width: 3, height: 4, color: '#000' }],
+      },
+    });
+
+    // Re-entering images after hydrating the legacy draft keeps both images.
+    const reentered = studioReducer(hydrated, { type: 'SET_STEP', step: 'images' });
+    expect(reentered.slides[0]?.imageUrl).toBe('data:image/png;base64,APPLE');
+    expect(reentered.slides[1]?.imageUrl).toBe('data:image/png;base64,BANANA');
+    expect(reentered.slides[1]?.censorBoxes).toHaveLength(1);
   });
 
   it('RESET clears state back to the initial draft', () => {
@@ -162,10 +212,148 @@ describe('studioReducer', () => {
 });
 
 describe('deriveSlidesFromCards', () => {
-  it('maps each card to an empty slide preserving order', () => {
+  it('maps each card to an empty slide preserving order (no slide data)', () => {
     const slides = deriveSlidesFromCards(sampleCards);
     expect(slides.map((s) => s.answer)).toEqual(['Apple', 'Banana']);
     expect(slides.every((s) => s.imageUrl === '' && s.censorBoxes.length === 0)).toBe(true);
+  });
+
+  it('fills imageUrl + censor boxes from the id-keyed map, blank for unknown cards', () => {
+    const slides = deriveSlidesFromCards(sampleCards, {
+      a: { imageUrl: 'data:image/png;base64,APPLE', censorBoxes: [] },
+      // 'b' deliberately absent → blank slide.
+    });
+    expect(slides[0]).toEqual({
+      imageUrl: 'data:image/png;base64,APPLE',
+      answer: 'Apple',
+      censorBoxes: [],
+    });
+    expect(slides[1]).toEqual({ imageUrl: '', answer: 'Banana', censorBoxes: [] });
+  });
+
+  it('always reflects the card current answer, not the map', () => {
+    const renamed: CardIdea[] = [{ ...appleCard, answer: 'Granny Smith' }];
+    const slides = deriveSlidesFromCards(renamed, {
+      a: { imageUrl: 'data:image/png;base64,APPLE', censorBoxes: [] },
+    });
+    expect(slides[0]?.answer).toBe('Granny Smith');
+    expect(slides[0]?.imageUrl).toBe('data:image/png;base64,APPLE');
+  });
+});
+
+/**
+ * Regression tests for the data-loss bug: re-deriving slides on entering the
+ * `images` step must preserve each surviving card's image + censor boxes by
+ * stable card id, not array index.
+ */
+describe('slide image/censor preservation across card edits', () => {
+  /** Build a draft on the images step with images set on both sample cards. */
+  function draftWithImages(): StudioDraft {
+    let draft = studioReducer(createInitialDraft(), { type: 'SET_CARDS', cards: sampleCards });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+    draft = studioReducer(draft, {
+      type: 'SET_SLIDE_IMAGE',
+      index: 0,
+      imageUrl: 'data:image/png;base64,APPLE',
+    });
+    draft = studioReducer(draft, {
+      type: 'SET_SLIDE_CENSOR_BOXES',
+      index: 0,
+      censorBoxes: [{ x: 5, y: 5, width: 10, height: 10, color: '#111' }],
+    });
+    draft = studioReducer(draft, {
+      type: 'SET_SLIDE_IMAGE',
+      index: 1,
+      imageUrl: 'data:image/png;base64,BANANA',
+    });
+    return draft;
+  }
+
+  it('adding a card then re-entering images preserves existing images; new card is blank', () => {
+    let draft = draftWithImages();
+    // Go back to cards, add a new card, then return to images.
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'cards' });
+    const cherry: CardIdea = {
+      id: 'c',
+      answer: 'Cherry',
+      imageKeywords: 'fruit red',
+      imagePrompt: 'a cherry',
+    };
+    draft = studioReducer(draft, { type: 'ADD_CARD', card: cherry });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+
+    expect(draft.slides).toHaveLength(3);
+    expect(draft.slides[0]?.imageUrl).toBe('data:image/png;base64,APPLE');
+    expect(draft.slides[0]?.censorBoxes).toHaveLength(1);
+    expect(draft.slides[1]?.imageUrl).toBe('data:image/png;base64,BANANA');
+    // New card → blank slide.
+    expect(draft.slides[2]).toEqual({ imageUrl: '', answer: 'Cherry', censorBoxes: [] });
+  });
+
+  it("editing a card's answer keeps that slide's image and censor boxes", () => {
+    let draft = draftWithImages();
+    draft = studioReducer(draft, {
+      type: 'UPDATE_CARD',
+      id: 'a',
+      changes: { answer: 'Granny Smith' },
+    });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+
+    expect(draft.slides[0]?.answer).toBe('Granny Smith');
+    expect(draft.slides[0]?.imageUrl).toBe('data:image/png;base64,APPLE');
+    expect(draft.slides[0]?.censorBoxes).toHaveLength(1);
+    // The other card is untouched.
+    expect(draft.slides[1]?.imageUrl).toBe('data:image/png;base64,BANANA');
+  });
+
+  it('deleting a middle card keeps the other cards images, dropping only the removed one', () => {
+    // Three cards, each with an image.
+    const cards: CardIdea[] = [
+      { id: 'a', answer: 'Apple', imageKeywords: '', imagePrompt: '' },
+      { id: 'b', answer: 'Banana', imageKeywords: '', imagePrompt: '' },
+      { id: 'c', answer: 'Cherry', imageKeywords: '', imagePrompt: '' },
+    ];
+    let draft = studioReducer(createInitialDraft(), { type: 'SET_CARDS', cards });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+    draft = studioReducer(draft, { type: 'SET_SLIDE_IMAGE', index: 0, imageUrl: 'IMG_A' });
+    draft = studioReducer(draft, { type: 'SET_SLIDE_IMAGE', index: 1, imageUrl: 'IMG_B' });
+    draft = studioReducer(draft, { type: 'SET_SLIDE_IMAGE', index: 2, imageUrl: 'IMG_C' });
+
+    // Delete the middle card and re-derive.
+    draft = studioReducer(draft, { type: 'DELETE_CARD', id: 'b' });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+
+    expect(draft.slides).toHaveLength(2);
+    expect(draft.slides[0]).toMatchObject({ answer: 'Apple', imageUrl: 'IMG_A' });
+    expect(draft.slides[1]).toMatchObject({ answer: 'Cherry', imageUrl: 'IMG_C' });
+    // The deleted card's data is pruned from the map.
+    expect(draft.slideDataByCardId?.['b']).toBeUndefined();
+  });
+
+  it('reordering cards makes images follow their card (id-stable, not index)', () => {
+    let draft = draftWithImages();
+    // Reorder: Banana first, Apple second (via SET_CARDS, as a list editor would).
+    const reordered = [bananaCard, appleCard];
+    draft = studioReducer(draft, { type: 'SET_CARDS', cards: reordered });
+    draft = studioReducer(draft, { type: 'SET_STEP', step: 'images' });
+
+    expect(draft.slides[0]).toMatchObject({
+      answer: 'Banana',
+      imageUrl: 'data:image/png;base64,BANANA',
+    });
+    expect(draft.slides[1]).toMatchObject({
+      answer: 'Apple',
+      imageUrl: 'data:image/png;base64,APPLE',
+    });
+    expect(draft.slides[1]?.censorBoxes).toHaveLength(1);
+  });
+
+  it('SET_CARDS prunes image data for cards no longer present', () => {
+    let draft = draftWithImages();
+    // Replace with only the second card.
+    draft = studioReducer(draft, { type: 'SET_CARDS', cards: [bananaCard] });
+    expect(draft.slideDataByCardId?.['a']).toBeUndefined();
+    expect(draft.slideDataByCardId?.['b']?.imageUrl).toBe('data:image/png;base64,BANANA');
   });
 });
 
