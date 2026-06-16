@@ -8,7 +8,13 @@
  */
 
 export { getOpenAI, resetOpenAIClient } from './client';
-export { structuredChat, DEFAULT_CHAT_MODEL, DEFAULT_IMAGE_MODEL } from './structuredChat';
+export {
+  structuredChat,
+  DEFAULT_CHAT_MODEL,
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_TEMPERATURE,
+  NAMES_TEMPERATURE,
+} from './structuredChat';
 export type { StructuredChatArgs } from './structuredChat';
 export { generateCategoryNames } from './categoryNames';
 export { generateCardIdeas } from './cardIdeas';

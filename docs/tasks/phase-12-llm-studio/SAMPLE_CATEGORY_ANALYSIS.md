@@ -289,6 +289,49 @@ wrapper:
 
 ---
 
+## Prompt gap & revisions (variety + fidelity pass)
+
+A follow-up pass addressed two issues: (1) the Studio kept surfacing the **same first category**
+(e.g. "Fruits!") every session, and (2) closing the remaining gap between generated output and the
+hand-made samples. Findings and the prompt before→after below.
+
+### Variety — root cause and fix
+
+- **Not a temperature-was-set-too-low bug.** `structuredChat` previously passed **no** sampling
+  params, so the SDK applied the server default (`temperature ≈ 1`). The repetition came from two
+  compounding factors: under a tiny fixed prompt + tight JSON schema, `gpt-4o-mini` collapses onto
+  its single modal first pick, **and** `useBatchedGenerator` always surfaces `buffer[0]` — so the
+  user always saw the model's #1 answer.
+- **Fix:** `structuredChat` now threads a `temperature` (default constant `DEFAULT_TEMPERATURE = 1`;
+  names use `NAMES_TEMPERATURE = 1.05`) and an optional `top_p`; `generateCategoryNames` sets the
+  raised names temperature, the name prompt now explicitly says *don't lead with the obvious pick /
+  return unordered / spread across domains*, and the deduped batch is **shuffled** so the first-shown
+  candidate de-correlates from the model's positional ordering. Temperature kept ≤ ~1.1 to preserve
+  structured-output validity.
+
+### Names — gap vs. samples
+
+| Dimension | Before | After |
+|---|---|---|
+| Variety | "distinct" only; nothing against the modal pick → "Fruits!" every run | "don't lead with the obvious", "return unordered", domain-spread nudge; batch shuffled |
+| Format | rigid "1–3 words, title-case" | "1–4 words", lowercase-when-natural allowed (samples: "Sea creatures", "Kitchen equipment", "Trees in pop culture") |
+| Archetype examples | Bears/Clouds/Trees + Sea Creatures/Game of Thrones | added Minecraft, Dogs, Mascots, NBA Players (broader sample coverage) |
+
+### Cards — gap vs. samples
+
+| Dimension | Before | After |
+|---|---|---|
+| Lateral flavors | generic "pun, homophone, logo, scene, person-for-concept" | named, sample-backed list: homophone (`soundcloud`), name-contains-word (`Tiger Woods`, `Berkeley`), hidden brand-mark (`Toblerone`, `Timberland`), representative film (`Moneyball`), actor-for-role (`Heath Ledger`) |
+| "Wait, that counts?" delight | absent | called out as the *signature* move with samples (GoT board games `Monopoly`/`Risk`/`Catan`/`Uno`; NBA `Gnarls Barkley`, `Space Jam`) |
+| Answer length | "1–3 words, prefer ~2" | same, plus explicit long-canonical allowance (`Cavalier King Charles Spaniel`) matching the ~4% long-name tail |
+| Theme-matched mix | "lean lateral / mostly direct" | quantified per archetype (~70% lateral for pun buckets, ~5–25% for taxonomies) with the Mascots/Halo all-deep-cut failure mode named |
+
+The censor-first image policy was preserved (no "no text in image" ban reintroduced). JSON-schema
+structures, type guards, and `schemaName` values are unchanged — only `description` strings and the
+system/user prompt text were edited.
+
+---
+
 ## Appendix — methodology
 
 - Answers extracted via `jq -r '.category.slides[].answer'` over all 20 files in `public/categories/`
