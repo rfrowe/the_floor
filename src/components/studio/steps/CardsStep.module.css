@@ -99,22 +99,27 @@
   border-radius: 0.5rem;
 }
 
-/* Responsive, space-filling grid: as many ~22rem columns as fit, each sharing
-   the row width equally (1fr), collapsing to a single column on narrow screens.
-   This replaces the old single-column list that wasted most of a wide screen. */
+/* Responsive, space-filling grid: as many ~26rem columns as fit, each sharing
+   the row width equally (1fr). The roomy min-width keeps the image prompt
+   comfortably readable — typically ~2 columns at common widths and ~3 on a wide
+   screen — instead of cramming in narrow columns. Collapses to one column on
+   narrow screens. Replaces the old single-column list that wasted most of the
+   width. */
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
-  gap: 0.75rem;
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
+  gap: 1rem;
+  /* Default `align-items: stretch` lets each card fill its row's height for
+     even rows; do NOT set `height: 100%` on the card or it resolves against an
+     indefinite track and overlaps the next row, eating the row-gap. */
 }
 
 /* Below the grid's single-column threshold, drop the minmax floor so very
    narrow viewports never force horizontal overflow. */
-@media (max-width: 24rem) {
+@media (max-width: 28rem) {
   .list {
     grid-template-columns: 1fr;
   }
