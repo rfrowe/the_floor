@@ -45,16 +45,28 @@
   flex-wrap: wrap;
 }
 
-/* Responsive grid of card tiles. */
+/*
+ * Responsive grid of card tiles.
+ *
+ * Rows MUST size to their content, never the other way around. An earlier
+ * `max-height` + `overflow-y: auto` directly on this grid element capped the
+ * grid's total height and let the browser compress the implicit auto-row tracks
+ * to fit: with 2+ rows each card's bottom (the action buttons) was clipped by
+ * the card's own `overflow: hidden`, and with many rows the squeezed tracks
+ * shrank the `aspect-ratio` thumbnails too. We instead let the grid grow
+ * downward and the PAGE scroll, and pin `grid-auto-rows: max-content` so every
+ * implicit row track is exactly as tall as its tallest card — full thumbnail +
+ * title + all actions, regardless of row count. Columns still reflow
+ * responsively via `auto-fill`.
+ */
 .grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-auto-rows: max-content;
   gap: 0.9rem;
-  max-height: 32rem;
-  overflow-y: auto;
 }
 
 .card {

@@ -335,6 +335,31 @@ describe('ImagesStep', () => {
     expect(within(foxItem).queryByRole('img')).toBeNull();
   });
 
+  it('renders every per-card control for many cards (multi-row grid), not just the first row', () => {
+    // Layout regression guard: a fixed-height/overflow grid once compressed the
+    // implicit row tracks so later rows' cards were clipped by the card's own
+    // `overflow: hidden`, hiding the action controls. The visual clipping is
+    // CSS (not observable in jsdom), but this asserts the MARKUP always emits
+    // the full control set (Generate, Google Images, Upload) for EVERY card at a
+    // row count well past one row — so nothing is conditionally dropped and the
+    // controls a card needs are all present to be shown by the (now uncapped)
+    // grid.
+    seedKey();
+    const many = Array.from({ length: 9 }, (_v, i) => card(`id-${String(i)}`, `Card${String(i)}`));
+    render(<Harness cards={many} />);
+
+    for (let i = 0; i < many.length; i += 1) {
+      const item = screen.getByText(`${String(i + 1)}. Card${String(i)}`).closest('li');
+      if (!item) throw new Error(`card ${String(i)} not found`);
+      // Blank card → its primary button reads "Generate".
+      expect(within(item).getByRole('button', { name: 'Generate' })).toBeInTheDocument();
+      expect(within(item).getByRole('button', { name: 'Google Images' })).toBeInTheDocument();
+      expect(
+        within(item).getByLabelText(`Upload an image for Card${String(i)}`)
+      ).toBeInTheDocument();
+    }
+  });
+
   it('the Upload file-input fallback also routes through the downscaler', async () => {
     const user = userEvent.setup();
     seedKey();
