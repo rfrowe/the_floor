@@ -4,14 +4,20 @@
  * Presentational only: it renders the card's `answer` and `imagePrompt` as
  * editable fields, a delete button, and reorder controls (a drag handle plus
  * keyboard-accessible Move up/Move down buttons). It reports edits, deletes, and
- * reorders up to the parent ({@link CardsStep}) via callbacks. It holds no state
- * and never calls the OpenAI service — generation lives in the parent's single
- * async path, and the parent owns the live drag state.
+ * reorders up to the parent ({@link CardsStep}) via callbacks. It holds no list
+ * state and never calls the OpenAI service — generation lives in the parent's
+ * single async path, and the parent owns the live drag state.
+ *
+ * Layout: a compact header (drag grip + ordinal badge on the left, the Move
+ * up/down segmented control on the right) groups all three reorder affordances
+ * into one tidy cluster, then the Answer field (with Delete inline) and an
+ * auto-growing Image-prompt textarea that fits its full content — so a long
+ * prompt is never clipped behind a tiny internal scroll in a narrow column.
  *
  * Reordering uses native HTML5 drag-and-drop (no drag library): the whole card
  * is `draggable`, with a visible grip and a drop-position indicator the parent
  * toggles via `isDropBefore`/`isDropAfter`. Native DnD is not keyboard-operable,
- * so Move up/Move down buttons (disabled at the ends) provide the accessible
+ * so the Move up/down buttons (disabled at the ends) provide the accessible
  * reorder path — mirroring the repo's "pointer interaction + accessible
  * alternative" pattern (see {@link CensorBoxEditor}). Both paths ultimately
  * dispatch `SET_CARDS` in the parent; because slide image/censor data is keyed
@@ -22,7 +28,7 @@
  * image generation/status is Task 58 and intentionally absent.
  */
 
-import { type DragEvent, useId } from 'react';
+import { type DragEvent, useId, useLayoutEffect, useRef } from 'react';
 import type { CardIdea } from '@types';
 import { Button } from '@components/common/Button';
 import styles from './CardListItem.module.css';
@@ -76,16 +82,19 @@ export function CardListItem({
 }: CardListItemProps) {
   const answerId = useId();
   const promptId = useId();
+  const promptRef = useRef<HTMLTextAreaElement>(null);
 
   const rowClass = styles['row'] ?? '';
   const draggingClass = isDragging ? (styles['dragging'] ?? '') : '';
   const dropBeforeClass = isDropBefore ? (styles['dropBefore'] ?? '') : '';
   const dropAfterClass = isDropAfter ? (styles['dropAfter'] ?? '') : '';
   const liClass = `${rowClass} ${draggingClass} ${dropBeforeClass} ${dropAfterClass}`.trim();
-  const handleColClass = styles['handleCol'] ?? '';
+  const headerClass = styles['header'] ?? '';
+  const handleClass = styles['handle'] ?? '';
   const gripClass = styles['grip'] ?? '';
   const positionClass = styles['position'] ?? '';
   const moveButtonsClass = styles['moveButtons'] ?? '';
+  const moveButtonClass = styles['moveButton'] ?? '';
   const fieldsClass = styles['fields'] ?? '';
   const fieldClass = styles['field'] ?? '';
   const answerRowClass = styles['answerRow'] ?? '';
@@ -107,6 +116,19 @@ export function CardListItem({
   const isFirst = position <= 1;
   const isLast = position >= total;
 
+  // Auto-grow the image-prompt textarea so its full content is always visible
+  // (no internal scroll/clipping in narrow grid columns). Measuring after layout
+  // — and re-running whenever the value changes (typing, reroll, resumed draft)
+  // — keeps the height in lockstep with the text. `min-height` (in CSS) sets the
+  // comfortable floor; this only ever grows it to fit. `scrollHeight` already
+  // includes the textarea's vertical padding because of border-box.
+  useLayoutEffect(() => {
+    const el = promptRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${String(el.scrollHeight)}px`;
+  }, [imagePrompt]);
+
   return (
     <li
       className={liClass}
@@ -116,36 +138,36 @@ export function CardListItem({
       onDrop={onDrop}
       onDragEnd={onDragEnd}
     >
-      <div className={handleColClass}>
-        {/* The grip is a visual affordance for the native drag (the whole row
-            is draggable); reordering by keyboard uses the Move buttons below. */}
-        <span className={gripClass} aria-hidden="true">
-          ⠿
-        </span>
-        <span className={positionClass} aria-hidden="true">
-          {position}
-        </span>
+      {/* Compact reorder cluster: grip + ordinal on the left, Move up/down on
+          the right. The whole row is draggable; the grip is the visual cue. */}
+      <div className={headerClass}>
+        <div className={handleClass}>
+          <span className={gripClass} aria-hidden="true">
+            ⠿
+          </span>
+          <span className={positionClass} aria-hidden="true">
+            #{position}
+          </span>
+        </div>
         <div className={moveButtonsClass}>
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="small"
+            className={moveButtonClass}
             onClick={onMoveUp}
             disabled={isFirst}
             aria-label={`Move ${answerLabel} up`}
           >
             ↑
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="small"
+            className={moveButtonClass}
             onClick={onMoveDown}
             disabled={isLast}
             aria-label={`Move ${answerLabel} down`}
           >
             ↓
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -190,8 +212,9 @@ export function CardListItem({
           </label>
           <textarea
             id={promptId}
+            ref={promptRef}
             className={promptInputClass}
-            rows={2}
+            rows={3}
             spellCheck={false}
             placeholder="What the generated image should depict (the censor step hides giveaways)"
             value={imagePrompt}
