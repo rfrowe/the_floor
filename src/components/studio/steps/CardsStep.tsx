@@ -19,12 +19,13 @@
  * generation/status is Task 58 and intentionally absent here.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type DragEvent, useCallback, useEffect, useRef, useState } from 'react';
 import type { CardIdea } from '@types';
 import { Button } from '@components/common/Button';
 import { useCredentials } from '@hooks/useCredentials';
 import { generateCardIdeas, toGenerationError, type GenerationError } from '@services/openai';
 import { CardListItem } from '@components/studio/CardListItem';
+import { moveCard } from '@utils/reorder';
 import styles from './CardsStep.module.css';
 
 /** Default number of card ideas to request (matches the ~50-slide sample norm). */
@@ -35,6 +36,14 @@ export const DEFAULT_CARD_COUNT = 50;
  * show a soft, non-blocking warning. Sample categories carry 41–52 slides.
  */
 const COUNT_WARNING_MARGIN = 15;
+
+/**
+ * The custom drag MIME type. A typed key (rather than the default `text/plain`)
+ * keeps these card drags from being confused with arbitrary text drops, and the
+ * payload is the dragged card's stable `id` so the drop resolves by identity
+ * even if the list mutates mid-drag.
+ */
+const CARD_DRAG_MIME = 'application/x-floor-card-id';
 
 export interface CardsStepProps {
   /** The confirmed category name (from the previous step's draft). */
@@ -67,6 +76,13 @@ export function CardsStep({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<GenerationError | null>(null);
   const [confirmReroll, setConfirmReroll] = useState(false);
+
+  // Live native-drag state. `draggingId` is the card being dragged; `dropIndex`
+  // is the insertion point (0..length) the drop would land at. Both are null
+  // when no drag is in progress. Kept here (not in the row) so the indicator and
+  // the source-dim are computed in one place.
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   // Guards a single auto-generation on entry. A ref (not state) so React 19's
   // double-invoked effects in dev/strict mode don't fire two API calls, and so
@@ -126,6 +142,87 @@ export function CardsStep({
     setConfirmReroll(false);
     void generate();
   };
+
+  // --- reordering ------------------------------------------------------------
+  // Both the keyboard Move buttons and native drag-and-drop funnel through
+  // `reorder`, which dispatches `SET_CARDS` with the new order. Because slide
+  // image/censor data is keyed by card id and `SET_CARDS` preserves it, each
+  // card's eventual image follows it to the new position.
+
+  const reorder = useCallback(
+    (from: number, to: number) => {
+      const next = moveCard(cards, from, to);
+      // Skip the dispatch when nothing actually moved (e.g. dropping a card on
+      // itself, or moving past an end).
+      if (next.length === cards.length && next.every((card, i) => card.id === cards[i]?.id)) {
+        return;
+      }
+      onSetCards(next);
+    },
+    [cards, onSetCards]
+  );
+
+  const moveUp = useCallback(
+    (index: number) => {
+      reorder(index, index - 1);
+    },
+    [reorder]
+  );
+
+  const moveDown = useCallback(
+    (index: number) => {
+      // Target index `index + 2` lands the card after its current next neighbor
+      // (insert-before semantics), i.e. one slot later.
+      reorder(index, index + 2);
+    },
+    [reorder]
+  );
+
+  const handleDragStart = useCallback((e: DragEvent<HTMLLIElement>, id: string) => {
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData(CARD_DRAG_MIME, id);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (e: DragEvent<HTMLLIElement>, index: number) => {
+      if (draggingId === null) return;
+      // Allow the drop and compute the insertion point: before or after the
+      // hovered row depending on which half the pointer is over.
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = e.currentTarget.getBoundingClientRect();
+      const after = e.clientY - rect.top > rect.height / 2;
+      setDropIndex(after ? index + 1 : index);
+    },
+    [draggingId]
+  );
+
+  const clearDrag = useCallback(() => {
+    setDraggingId(null);
+    setDropIndex(null);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: DragEvent<HTMLLIElement>, index: number) => {
+      if (draggingId === null) {
+        clearDrag();
+        return;
+      }
+      e.preventDefault();
+      const from = cards.findIndex((card) => card.id === draggingId);
+      // Resolve the drop position the same way `handleDragOver` did, so a drop
+      // without a final dragover (rare) still lands correctly.
+      const rect = e.currentTarget.getBoundingClientRect();
+      const after = e.clientY - rect.top > rect.height / 2;
+      const to = after ? index + 1 : index;
+      clearDrag();
+      if (from >= 0) {
+        reorder(from, to);
+      }
+    },
+    [cards, draggingId, reorder, clearDrag]
+  );
 
   const cardCount = cards.length;
   // Defensive runtime guard: `answer` is typed as a string, but a malformed
@@ -282,12 +379,34 @@ export function CardsStep({
                 key={card.id}
                 card={card}
                 position={index + 1}
+                total={cardCount}
                 onChange={(changes) => {
                   onUpdateCard(card.id, changes);
                 }}
                 onDelete={() => {
                   onDeleteCard(card.id);
                 }}
+                onMoveUp={() => {
+                  moveUp(index);
+                }}
+                onMoveDown={() => {
+                  moveDown(index);
+                }}
+                isDragging={draggingId === card.id}
+                isDropBefore={dropIndex === index && draggingId !== null}
+                isDropAfter={
+                  dropIndex === index + 1 && index === cardCount - 1 && draggingId !== null
+                }
+                onDragStart={(e) => {
+                  handleDragStart(e, card.id);
+                }}
+                onDragOver={(e) => {
+                  handleDragOver(e, index);
+                }}
+                onDrop={(e) => {
+                  handleDrop(e, index);
+                }}
+                onDragEnd={clearDrag}
               />
             ))}
           </ul>

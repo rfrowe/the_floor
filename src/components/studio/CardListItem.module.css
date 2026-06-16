@@ -1,24 +1,92 @@
-/* CardListItem — one editable card-idea row (answer + image prompt + delete). */
+/* CardListItem — one editable card-idea row (grip + reorder + answer + prompt
+   + delete). Sized to fill a single cell of the parent's responsive grid. */
 
 .row {
+  position: relative;
   display: flex;
   gap: 0.85rem;
   align-items: flex-start;
+  height: 100%;
   padding: 1rem 1.1rem;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-default);
   border-radius: 0.6rem;
+  transition:
+    opacity 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
-/* 1-based ordinal badge. Nudged down to sit on the answer input's baseline row. */
-.position {
+/* The dragged source row dims so the drop indicator stands out. */
+.dragging {
+  opacity: 0.45;
+}
+
+/* Drop-position indicators: a bright bar on the edge the card would land on.
+   `dropBefore` sits on the leading edge, `dropAfter` on the trailing edge
+   (only used on the last card). The grid is multi-directional, so a glowing
+   ring reinforces the target cell alongside the edge bar. */
+.dropBefore,
+.dropAfter {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--border-focus) 55%, transparent);
+}
+
+.dropBefore::before,
+.dropAfter::after {
+  content: '';
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  height: 3px;
+  border-radius: 3px;
+  background-color: var(--border-focus);
+}
+
+.dropBefore::before {
+  top: -0.45rem;
+}
+
+.dropAfter::after {
+  bottom: -0.45rem;
+}
+
+/* Left column: drag grip, 1-based ordinal, and the keyboard move buttons. */
+.handleCol {
   flex: 0 0 auto;
-  min-width: 1.75rem;
-  padding-top: 1.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.1rem;
+}
+
+/* Visual affordance for the native drag (the whole row is draggable). */
+.grip {
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: grab;
+  user-select: none;
+}
+
+.row:active .grip {
+  cursor: grabbing;
+}
+
+/* 1-based ordinal badge. */
+.position {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--text-secondary);
-  text-align: right;
+  text-align: center;
+}
+
+/* Stacked Move up / Move down buttons under the ordinal. */
+.moveButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 /* Stacked answer row + image-prompt field take the remaining width. A single
@@ -103,15 +171,6 @@
 }
 
 @media (max-width: 640px) {
-  .row {
-    flex-wrap: wrap;
-    gap: 0.6rem;
-  }
-
-  .position {
-    padding-top: 0;
-  }
-
   .answerRow {
     flex-wrap: wrap;
   }

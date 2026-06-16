@@ -16,6 +16,7 @@ import { render, screen, waitFor, within, cleanup } from '@testing-library/react
 import { userEvent } from '@testing-library/user-event';
 import type { CardIdea } from '@types';
 import { CardsStep } from './CardsStep';
+import { moveCard } from '@utils/reorder';
 import { __resetCredentialsForTest, __setCredentialsForTest } from '@hooks/useCredentials';
 import { GenerationError, generateCardIdeas } from '@services/openai';
 import { createBlankCard } from '@hooks/useStudioState';
@@ -54,7 +55,14 @@ function seedKey(apiKey = 'sk-test'): void {
  * `UPDATE_CARD`/`DELETE_CARD`/`ADD_CARD` actions do, so tests exercise real
  * list behavior (including stable keys) rather than just asserting callbacks.
  */
-function Harness({ initialCards = [] }: { initialCards?: CardIdea[] }) {
+function Harness({
+  initialCards = [],
+  onSetCardsSpy,
+}: {
+  initialCards?: CardIdea[];
+  /** Observe each `SET_CARDS` dispatch (reorder, reroll, initial generate). */
+  onSetCardsSpy?: (cards: CardIdea[]) => void;
+}) {
   const [cards, setCards] = useState<CardIdea[]>(initialCards);
   const [continued, setContinued] = useState(false);
 
@@ -63,7 +71,10 @@ function Harness({ initialCards = [] }: { initialCards?: CardIdea[] }) {
       <CardsStep
         categoryName="Cryptids"
         cards={cards}
-        onSetCards={setCards}
+        onSetCards={(next) => {
+          onSetCardsSpy?.(next);
+          setCards(next);
+        }}
         onUpdateCard={(id, changes) => {
           setCards((current) => current.map((c) => (c.id === id ? { ...c, ...changes } : c)));
         }}
@@ -317,5 +328,110 @@ describe('CardsStep', () => {
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(generateMock).toHaveBeenCalledTimes(2);
+  });
+
+  // --- reordering ----------------------------------------------------------
+  // Native HTML5 drag-and-drop is not reliably simulatable in jsdom, so the
+  // keyboard Move up / Move down path is the unit-tested reorder mechanism. It
+  // shares the exact same `reorder` → `SET_CARDS` path the drag drop uses.
+
+  /** Current order of answer inputs by display value, top to bottom. */
+  function currentOrder(): string[] {
+    return screen
+      .getAllByLabelText('Answer')
+      .map((el) => (el instanceof HTMLInputElement ? el.value : ''));
+  }
+
+  it('Move down reorders via SET_CARDS with the expected new order', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    const setCardsSpy = vi.fn<(cards: CardIdea[]) => void>();
+    render(
+      <Harness
+        initialCards={[card('a', 'Mothman'), card('b', 'Bigfoot'), card('c', 'Nessie')]}
+        onSetCardsSpy={setCardsSpy}
+      />
+    );
+    await screen.findByDisplayValue('Mothman');
+
+    await user.click(screen.getByRole('button', { name: /Move Mothman down/i }));
+
+    // Dispatched SET_CARDS carries the new order (Bigfoot, Mothman, Nessie).
+    expect(setCardsSpy).toHaveBeenCalledTimes(1);
+    expect(setCardsSpy.mock.calls[0]?.[0].map((c) => c.answer)).toEqual([
+      'Bigfoot',
+      'Mothman',
+      'Nessie',
+    ]);
+    expect(currentOrder()).toEqual(['Bigfoot', 'Mothman', 'Nessie']);
+  });
+
+  it('Move up reorders via SET_CARDS with the expected new order', async () => {
+    const user = userEvent.setup();
+    seedKey();
+    const setCardsSpy = vi.fn<(cards: CardIdea[]) => void>();
+    render(
+      <Harness
+        initialCards={[card('a', 'Mothman'), card('b', 'Bigfoot'), card('c', 'Nessie')]}
+        onSetCardsSpy={setCardsSpy}
+      />
+    );
+    await screen.findByDisplayValue('Mothman');
+
+    await user.click(screen.getByRole('button', { name: /Move Nessie up/i }));
+
+    expect(setCardsSpy).toHaveBeenCalledTimes(1);
+    expect(setCardsSpy.mock.calls[0]?.[0].map((c) => c.answer)).toEqual([
+      'Mothman',
+      'Nessie',
+      'Bigfoot',
+    ]);
+    expect(currentOrder()).toEqual(['Mothman', 'Nessie', 'Bigfoot']);
+  });
+
+  it('disables Move up on the first card and Move down on the last card', async () => {
+    seedKey();
+    render(
+      <Harness initialCards={[card('a', 'Mothman'), card('b', 'Bigfoot'), card('c', 'Nessie')]} />
+    );
+    await screen.findByDisplayValue('Mothman');
+
+    expect(screen.getByRole('button', { name: /Move Mothman up/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Move Mothman down/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Move Nessie up/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Move Nessie down/i })).toBeDisabled();
+  });
+
+  it('a single card has both Move buttons disabled', async () => {
+    seedKey();
+    render(<Harness initialCards={[card('a', 'Mothman')]} />);
+    await screen.findByDisplayValue('Mothman');
+
+    expect(screen.getByRole('button', { name: /Move Mothman up/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Move Mothman down/i })).toBeDisabled();
+  });
+});
+
+describe('moveCard', () => {
+  const items = ['a', 'b', 'c', 'd'];
+
+  it('moves an item later (insert-before semantics)', () => {
+    // Move "a" (0) so it lands one slot later → b, a, c, d.
+    expect(moveCard(items, 0, 2)).toEqual(['b', 'a', 'c', 'd']);
+  });
+
+  it('moves an item earlier', () => {
+    // Move "c" (2) up one → a, c, b, d.
+    expect(moveCard(items, 2, 1)).toEqual(['a', 'c', 'b', 'd']);
+  });
+
+  it('moves to the very end', () => {
+    expect(moveCard(items, 0, items.length)).toEqual(['b', 'c', 'd', 'a']);
+  });
+
+  it('returns an unchanged copy for a no-op or out-of-range move', () => {
+    expect(moveCard(items, 1, 1)).toEqual(items);
+    expect(moveCard(items, -1, 2)).toEqual(items);
+    expect(moveCard(items, 0, 99)).toEqual(items);
   });
 });
