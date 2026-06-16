@@ -89,22 +89,35 @@
   gap: 0.6rem;
 }
 
-/* Scrollable list area; the spinner overlays it during generation. */
+/* List area. The spinner overlays it during generation (anchored here via
+   position: relative). It is intentionally NOT height-capped or clipped — the
+   page scrolls as cards grow, and the responsive grid below fills the width so
+   wide screens show many cards at once instead of two tall ones. */
 .listWrap {
   position: relative;
   min-height: 6rem;
-  max-height: 28rem;
-  overflow-y: auto;
   border-radius: 0.5rem;
 }
 
+/* Responsive, space-filling grid: as many ~22rem columns as fit, each sharing
+   the row width equally (1fr), collapsing to a single column on narrow screens.
+   This replaces the old single-column list that wasted most of a wide screen. */
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+/* Below the grid's single-column threshold, drop the minmax floor so very
+   narrow viewports never force horizontal overflow. */
+@media (max-width: 24rem) {
+  .list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .empty {
