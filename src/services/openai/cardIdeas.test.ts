@@ -44,6 +44,7 @@ vi.mock('nanoid', () => ({
 
 import { generateCardIdeas } from './cardIdeas';
 import { resetOpenAIClient } from './client';
+import { DEFAULT_TEMPERATURE } from './structuredChat';
 
 function chatResponse(content: string) {
   return { choices: [{ message: { content } }] };
@@ -130,6 +131,15 @@ describe('generateCardIdeas', () => {
     const userMessage = params.messages.find((m) => m.role === 'user');
     expect(userMessage?.content).toContain('Cryptids');
     expect(userMessage?.content).toContain('5');
+  });
+
+  it('threads the default temperature into the chat request', async () => {
+    mockState.createMock.mockResolvedValue(chatResponse(JSON.stringify(SAMPLE)));
+
+    await generateCardIdeas(config(), 'Cyborgs', 2);
+
+    const params = mockState.createMock.mock.calls[0]?.[0] as { temperature: number };
+    expect(params.temperature).toBe(DEFAULT_TEMPERATURE);
   });
 
   it('passes a custom base URL through to the SDK', async () => {

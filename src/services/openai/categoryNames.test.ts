@@ -42,6 +42,7 @@ vi.mock('openai', async () => {
 import { generateCategoryNames } from './categoryNames';
 import { resetOpenAIClient } from './client';
 import { GenerationError } from './errors';
+import { NAMES_TEMPERATURE } from './structuredChat';
 
 /** Shape a chat-completion response with the given JSON content string. */
 function chatResponse(content: string) {
@@ -59,13 +60,15 @@ describe('generateCategoryNames', () => {
     resetOpenAIClient();
   });
 
-  it('parses structured names and returns them in order', async () => {
+  it('parses and returns all structured names (order is shuffled for variety)', async () => {
     mockState.createMock.mockResolvedValue(
       chatResponse(JSON.stringify({ names: ['Cryptids', 'World Capitals', 'Mascots'] }))
     );
 
     const names = await generateCategoryNames(config(), 3);
-    expect(names).toEqual(['Cryptids', 'World Capitals', 'Mascots']);
+    // The batch is shuffled to de-correlate the first-shown candidate from the
+    // model's modal pick, so we assert membership (set equality), not order.
+    expect([...names].sort()).toEqual(['Cryptids', 'Mascots', 'World Capitals']);
   });
 
   it('trims and de-dups case-insensitively, dropping blanks', async () => {
@@ -74,7 +77,21 @@ describe('generateCategoryNames', () => {
     );
 
     const names = await generateCategoryNames(config(), 5);
-    expect(names).toEqual(['Cryptids', 'Mascots']);
+    // De-dup keeps first-seen casing; shuffle may reorder, so compare as a set.
+    expect([...names].sort()).toEqual(['Cryptids', 'Mascots']);
+  });
+
+  it('sends the raised names temperature so batches vary run-to-run', async () => {
+    mockState.createMock.mockResolvedValue(
+      chatResponse(JSON.stringify({ names: ['Cryptids', 'Mascots'] }))
+    );
+
+    await generateCategoryNames(config(), 2);
+
+    const params = mockState.createMock.mock.calls[0]?.[0] as { temperature: number };
+    expect(params.temperature).toBe(NAMES_TEMPERATURE);
+    expect(NAMES_TEMPERATURE).toBeGreaterThan(1);
+    expect(NAMES_TEMPERATURE).toBeLessThanOrEqual(1.1);
   });
 
   it('sends the json_schema response_format and default model', async () => {

@@ -36,10 +36,12 @@ const CARD_IDEAS_SCHEMA: Record<string, unknown> = {
           answer: {
             type: 'string',
             description:
-              'The correct guess: 1–3 words (prefer ~2), cleanly and correctly spelled, ' +
-              'naming the canonical/most-famous form first with a well-known alias in ' +
-              'parentheses or after a slash if useful (e.g. "Shaq (Shaquille O\'Neal)", ' +
-              '"Little Finger / Lord Baelish"). No descriptions, sentences, or hints.',
+              'The correct guess: short — 1–3 words, two is the sweet spot (longer only when ' +
+              'the canonical name genuinely is, e.g. "Cavalier King Charles Spaniel"). Cleanly ' +
+              'and correctly spelled; name the canonical/most-famous form first with a ' +
+              'well-known alias in parentheses or after a slash if useful (e.g. ' +
+              '"Shaq (Shaquille O\'Neal)", "Little Finger / Lord Baelish", "Lab (Labrador ' +
+              'Retriever)"). No descriptions, sentences, or hints.',
           },
           imageKeywords: {
             type: 'string',
@@ -94,27 +96,41 @@ const SYSTEM_PROMPT = [
   '"imageKeywords", and "imagePrompt".',
   '',
   'Answer style:',
-  '- 1–3 words, prefer ~2. Name the canonical / most-famous thing, with a year or qualifier',
-  '  only when it disambiguates.',
+  '- Short: 1–3 words, two is the sweet spot. Go longer only when the canonical name truly is',
+  '  (e.g. "Cavalier King Charles Spaniel"). Name the canonical / most-famous thing, with a year',
+  '  or qualifier only when it disambiguates (e.g. "1967 Chevy Impala", "Red (Taylor\'s Version)").',
   '- Spell every answer cleanly and correctly (e.g. "Joe DiMaggio", "mayonnaise") — do not',
   '  imitate casual misspellings.',
   '- Fold a well-known alias into the same answer with parentheses or a slash when helpful',
-  '  (e.g. "Shaq (Shaquille O\'Neal)", "Little Finger / Lord Baelish").',
+  '  (e.g. "Shaq (Shaquille O\'Neal)", "Little Finger / Lord Baelish", "David Ortiz (Big Papi)").',
   '- The answer is just the name — no descriptions, sentences, or hints. The image is the clue.',
   '',
   'Difficulty & lateral mix:',
   '- Aim for roughly 70% direct (the image literally shows the subject and you name it) and',
-  '  30% lateral (a pun, homophone, logo/brand-mark, representative scene/prop, or a person',
-  '  who stands in for a role/concept).',
-  '- Match the mix to the theme: a pun/homophone bucket leans more lateral; a concrete taxonomy',
-  '  or field-guide theme stays mostly direct.',
+  '  30% lateral. Lateral cards come in a few flavors — use several:',
+  '    • homophone / sound-alike (Clouds → "soundcloud"; Bears → "Berlin");',
+  '    • the name literally CONTAINS the bucket word (Trees → "Tiger Woods", "Chris Pine"; Bears',
+  '      → "Berkeley");',
+  '    • a logo / brand-mark that hides the thing (Bears → "Toblerone"; Trees → "Timberland");',
+  '    • a representative scene, prop, or film standing in for the subject (Baseball → "Moneyball",',
+  '      "The Sandlot");',
+  '    • a person who stands in for a role/concept (Batman villains → the ACTORS, "Heath Ledger");',
+  '    • a "wait, that counts?" left-field-but-fair member of the bucket (Game of Thrones → board',
+  '      games "Monopoly"/"Risk"/"Catan"/"Uno"; NBA Players → "Gnarls Barkley", "Space Jam").',
+  '  That clever "oh, that counts!" surprise is the signature delight — work a few in.',
+  '- Match the mix to the theme: a pun/homophone bucket (Bears, Clouds, Trees) leans heavily',
+  '  lateral (~70%); a concrete taxonomy or field-guide theme (Dogs, Sea creatures, Kitchen',
+  '  equipment) stays mostly direct (~5–25% lateral).',
   '- Guessability bar: a smart general audience should get most answers from a good image. Even',
-  '  lateral answers must be widely famous references. Cap deep-cut / superfan obscurities at',
-  '  roughly a 20% tail — never make a whole batch out of deep cuts.',
+  '  lateral answers must be widely famous references (the pun/connection must be one most people',
+  '  would recognize). Cap deep-cut / superfan obscurities at roughly a 20% tail — never make a',
+  '  whole batch out of deep cuts (the Mascots/Halo failure mode: fun for superfans, alienating',
+  '  for everyone else).',
   '',
   'Variety: keep answers distinct and non-overlapping, and vary the subtype within the category',
-  '(for a sport: players, teams, coaches, trophies, ephemera, the sport in film) — do not return',
-  'many of the same kind of thing.',
+  '(for a sport: players, teams, coaches, trophies, stadiums, ballpark ephemera, the sport in',
+  'film). Mix proper nouns and common nouns as the theme allows — do not return many of the same',
+  'kind of thing.',
   '',
   'Image rules:',
   '- "imageKeywords": space-separated concrete search terms for the literal thing to depict',
@@ -156,11 +172,13 @@ export async function generateCardIdeas(
     system: SYSTEM_PROMPT,
     user:
       `Category: "${trimmedName}". Generate ${String(requested)} distinct card ideas. ` +
-      'Keep answers 1–3 words and correctly spelled, vary the subtype, and match the direct/' +
-      'lateral mix to this theme (lean lateral for a pun bucket, mostly direct for a taxonomy). ' +
-      'Make each imagePrompt a single centered subject, recognizable with its real identifying ' +
-      "detail (logos/branding welcome — the censor step hides giveaways); just don't caption " +
-      'the literal answer.',
+      'Keep answers short (1–3 words, ~2) and correctly spelled, vary the subtype, and match the ' +
+      'direct/lateral mix to this theme (lean lateral for a pun/homophone bucket, mostly direct ' +
+      'for a taxonomy or field-guide). Work in a few clever "wait, that counts?" lateral picks — ' +
+      'homophones, names that contain the bucket word, hidden brand-marks, or a left-field-but-' +
+      'fair member — but keep them famous enough for a general audience. Make each imagePrompt a ' +
+      'single centered subject, recognizable with its real identifying detail (logos/branding ' +
+      "welcome — the censor step hides giveaways); just don't caption the literal answer.",
   });
 
   const cards: CardIdea[] = [];
