@@ -12,8 +12,10 @@
  * Besides AI generation, each card offers a "find a real photo" path: a Google
  * Images button (opens an image search for the card's answer in a new tab) paired
  * with drag-and-drop / upload of a downloaded image FILE onto the card's image
- * area. A dropped/selected file is read to a base64 `data:` URL via
- * {@link blobToDataUrl} and dispatched through the same `SET_SLIDE_IMAGE` path.
+ * area. A dropped/selected file is DOWNSCALED to a capped-long-edge JPEG `data:`
+ * URL via {@link downscaleImageToDataUrl} (so a 12 MP phone photo doesn't bloat
+ * the persisted draft or the exported category JSON) and dispatched through the
+ * same `SET_SLIDE_IMAGE` path. Generated images are NOT touched by this path.
  *
  * CONCURRENCY: a SINGLE shared limiter ({@link createLimiter}, cap
  * {@link GENERATE_ALL_CONCURRENCY}) governs EVERY `generateImage` call — both the
@@ -38,7 +40,7 @@ import type { CardIdea, Slide } from '@types';
 import { Button } from '@components/common/Button';
 import { useCredentials } from '@hooks/useCredentials';
 import { generateImage, toGenerationError, type GenerationError } from '@services/openai';
-import { blobToDataUrl } from '@services/images/toDataUrl';
+import { downscaleImageToDataUrl } from '@utils/downscaleImage';
 import { createLimiter } from '@utils/concurrencyLimit';
 import { buildGoogleImagesUrl } from '@utils/googleImages';
 import styles from './ImagesStep.module.css';
@@ -133,11 +135,13 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
 
   /**
    * Apply an image FILE (drag-drop or upload) to a card: verify it's an image,
-   * read it to a base64 `data:` URL via {@link blobToDataUrl}, then dispatch
-   * `SET_SLIDE_IMAGE` for that card's index. Non-image files are rejected with a
-   * per-card message; this is the OS-file path that pairs with Google Images
-   * (dragging an <img> from a tab yields a CORS-blocked cross-origin URL, so we
-   * only accept files).
+   * DOWNSCALE it to a capped-long-edge JPEG `data:` URL via
+   * {@link downscaleImageToDataUrl}, then dispatch `SET_SLIDE_IMAGE` for that
+   * card's index. Downscaling at ingest keeps a large phone photo from bloating
+   * the persisted draft AND the exported category JSON (the smaller data URL is
+   * what flows downstream). Non-image files are rejected with a per-card message;
+   * this is the OS-file path that pairs with Google Images (dragging an <img> from
+   * a tab yields a CORS-blocked cross-origin URL, so we only accept files).
    */
   const applyImageFile = useCallback(
     async (id: string, index: number, file: File): Promise<void> => {
@@ -147,12 +151,12 @@ export function ImagesStep({ cards, slides, onSetSlideImage, onContinue }: Image
       }
       setError(id, null);
       try {
-        const dataUrl = await blobToDataUrl(file);
+        const dataUrl = await downscaleImageToDataUrl(file);
         onSetSlideImage(index, dataUrl);
         setStatus(id, 'done');
       } catch {
         setStatus(id, 'error');
-        setError(id, 'Couldn’t read that image file. Try another.');
+        setError(id, 'Couldn’t process that image file. Try another.');
       }
     },
     [onSetSlideImage, setError, setStatus]

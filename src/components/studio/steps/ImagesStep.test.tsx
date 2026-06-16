@@ -12,8 +12,9 @@
  * The Phase 12 enhancements add: a per-card Google Images button (opens a
  * `tbm=isch` search for the answer; disabled when blank), drag-and-drop of an
  * image FILE onto the card's image area (and a keyboard "Upload" fallback) — both
- * reusing the mocked `blobToDataUrl` → `SET_SLIDE_IMAGE` path, with non-image
- * files rejected.
+ * routing the file through the mocked `downscaleImageToDataUrl` → `SET_SLIDE_IMAGE`
+ * path (uploads are downscaled at ingest to keep the draft/export small), with
+ * non-image files rejected before the downscaler runs.
  */
 
 import { useMemo, useState } from 'react';
@@ -24,22 +25,21 @@ import type { CardIdea, Slide } from '@types';
 import { ImagesStep, GENERATE_ALL_CONCURRENCY } from './ImagesStep';
 import { __resetCredentialsForTest, __setCredentialsForTest } from '@hooks/useCredentials';
 import { GenerationError, generateImage } from '@services/openai';
-import { blobToDataUrl } from '@services/images/toDataUrl';
+import { downscaleImageToDataUrl } from '@utils/downscaleImage';
 
 vi.mock('@services/openai', async () => {
   const actual = await vi.importActual<typeof import('@services/openai')>('@services/openai');
   return { ...actual, generateImage: vi.fn() };
 });
 
-vi.mock('@services/images/toDataUrl', async () => {
-  const actual = await vi.importActual<typeof import('@services/images/toDataUrl')>(
-    '@services/images/toDataUrl'
-  );
-  return { ...actual, blobToDataUrl: vi.fn() };
+vi.mock('@utils/downscaleImage', async () => {
+  const actual =
+    await vi.importActual<typeof import('@utils/downscaleImage')>('@utils/downscaleImage');
+  return { ...actual, downscaleImageToDataUrl: vi.fn() };
 });
 
 const generateMock = vi.mocked(generateImage);
-const blobToDataUrlMock = vi.mocked(blobToDataUrl);
+const downscaleMock = vi.mocked(downscaleImageToDataUrl);
 
 /** Build a card with a deterministic id for assertions. */
 function card(id: string, answer: string): CardIdea {
@@ -102,7 +102,7 @@ function Harness({ cards }: { cards: CardIdea[] }) {
 beforeEach(() => {
   __resetCredentialsForTest();
   generateMock.mockReset();
-  blobToDataUrlMock.mockReset();
+  downscaleMock.mockReset();
 });
 
 afterEach(() => {
@@ -283,9 +283,9 @@ describe('ImagesStep', () => {
     expect(within(item).getByRole('button', { name: 'Google Images' })).toBeDisabled();
   });
 
-  it('dropping an image file sets that slide via the blob→dataURL path (by index)', async () => {
+  it('dropping an image file downscales it before setting that slide (by index)', async () => {
     seedKey();
-    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,DROPPED');
+    downscaleMock.mockResolvedValue('data:image/jpeg;base64,DROPPED');
 
     render(<Harness cards={[card('a', 'Fox'), card('b', 'Bear')]} />);
 
@@ -304,18 +304,19 @@ describe('ImagesStep', () => {
     await waitFor(() => {
       expect(within(foxItem).getByRole('img')).toHaveAttribute(
         'src',
-        'data:image/png;base64,DROPPED'
+        'data:image/jpeg;base64,DROPPED'
       );
     });
-    expect(blobToDataUrlMock).toHaveBeenCalledWith(file);
+    // The dropped file is routed through the downscaler before SET_SLIDE_IMAGE.
+    expect(downscaleMock).toHaveBeenCalledWith(file);
     expect(generateMock).not.toHaveBeenCalled();
     // Index isolation: Bear stays blank.
     expect(within(bearItem).queryByRole('img')).toBeNull();
   });
 
-  it('rejects a non-image file drop with an inline error and does not set the slide', async () => {
+  it('rejects a non-image file drop with an inline error and does not downscale or set the slide', async () => {
     seedKey();
-    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,NOPE');
+    downscaleMock.mockResolvedValue('data:image/jpeg;base64,NOPE');
 
     render(<Harness cards={[card('a', 'Fox')]} />);
     const foxItem = screen.getByText('1. Fox').closest('li');
@@ -330,14 +331,14 @@ describe('ImagesStep', () => {
     await waitFor(() => {
       expect(within(foxItem).getByRole('alert')).toHaveTextContent(/isn’t an image/i);
     });
-    expect(blobToDataUrlMock).not.toHaveBeenCalled();
+    expect(downscaleMock).not.toHaveBeenCalled();
     expect(within(foxItem).queryByRole('img')).toBeNull();
   });
 
-  it('the Upload file-input fallback runs the same blob→dataURL path', async () => {
+  it('the Upload file-input fallback also routes through the downscaler', async () => {
     const user = userEvent.setup();
     seedKey();
-    blobToDataUrlMock.mockResolvedValue('data:image/png;base64,UPLOADED');
+    downscaleMock.mockResolvedValue('data:image/jpeg;base64,UPLOADED');
 
     render(<Harness cards={[card('a', 'Fox')]} />);
     const foxItem = screen.getByText('1. Fox').closest('li');
@@ -350,10 +351,10 @@ describe('ImagesStep', () => {
     await waitFor(() => {
       expect(within(foxItem).getByRole('img')).toHaveAttribute(
         'src',
-        'data:image/png;base64,UPLOADED'
+        'data:image/jpeg;base64,UPLOADED'
       );
     });
-    expect(blobToDataUrlMock).toHaveBeenCalledWith(file);
+    expect(downscaleMock).toHaveBeenCalledWith(file);
     expect(generateMock).not.toHaveBeenCalled();
   });
 });
