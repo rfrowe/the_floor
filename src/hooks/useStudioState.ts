@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
-import type { CardIdea, Slide, StudioDraft, StudioStep } from '@types';
+import type { CardIdea, Slide, SlideDataByCardId, StudioDraft, StudioStep } from '@types';
 import {
   useStudioDraftStore,
   STUDIO_DRAFT_ID,
@@ -51,6 +51,7 @@ export function createInitialDraft(): StudioDraft {
     categoryName: null,
     cards: [],
     slides: [],
+    slideDataByCardId: {},
     imageSource: 'openai',
     updatedAt: new Date().toISOString(),
   };
@@ -64,11 +65,81 @@ export function createBlankCard(): CardIdea {
 }
 
 /**
- * Derive one slide per card, preserving order. Images and censor boxes are
- * filled in by later steps; here every slide starts empty.
+ * Derive one slide per card, in card order (index-aligned with `cards`).
+ *
+ * A card's `imageUrl` and `censorBoxes` are looked up by its stable `id` in
+ * `slideData`, so re-deriving after a card is added, removed, reordered, or
+ * re-answered preserves every surviving card's image and censor boxes. Cards
+ * with no stored data (e.g. a freshly added card) get a blank slide. The
+ * slide's `answer` always reflects the card's current `answer`.
+ *
+ * `slideData` defaults to empty, in which case every slide starts blank.
  */
-export function deriveSlidesFromCards(cards: CardIdea[]): Slide[] {
-  return cards.map((card) => ({ imageUrl: '', answer: card.answer, censorBoxes: [] }));
+export function deriveSlidesFromCards(
+  cards: CardIdea[],
+  slideData: SlideDataByCardId = {}
+): Slide[] {
+  return cards.map((card) => {
+    const data = slideData[card.id];
+    return {
+      imageUrl: data?.imageUrl ?? '',
+      answer: card.answer,
+      censorBoxes: data?.censorBoxes ?? [],
+    };
+  });
+}
+
+/**
+ * Rebuild the id-keyed slide-data map from a draft's `slides` + `cards` by
+ * index. Used to (1) reconstruct the map for a legacy persisted draft that
+ * predates this field, and (2) keep the map in sync with externally-supplied
+ * slides. Cards with a blank slide (no image and no boxes) are omitted to keep
+ * the map sparse.
+ */
+function slideDataFromSlides(cards: CardIdea[], slides: Slide[]): SlideDataByCardId {
+  const map: SlideDataByCardId = {};
+  cards.forEach((card, i) => {
+    const slide = slides[i];
+    if (slide && (slide.imageUrl !== '' || slide.censorBoxes.length > 0)) {
+      map[card.id] = { imageUrl: slide.imageUrl, censorBoxes: slide.censorBoxes };
+    }
+  });
+  return map;
+}
+
+/**
+ * Normalize a draft so the reducer can rely on `slideDataByCardId` being
+ * present. A legacy draft persisted before this field existed has it
+ * reconstructed from its stored `slides` so a resumed pre-fix draft keeps its
+ * images instead of losing them on the next re-derive.
+ */
+function normalizeDraft(draft: StudioDraft): StudioDraft {
+  if (draft.slideDataByCardId) {
+    return draft;
+  }
+  return { ...draft, slideDataByCardId: slideDataFromSlides(draft.cards, draft.slides) };
+}
+
+/**
+ * Drop image-data entries for card ids that no longer exist, keeping the map
+ * and the persisted draft tidy after cards are removed or replaced. Surviving
+ * cards keep their image data untouched.
+ */
+function pruneSlideData(
+  cards: CardIdea[],
+  slideData: SlideDataByCardId | undefined
+): SlideDataByCardId {
+  if (!slideData) {
+    return {};
+  }
+  const liveIds = new Set(cards.map((card) => card.id));
+  const next: SlideDataByCardId = {};
+  for (const [cardId, data] of Object.entries(slideData)) {
+    if (liveIds.has(cardId)) {
+      next[cardId] = data;
+    }
+  }
+  return next;
 }
 
 export type StudioAction =
@@ -123,14 +194,15 @@ export function studioReducer(state: StudioDraft, action: StudioAction): StudioD
 
   switch (action.type) {
     case 'SET_STEP': {
-      // Derive slides when entering the images step so later steps have a
-      // slide per card. Preserve any slides already present (e.g. on a
-      // back-and-forth) only when the card set is unchanged in length.
+      // Entering the images step (re-)derives one slide per card, in card
+      // order. Image data is pulled from `slideDataByCardId` by stable card
+      // id, so every surviving card keeps its image + censor boxes even if
+      // cards were added, deleted, reordered, or re-answered in between; only
+      // brand-new cards get a blank slide. The keyed map is the source of
+      // truth, so re-deriving is always correct (no need to guess whether the
+      // card set changed).
       if (action.step === 'images') {
-        const needsDerive =
-          state.slides.length !== state.cards.length ||
-          state.cards.some((card, i) => state.slides[i]?.answer !== card.answer);
-        const slides = needsDerive ? deriveSlidesFromCards(state.cards) : state.slides;
+        const slides = deriveSlidesFromCards(state.cards, state.slideDataByCardId);
         return touch({ ...state, step: action.step, slides });
       }
       return touch({ ...state, step: action.step });
@@ -140,7 +212,13 @@ export function studioReducer(state: StudioDraft, action: StudioAction): StudioD
       return touch({ ...state, categoryName: action.name });
 
     case 'SET_CARDS':
-      return touch({ ...state, cards: action.cards });
+      // Reconcile the keyed image data to the new card set: surviving cards
+      // (matched by id) keep their image; ids no longer present are dropped.
+      return touch({
+        ...state,
+        cards: action.cards,
+        slideDataByCardId: pruneSlideData(action.cards, state.slideDataByCardId),
+      });
 
     case 'UPDATE_CARD':
       return touch({
@@ -150,11 +228,15 @@ export function studioReducer(state: StudioDraft, action: StudioAction): StudioD
         ),
       });
 
-    case 'DELETE_CARD':
+    case 'DELETE_CARD': {
+      // Drop the deleted card's image data; other cards keep theirs.
+      const cards = state.cards.filter((card) => card.id !== action.id);
       return touch({
         ...state,
-        cards: state.cards.filter((card) => card.id !== action.id),
+        cards,
+        slideDataByCardId: pruneSlideData(cards, state.slideDataByCardId),
       });
+    }
 
     case 'ADD_CARD':
       return touch({
@@ -162,25 +244,53 @@ export function studioReducer(state: StudioDraft, action: StudioAction): StudioD
         cards: [...state.cards, action.card ?? createBlankCard()],
       });
 
-    case 'SET_SLIDE_IMAGE':
+    case 'SET_SLIDE_IMAGE': {
+      // Write through to both the index-aligned `slides` array (what the
+      // Images/Censor steps read) and the id-keyed map (the durable backing
+      // store), keyed by the card at this index so the image survives a later
+      // re-derive.
+      const card = state.cards[action.index];
+      const slides = state.slides.map((slide, i) =>
+        i === action.index ? { ...slide, imageUrl: action.imageUrl } : slide
+      );
+      if (!card) {
+        return touch({ ...state, slides });
+      }
+      const prev = state.slideDataByCardId?.[card.id];
       return touch({
         ...state,
-        slides: state.slides.map((slide, i) =>
-          i === action.index ? { ...slide, imageUrl: action.imageUrl } : slide
-        ),
+        slides,
+        slideDataByCardId: {
+          ...state.slideDataByCardId,
+          [card.id]: { imageUrl: action.imageUrl, censorBoxes: prev?.censorBoxes ?? [] },
+        },
       });
+    }
 
-    case 'SET_SLIDE_CENSOR_BOXES':
+    case 'SET_SLIDE_CENSOR_BOXES': {
+      const card = state.cards[action.index];
+      const slides = state.slides.map((slide, i) =>
+        i === action.index ? { ...slide, censorBoxes: action.censorBoxes } : slide
+      );
+      if (!card) {
+        return touch({ ...state, slides });
+      }
+      const prev = state.slideDataByCardId?.[card.id];
       return touch({
         ...state,
-        slides: state.slides.map((slide, i) =>
-          i === action.index ? { ...slide, censorBoxes: action.censorBoxes } : slide
-        ),
+        slides,
+        slideDataByCardId: {
+          ...state.slideDataByCardId,
+          [card.id]: { imageUrl: prev?.imageUrl ?? '', censorBoxes: action.censorBoxes },
+        },
       });
+    }
 
     case 'HYDRATE_DRAFT':
-      // Replace wholesale with the persisted draft; do not re-stamp.
-      return action.draft;
+      // Replace wholesale with the persisted draft; do not re-stamp. Normalize
+      // so a legacy draft (persisted before `slideDataByCardId` existed) has
+      // the map reconstructed from its stored `slides`, preserving its images.
+      return normalizeDraft(action.draft);
 
     case 'RESET':
       return createInitialDraft();

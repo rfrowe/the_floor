@@ -7,7 +7,7 @@
  * to IndexedDB. See docs/tasks/phase-12-llm-studio/PHASE_PROPOSAL.md.
  */
 
-import type { Slide } from './slide';
+import type { CensorBox, Slide } from './slide';
 
 /**
  * The ordered steps of the Studio wizard.
@@ -41,6 +41,20 @@ export interface CardIdea {
 }
 
 /**
+ * Per-card image data, keyed by the card's stable {@link CardIdea.id}.
+ *
+ * This is the *source of truth* for a card's generated/uploaded image and its
+ * censor boxes. The gameplay {@link Slide} list is derived from the cards plus
+ * this map (see `deriveSlidesFromCards`), which keeps image data associated
+ * with a card by id rather than by fragile array position — so adding,
+ * deleting, reordering, or re-answering a card never wipes other cards' images.
+ *
+ * Internal to the draft/reducer only; it is never part of the exported
+ * gameplay {@link Slide} shape.
+ */
+export type SlideDataByCardId = Record<string, { imageUrl: string; censorBoxes: CensorBox[] }>;
+
+/**
  * The complete, serializable state of an in-progress Studio session.
  *
  * Persisted (debounced) to the `studio-drafts` IndexedDB store as a single
@@ -65,10 +79,21 @@ export interface StudioDraft {
   cards: CardIdea[];
 
   /**
-   * One slide per card, derived on entering the `images` step. Images and
-   * censor boxes are filled in by Tasks 58/59. Uses the gameplay `Slide` type.
+   * One slide per card, in card order and index-aligned with {@link cards}.
+   * Derived from `cards` + {@link slideDataByCardId} whenever the `images`
+   * step is (re-)entered. Images and censor boxes are filled in by Tasks
+   * 58/59. Uses the gameplay `Slide` type — consumers read it by index.
    */
   slides: Slide[];
+
+  /**
+   * Image data (imageUrl + censor boxes) keyed by stable card id. The durable
+   * backing store for `slides`; survives card add/delete/reorder/re-answer so
+   * re-deriving `slides` never loses a surviving card's image. Optional on the
+   * persisted shape so legacy (pre-fix) drafts hydrate without it and have it
+   * reconstructed from their stored `slides`.
+   */
+  slideDataByCardId?: SlideDataByCardId;
 
   /** Image source for this draft (fixed to OpenAI generation in Phase 12). */
   imageSource: StudioImageSource;
